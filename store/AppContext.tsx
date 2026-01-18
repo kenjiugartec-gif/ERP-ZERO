@@ -1,5 +1,7 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, Vehicle, StockItem, GateTransaction, TransactionItem, Notification } from '../types';
+import { User, Vehicle, StockItem, GateTransaction, TransactionItem, Notification, GeoLocationRecord } from '../types';
+import { EMPLACEMENTS as INITIAL_EMPLACEMENTS } from '../constants';
 
 interface AppContextType {
   user: User | null;
@@ -14,6 +16,8 @@ interface AppContextType {
   stock: StockItem[];
   transactions: GateTransaction[];
   notifications: Notification[];
+  geoRecords: GeoLocationRecord[];
+  emplacements: string[];
   
   // Actions
   addVehicle: (v: Vehicle) => void;
@@ -25,6 +29,9 @@ interface AppContextType {
   updateStockLocation: (id: string, newLocation: string) => void;
   markNotificationRead: (id: number) => void;
   clearNotifications: () => void;
+  addGeoRecord: (record: GeoLocationRecord) => void;
+  deleteGeoRecord: (id: string) => void;
+  addEmplacement: (name: string) => void;
   
   // UI Settings
   appName: string;
@@ -38,16 +45,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [welcomeMessageShown, setWelcomeMessageShown] = useState(false);
   const [appName, setAppName] = useState("ZERO WMS");
 
-  // Initial Data: Admin password updated to 174545219
+  // Initial Data
   const [users, setUsers] = useState<User[]>([
     { id: '1', name: 'Admin', rut: '1-9', password: '174545219', role: 'ADMIN', location: 'Central' }
   ]);
-  
   const [vehicles, setVehicles] = useState<Vehicle[]>([]); 
   const [stock, setStock] = useState<StockItem[]>([]); 
-  
   const [transactions, setTransactions] = useState<GateTransaction[]>([]);
-  
+  const [geoRecords, setGeoRecords] = useState<GeoLocationRecord[]>([]);
+  const [emplacements, setEmplacements] = useState<string[]>(INITIAL_EMPLACEMENTS);
   const [notifications, setNotifications] = useState<Notification[]>([
     { id: 1, title: 'Sistema Iniciado', message: 'Plataforma lista para operar.', type: 'INFO', timestamp: new Date(), read: false }
   ]);
@@ -76,23 +82,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const addStockItem = (item: StockItem) => {
     setStock(prev => [...prev, item]);
-    
     if (item.quantity < 20) {
       const newNotif: Notification = {
         id: Date.now(),
         title: 'Stock Crítico Detectado',
-        message: `El ítem ${item.name} (${item.code}) se ha registrado con bajo stock: ${item.quantity} unidades.`,
+        message: `El ítem ${item.name} (${item.code}) se ha registrado con bajo stock.`,
         type: 'WARNING',
-        timestamp: new Date(),
-        read: false
-      };
-      setNotifications(prev => [newNotif, ...prev]);
-    } else if (item.quantity > 100) {
-      const newNotif: Notification = {
-        id: Date.now(),
-        title: 'Ingreso Masivo',
-        message: `Se han ingresado ${item.quantity} unidades de ${item.name}.`,
-        type: 'SUCCESS',
         timestamp: new Date(),
         read: false
       };
@@ -108,18 +103,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
   };
 
-  const clearNotifications = () => {
-    setNotifications([]);
+  const clearNotifications = () => setNotifications([]);
+
+  const addGeoRecord = (record: GeoLocationRecord) => setGeoRecords([record, ...geoRecords]);
+  const deleteGeoRecord = (id: string) => setGeoRecords(geoRecords.filter(r => r.id !== id));
+  
+  const addEmplacement = (name: string) => {
+    if (!emplacements.includes(name)) {
+      setEmplacements([...emplacements, name]);
+    }
   };
 
   return (
     <AppContext.Provider value={{
       user, login, logout,
       welcomeMessageShown, setWelcomeMessageShown,
-      users, vehicles, stock, transactions, notifications,
+      users, vehicles, stock, transactions, notifications, geoRecords, emplacements,
       addVehicle, updateVehicle, createTransaction, updateTransaction, addUser,
       addStockItem, updateStockLocation,
       markNotificationRead, clearNotifications,
+      addGeoRecord, deleteGeoRecord, addEmplacement,
       appName, setAppName
     }}>
       {children}

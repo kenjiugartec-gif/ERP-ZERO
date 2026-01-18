@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { AppProvider, useApp } from './store/AppContext';
 import { Login } from './views/Login';
@@ -8,7 +9,8 @@ import { GateControl, IOControl } from './views/GateAndIOControl';
 import { FleetView, ReceptionView, DispatchView } from './views/Modules';
 import { HistoryView, SalesControlView } from './views/HistoryAndSales';
 import { StockControl } from './views/StockControl';
-import { Settings, UserPlus, Map, X, LayoutTemplate } from 'lucide-react';
+import { GeographyView } from './views/GeographyView';
+import { Settings, UserPlus, X, LayoutTemplate } from 'lucide-react';
 
 const AppContent: React.FC = () => {
   const { user, appName } = useApp();
@@ -30,6 +32,7 @@ const AppContent: React.FC = () => {
       case 'dispatch': return <DispatchView />;
       case 'history': return <HistoryView />;
       case 'sales': return <SalesControlView />;
+      case 'communes': return <GeographyView />;
       case 'settings': 
         return (
            <div className="p-8 text-center text-slate-500">
@@ -46,14 +49,6 @@ const AppContent: React.FC = () => {
                <p className="text-black">Creación de usuarios con RUT y Rol.</p>
             </div>
         );
-      case 'communes':
-         return (
-             <div className="p-8 text-center text-slate-500">
-                <Map size={48} className="mx-auto mb-4 text-slate-300"/>
-                <h2 className="text-xl font-bold text-black">Comunas y Regiones</h2>
-                <p className="text-black">Gestión geográfica profesional.</p>
-             </div>
-         );
       default: return null;
     }
   };

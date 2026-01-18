@@ -19,6 +19,14 @@ export interface Notification {
   read: boolean;
 }
 
+export interface GeoLocationRecord {
+  id: string;
+  region: string;
+  commune: string;
+  emplacement: string;
+  timestamp: string;
+}
+
 export interface StockItem {
   id: string;
   code: string;

@@ -1,23 +1,23 @@
+
 import React, { useState } from 'react';
 import { useApp } from '../store/AppContext';
 import { StockItem } from '../types';
 import { Database, Search, MapPin, Save, FileSpreadsheet, ArrowRight, UploadCloud, FileUp } from 'lucide-react';
 
+const inputBaseClass = "w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 font-normal focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-400 outline-none transition-all shadow-sm";
+
 export const StockControl: React.FC = () => {
   const { stock, addStockItem, updateStockLocation, user } = useApp();
   
-  // States
   const [sheetId, setSheetId] = useState('');
   const [isSimulating, setIsSimulating] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Handle Sheet ID Sync
   const handleSheetSync = () => {
     if (!sheetId) return;
     simulateLoad("Sincronizando con Google Sheets...");
   };
 
-  // Handle Excel Upload
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       simulateLoad(`Cargando archivo: ${e.target.files[0].name}...`);
@@ -26,7 +26,6 @@ export const StockControl: React.FC = () => {
 
   const simulateLoad = (message: string) => {
     setIsSimulating(true);
-    // Simulate API delay and data population
     setTimeout(() => {
         const mockItems: StockItem[] = [
             {
@@ -34,7 +33,7 @@ export const StockControl: React.FC = () => {
               code: `IMP-${Math.floor(Math.random()*1000)}`,
               name: 'Cilindro Oxígeno Portátil',
               category: 'ACTIVO',
-              quantity: 8, // Intentionally Low Stock (< 20) to trigger notification
+              quantity: 8,
               location: 'Recepcion',
               receptionBranch: user?.location || 'Central',
               supplier: 'Excel Import',
@@ -52,36 +51,24 @@ export const StockControl: React.FC = () => {
     item.code.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const getStatusBadge = (qty: number) => {
-     if (qty === 0) return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 border border-red-200 uppercase">Sin Stock</span>;
-     if (qty < 20) return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-200 uppercase">Crítico</span>;
-     return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-teal-100 text-teal-700 border border-teal-200 uppercase">Disponible</span>;
-  };
-
   return (
     <div className="h-full flex flex-col bg-white">
-      
-      {/* Top Control Bar: Inputs & Search */}
-      <div className="bg-white border-b border-slate-200 p-4 shadow-sm flex-shrink-0 z-10">
-         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            
-            {/* Search */}
-            <div className="relative w-full md:w-64">
-                <Search className="absolute left-3 top-2.5 text-slate-400" size={16} />
+      <div className="bg-white border-b border-slate-100 p-6 flex-shrink-0 z-10">
+         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="relative w-full md:w-80">
+                <Search className="absolute left-4 top-3.5 text-slate-400" size={16} />
                 <input 
                   type="text" 
-                  placeholder="Buscar material..." 
+                  placeholder="Buscar material o código..." 
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 bg-slate-100 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-slate-800 text-sm font-medium"
+                  className="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/5 focus:border-blue-400 outline-none text-slate-900 text-sm font-normal shadow-sm transition-all"
                 />
             </div>
 
-            {/* Data Ingestion Controls */}
-            <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
-                {/* Google Sheets Input */}
-                <div className="flex items-center bg-white border border-slate-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-green-500 focus-within:border-green-500 w-full md:w-80 shadow-sm">
-                   <div className="bg-green-50 px-3 py-2 border-r border-slate-200 text-green-700">
+            <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+                <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl overflow-hidden focus-within:ring-4 focus-within:ring-green-500/5 focus-within:border-green-400 w-full md:w-96 shadow-sm transition-all">
+                   <div className="bg-green-50 px-4 py-3.5 border-r border-slate-100 text-green-700">
                       <FileSpreadsheet size={18} />
                    </div>
                    <input 
@@ -89,21 +76,18 @@ export const StockControl: React.FC = () => {
                       value={sheetId}
                       onChange={(e) => setSheetId(e.target.value)}
                       placeholder="Pegar ID Google Sheet" 
-                      className="flex-1 px-3 py-2 text-sm outline-none text-slate-700 placeholder:text-slate-400 bg-transparent"
+                      className="flex-1 px-4 py-3.5 text-sm outline-none text-slate-900 font-normal placeholder:text-slate-400 bg-transparent"
                    />
                    <button 
                      onClick={handleSheetSync}
                      disabled={!sheetId || isSimulating}
-                     className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white transition-colors disabled:opacity-50"
+                     className="px-5 py-3.5 bg-green-600 hover:bg-green-700 text-white transition-colors disabled:opacity-50"
                    >
-                     <ArrowRight size={18} />
+                     <ArrowRight size={20} />
                    </button>
                 </div>
 
-                <div className="text-slate-300 font-bold self-center hidden md:block">O</div>
-
-                {/* Excel Upload Button */}
-                <label className="flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg cursor-pointer transition-colors shadow-sm text-sm font-bold w-full md:w-auto">
+                <label className="flex items-center justify-center space-x-2 bg-slate-900 hover:bg-slate-800 text-white px-6 py-3.5 rounded-xl cursor-pointer transition-all shadow-lg active:scale-95 text-xs font-bold uppercase tracking-widest w-full md:w-auto">
                     <FileUp size={18} />
                     <span>Cargar Excel</span>
                     <input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileUpload} />
@@ -112,71 +96,57 @@ export const StockControl: React.FC = () => {
          </div>
       </div>
 
-      {/* Main Table Area - Fills remaining screen */}
       <div className="flex-1 overflow-auto bg-white relative">
         {isSimulating && (
-            <div className="absolute inset-0 z-20 bg-white/80 backdrop-blur-[1px] flex items-center justify-center">
+            <div className="absolute inset-0 z-20 bg-white/60 backdrop-blur-[2px] flex items-center justify-center">
                 <div className="flex flex-col items-center">
-                    <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-2"></div>
-                    <span className="text-sm font-bold text-blue-700 animate-pulse">Procesando datos...</span>
+                    <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-3"></div>
+                    <span className="text-sm font-bold text-blue-700 uppercase tracking-widest animate-pulse">Sincronizando...</span>
                 </div>
             </div>
         )}
         
-        <table className="w-full text-sm text-left border-collapse">
-          <thead className="bg-slate-100 text-slate-600 font-bold uppercase text-xs sticky top-0 z-10 shadow-sm">
+        <table className="w-full text-sm text-left">
+          <thead className="bg-slate-50 text-slate-400 font-bold uppercase text-[10px] tracking-widest sticky top-0 z-10 border-b border-slate-100">
             <tr>
-              <th className="px-6 py-3 border-b border-slate-200">Material / Producto</th>
-              <th className="px-6 py-3 border-b border-slate-200">Categoría</th>
-              <th className="px-6 py-3 border-b border-slate-200">Ubicación</th>
-              <th className="px-6 py-3 border-b border-slate-200 text-center">Stock Físico</th>
-              <th className="px-6 py-3 border-b border-slate-200">Código</th>
-              <th className="px-6 py-3 border-b border-slate-200 text-center">Estado</th>
+              <th className="px-8 py-5">Material</th>
+              <th className="px-8 py-5">Categoría</th>
+              <th className="px-8 py-5">Nodo</th>
+              <th className="px-8 py-5 text-center">Físico</th>
+              <th className="px-8 py-5">Audit SKU</th>
+              <th className="px-8 py-5 text-center">Status</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 text-slate-700">
+          <tbody className="divide-y divide-slate-50">
             {filteredStock.map((item) => (
-              <tr key={item.id} className="hover:bg-blue-50/50 transition-colors group">
-                <td className="px-6 py-3">
+              <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
+                <td className="px-8 py-5">
                   <div className="font-bold text-slate-900">{item.name}</div>
-                  <div className="text-[10px] text-slate-400">{item.supplier}</div>
+                  <div className="text-[10px] text-slate-400 uppercase">{item.supplier}</div>
                 </td>
-                <td className="px-6 py-3">
-                   <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
-                       item.category === 'ACTIVO' ? 'bg-purple-50 text-purple-700 border border-purple-100' : 'bg-cyan-50 text-cyan-700 border border-cyan-100'
-                   }`}>
-                      {item.category}
-                   </span>
+                <td className="px-8 py-5">
+                   <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded-lg text-[9px] font-bold border border-slate-200">{item.category}</span>
                 </td>
-                <td className="px-6 py-3">
-                   <div className="flex items-center max-w-[150px]">
-                     <MapPin size={14} className="text-slate-400 mr-2 flex-shrink-0" />
+                <td className="px-8 py-5">
+                   <div className="flex items-center space-x-2 text-slate-600">
+                     <MapPin size={12} className="opacity-40" />
                      <input 
                         type="text" 
                         value={item.location}
                         onChange={(e) => updateStockLocation(item.id, e.target.value)}
-                        className="bg-transparent border-b border-transparent hover:border-slate-300 focus:border-blue-500 focus:bg-white outline-none w-full text-slate-700 transition-all text-xs py-1"
+                        className="bg-transparent border-none outline-none focus:bg-slate-100 focus:px-2 focus:rounded-md transition-all text-xs"
                      />
                    </div>
                 </td>
-                <td className="px-6 py-3 text-center">
-                    <span className="font-mono text-base font-semibold text-slate-800">{item.quantity}</span>
-                </td>
-                <td className="px-6 py-3 font-mono text-xs text-slate-500">{item.code}</td>
-                <td className="px-6 py-3 text-center">
-                   {getStatusBadge(item.quantity)}
+                <td className="px-8 py-5 text-center font-black text-slate-800">{item.quantity}</td>
+                <td className="px-8 py-5 font-mono text-xs text-slate-400">{item.code}</td>
+                <td className="px-8 py-5 text-center">
+                    <span className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase border ${item.quantity < 20 ? 'bg-amber-50 text-amber-700 border-amber-100' : 'bg-green-50 text-green-700 border-green-100'}`}>
+                        {item.quantity < 20 ? 'Crítico' : 'OK'}
+                    </span>
                 </td>
               </tr>
             ))}
-            {filteredStock.length === 0 && (
-              <tr>
-                <td colSpan={6} className="px-6 py-20 text-center text-slate-400">
-                  <Database size={48} className="mx-auto mb-4 text-slate-200" />
-                  <p>No se encontraron registros.</p>
-                  <p className="text-xs mt-1">Utilice la barra superior para importar datos.</p>
-                </td>
-              </tr>
-            )}
           </tbody>
         </table>
       </div>
