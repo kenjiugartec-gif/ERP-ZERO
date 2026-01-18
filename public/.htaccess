@@ -1,0 +1,14 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  
+  # Si el archivo solicitado es index.html, no hacer nada
+  RewriteRule ^index\.html$ - [L]
+  
+  # Si el archivo o directorio solicitado no existe en el servidor...
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  
+  # ...redirigir todo a index.html para que React maneje el enrutamiento
+  RewriteRule . /index.html [L]
+</IfModule>
