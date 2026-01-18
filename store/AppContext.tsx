@@ -36,15 +36,15 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [welcomeMessageShown, setWelcomeMessageShown] = useState(false);
-  const [appName, setAppName] = useState("Sistema de Gestión");
+  const [appName, setAppName] = useState("ZERO WMS");
 
-  // Initial Data: Clean for Production Use
+  // Initial Data: Admin password updated to 174545219
   const [users, setUsers] = useState<User[]>([
-    { id: '1', name: 'Admin', rut: '1-9', password: 'admin', role: 'ADMIN', location: 'Central' }
+    { id: '1', name: 'Admin', rut: '1-9', password: '174545219', role: 'ADMIN', location: 'Central' }
   ]);
   
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]); // Clean fleet
-  const [stock, setStock] = useState<StockItem[]>([]); // Clean stock
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]); 
+  const [stock, setStock] = useState<StockItem[]>([]); 
   
   const [transactions, setTransactions] = useState<GateTransaction[]>([]);
   
@@ -77,8 +77,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const addStockItem = (item: StockItem) => {
     setStock(prev => [...prev, item]);
     
-    // AUTOMATIC NOTIFICATION LOGIC
-    // Threshold defined as 20 units
     if (item.quantity < 20) {
       const newNotif: Notification = {
         id: Date.now(),
@@ -89,19 +87,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         read: false
       };
       setNotifications(prev => [newNotif, ...prev]);
-    } else {
-       // Success notification for large entries
-       if (item.quantity > 100) {
-          const newNotif: Notification = {
-            id: Date.now(),
-            title: 'Ingreso Masivo',
-            message: `Se han ingresado ${item.quantity} unidades de ${item.name}.`,
-            type: 'SUCCESS',
-            timestamp: new Date(),
-            read: false
-          };
-          setNotifications(prev => [newNotif, ...prev]);
-       }
+    } else if (item.quantity > 100) {
+      const newNotif: Notification = {
+        id: Date.now(),
+        title: 'Ingreso Masivo',
+        message: `Se han ingresado ${item.quantity} unidades de ${item.name}.`,
+        type: 'SUCCESS',
+        timestamp: new Date(),
+        read: false
+      };
+      setNotifications(prev => [newNotif, ...prev]);
     }
   };
 
