@@ -9,7 +9,6 @@ import {
 } from 'lucide-react';
 import { GeoLocationRecord } from '../types';
 
-// Componente Desplegable Personalizado
 interface CustomSelectProps {
   label: string;
   icon: React.ReactNode;
@@ -128,29 +127,29 @@ export const GeographyView: React.FC = () => {
   };
 
   return (
-    <div className="h-full overflow-y-auto p-6 bg-slate-50 relative">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="h-full overflow-y-auto p-8 bg-slate-50 relative">
+      <div className="max-w-6xl mx-auto space-y-8">
         
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center space-x-3">
-            <div className="bg-slate-900 p-2.5 rounded-xl text-white shadow-md">
-              <MapPin size={20} />
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex items-center space-x-4">
+            <div className="bg-slate-900 p-3 rounded-2xl text-white shadow-lg flex-shrink-0">
+              <MapPin size={24} />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-slate-800 tracking-tight uppercase">Configuración Territorial</h2>
-              <p className="text-xs text-slate-500 font-medium">Gestión de nodos y sucursales regionales</p>
+              <h2 className="text-2xl font-bold text-slate-900 tracking-tight uppercase leading-none">Configuración Territorial</h2>
+              <p className="text-sm text-slate-500 font-medium mt-1">Gestión de nodos y sucursales regionales</p>
             </div>
           </div>
           <button 
             onClick={() => setIsModalOpen(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center shadow-xl shadow-blue-900/10 transition-all active:scale-95"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center shadow-xl shadow-blue-200 transition-all active:scale-95"
           >
             <Plus size={16} className="mr-2" />
             Nuevo Emplazamiento
           </button>
         </div>
 
-        <div className="bg-white p-10 rounded-2xl shadow-sm border border-slate-200">
+        <div className="bg-white p-10 rounded-[2.5rem] shadow-sm border border-slate-200">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
             <CustomSelect 
               label="Nodo Operativo"
@@ -200,7 +199,7 @@ export const GeographyView: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+        <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
           <table className="w-full text-left">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
@@ -228,7 +227,7 @@ export const GeographyView: React.FC = () => {
 
       {isModalOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border border-slate-100 animate-in zoom-in-95">
+          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden border border-slate-100 animate-in zoom-in-95">
             <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/30">
               <h3 className="font-bold text-slate-800 uppercase tracking-tight flex items-center">
                 <Globe size={18} className="mr-2 text-blue-600" /> Nuevo Nodo

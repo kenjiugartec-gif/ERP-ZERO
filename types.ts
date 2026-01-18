@@ -1,6 +1,16 @@
 
 export type UserRole = 'ADMIN' | 'OPERATOR' | 'DRIVER';
 
+export interface AppConfig {
+  logo?: string;
+  slogan: string;
+  fontFamily: string;
+  fontSize: number; // en px
+  lineHeight: number; // multiplicador
+  primaryColor: string;
+  disableBold: boolean;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -8,6 +18,7 @@ export interface User {
   password?: string;
   role: string;
   location: string;
+  commune?: string;
 }
 
 export interface Notification {
@@ -33,9 +44,9 @@ export interface StockItem {
   name: string;
   category: 'ACTIVO' | 'INSUMO';
   quantity: number;
-  location: string; // Ubicación editable
-  supplier?: string; // Proveedor/Cliente
-  receptionBranch?: string; // Sucursal de recepción
+  location: string;
+  supplier?: string; 
+  receptionBranch?: string; 
   lastUpdated: string;
 }
 
@@ -44,7 +55,7 @@ export interface Vehicle {
   type: string;
   brand: string;
   model: string;
-  km: number;
+  year: number;
   commune: string;
   location: string;
   driver: string;
@@ -52,10 +63,10 @@ export interface Vehicle {
 }
 
 export interface TransactionItem {
-  name: string; // e.g., "Cilindro 10m3"
+  name: string;
   quantity: number;
   type: 'ACTIVO' | 'INSUMO';
-  details?: string; // e.g., Regulator type "0-2"
+  details?: string;
 }
 
 export interface GateTransaction {
@@ -65,10 +76,10 @@ export interface GateTransaction {
   status: 'PENDING_EXIT' | 'EXIT_AUTHORIZED' | 'IN_ROUTE' | 'PENDING_ENTRY' | 'ENTRY_AUTHORIZED' | 'COMPLETED';
   exitTime?: string;
   entryTime?: string;
-  exitItems_ES: TransactionItem[]; // Items registered by E/S at exit
-  exitItems_Gate: TransactionItem[]; // Items verified by Gate at exit (if applicable, or assumed same)
-  entryItems_ES: TransactionItem[]; // Items registered by E/S at entry
-  entryItems_Gate: TransactionItem[]; // Items verified by Gate at entry
+  exitItems_ES: TransactionItem[];
+  exitItems_Gate: TransactionItem[];
+  entryItems_ES: TransactionItem[];
+  entryItems_Gate: TransactionItem[];
   user_ES_Out?: string;
   user_Gate_Out?: string;
   user_Gate_In?: string;

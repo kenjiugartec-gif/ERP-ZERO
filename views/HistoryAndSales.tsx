@@ -1,41 +1,80 @@
+
 import React from 'react';
 import { useApp } from '../store/AppContext';
+import { History, FileText, Download, Printer } from 'lucide-react';
 
 export const HistoryView: React.FC = () => {
-  const { transactions } = useApp();
+  const { transactions, currentConfig, appName, user } = useApp();
   
-  // Logic to compare items (Mocking diff)
-  // Positive blue, negative red
-  
+  const handleDownload = () => {
+    window.print();
+  };
+
   return (
-    <div className="h-full overflow-y-auto p-6 bg-white">
-      <div className="bg-slate-50 p-6 rounded-2xl shadow-sm border border-slate-200">
-        <h2 className="text-2xl font-bold text-slate-800 mb-6">Histórico de Movimientos</h2>
-        <div className="overflow-x-auto bg-white rounded-xl border border-slate-200">
+    <div className="h-full overflow-y-auto p-8 bg-white report-container">
+      {/* Print-Only Header */}
+      <div className="print-only">
+        <div className="print-header">
+          <div className="flex flex-col">
+            <h1 className="print-title">{appName}</h1>
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">{user?.location}</p>
+          </div>
+          {currentConfig.logo && (
+            <img src={currentConfig.logo} alt="Logo" className="print-logo" />
+          )}
+        </div>
+        <div className="mb-6">
+          <h2 className="text-lg font-bold uppercase underline">Reporte Histórico de Movimientos</h2>
+          <p className="text-xs text-slate-500">Generado el: {new Date().toLocaleString()}</p>
+        </div>
+      </div>
+
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 no-print">
+        <div className="flex items-center space-x-4">
+          <div className="bg-slate-900 p-3 rounded-2xl text-white shadow-lg flex-shrink-0">
+            <History size={24} />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900 tracking-tight uppercase leading-none">Histórico de Movimientos</h2>
+            <p className="text-sm text-slate-500 font-medium mt-1">Registro cronológico de entradas y salidas técnicas</p>
+          </div>
+        </div>
+        
+        <button 
+          onClick={handleDownload}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center shadow-lg transition-all active:scale-95"
+        >
+          <Download size={18} className="mr-2" />
+          Descargar PDF
+        </button>
+      </div>
+
+      <div className="bg-slate-50 p-6 rounded-3xl border border-slate-200 print:bg-white print:border-none print:p-0">
+        <div className="overflow-x-auto bg-white rounded-2xl border border-slate-200 print:border-none">
           <table className="w-full text-sm text-left">
-            <thead className="bg-slate-100 text-slate-600 font-semibold uppercase text-xs">
+            <thead className="bg-slate-50 text-slate-600 font-bold uppercase text-[10px] tracking-widest border-b border-slate-100 print:bg-slate-200">
               <tr>
-                <th className="px-4 py-3 border-b border-slate-200">Fecha/Hora</th>
-                <th className="px-4 py-3 border-b border-slate-200">Patente</th>
-                <th className="px-4 py-3 border-b border-slate-200">Conductor</th>
-                <th className="px-4 py-3 border-b border-slate-200">Items Salida</th>
-                <th className="px-4 py-3 border-b border-slate-200">Items Entrada</th>
-                <th className="px-4 py-3 border-b border-slate-200">Diferencia</th>
+                <th className="px-6 py-4">Fecha/Hora</th>
+                <th className="px-6 py-4">Patente</th>
+                <th className="px-6 py-4">Conductor</th>
+                <th className="px-6 py-4 text-center">Items Salida</th>
+                <th className="px-6 py-4 text-center">Items Entrada</th>
+                <th className="px-6 py-4 text-center">Diferencia</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-50">
               {transactions.map(t => {
                  const countOut = t.exitItems_ES.reduce((acc, i) => acc + i.quantity, 0);
                  const countIn = t.entryItems_ES.reduce((acc, i) => acc + i.quantity, 0);
                  const diff = countIn - countOut;
                  return (
-                   <tr key={t.id} className="hover:bg-slate-50">
-                     <td className="px-4 py-3 text-slate-600">{t.entryTime ? new Date(t.entryTime).toLocaleString() : 'En curso'}</td>
-                     <td className="px-4 py-3 font-bold text-slate-800">{t.plate}</td>
-                     <td className="px-4 py-3 text-slate-600">{t.driver}</td>
-                     <td className="px-4 py-3 text-slate-600">{countOut}</td>
-                     <td className="px-4 py-3 text-slate-600">{countIn}</td>
-                     <td className={`px-4 py-3 font-bold ${diff >= 0 ? 'text-blue-600' : 'text-red-500'}`}>
+                   <tr key={t.id} className="hover:bg-slate-50 transition-colors">
+                     <td className="px-6 py-4 text-slate-600">{t.entryTime ? new Date(t.entryTime).toLocaleString() : 'En curso'}</td>
+                     <td className="px-6 py-4 font-bold text-slate-800">{t.plate}</td>
+                     <td className="px-6 py-4 text-slate-600">{t.driver}</td>
+                     <td className="px-6 py-4 text-slate-600 text-center">{countOut}</td>
+                     <td className="px-6 py-4 text-slate-600 text-center">{countIn}</td>
+                     <td className={`px-6 py-4 font-bold text-center ${diff >= 0 ? 'text-blue-600' : 'text-red-500'}`}>
                        {diff > 0 ? `+${diff}` : diff}
                      </td>
                    </tr>
@@ -50,44 +89,80 @@ export const HistoryView: React.FC = () => {
 };
 
 export const SalesControlView: React.FC = () => {
-    const { transactions } = useApp();
+    const { transactions, currentConfig, appName, user } = useApp();
+
+    const handleDownload = () => {
+      window.print();
+    };
+
     return (
-        <div className="h-full overflow-y-auto p-6 bg-white">
-            <div className="bg-slate-50 p-6 rounded-2xl shadow-sm border border-slate-200">
-                <h2 className="text-2xl font-bold text-slate-800 mb-6">Control VTA (Auditoría)</h2>
-                <div className="space-y-4">
-                    {transactions.filter(t => t.status === 'COMPLETED').map(t => (
-                        <div key={t.id} className="p-4 border rounded-xl hover:shadow-md transition bg-white border-slate-200">
-                            <div className="flex justify-between items-start mb-2">
-                                 <div>
-                                    <h3 className="font-bold text-lg text-slate-700">{t.plate} <span className="text-sm font-normal text-slate-500">| {t.driver}</span></h3>
-                                    <p className="text-xs text-slate-400">{t.id}</p>
-                                 </div>
-                                 <div className="text-right text-xs text-slate-500">
-                                    <p><span className="font-semibold text-slate-700">Salida:</span> {new Date(t.exitTime || '').toLocaleString()} por {t.user_Gate_Out}</p>
-                                    <p><span className="font-semibold text-slate-700">Entrada:</span> {new Date(t.entryTime || '').toLocaleString()} por {t.user_Gate_In}</p>
-                                 </div>
+        <div className="h-full overflow-y-auto p-8 bg-white report-container">
+            {/* Print-Only Header */}
+            <div className="print-only">
+              <div className="print-header">
+                <div className="flex flex-col">
+                  <h1 className="print-title">{appName}</h1>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">{user?.location}</p>
+                </div>
+                {currentConfig.logo && (
+                  <img src={currentConfig.logo} alt="Logo" className="print-logo" />
+                )}
+              </div>
+              <div className="mb-6">
+                <h2 className="text-lg font-bold uppercase underline">Control de Auditoría VTA</h2>
+                <p className="text-xs text-slate-500">Corte de auditoría: {new Date().toLocaleString()}</p>
+              </div>
+            </div>
+
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 no-print">
+              <div className="flex items-center space-x-4">
+                <div className="bg-slate-900 p-3 rounded-2xl text-white shadow-lg flex-shrink-0">
+                  <FileText size={24} />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-900 tracking-tight uppercase leading-none">Control VTA (Auditoría)</h2>
+                  <p className="text-sm text-slate-500 font-medium mt-1">Supervisión comercial y auditoría de carga</p>
+                </div>
+              </div>
+              
+              <button 
+                onClick={handleDownload}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center shadow-lg transition-all active:scale-95"
+              >
+                <Download size={18} className="mr-2" />
+                Exportar Reporte
+              </button>
+            </div>
+
+            <div className="space-y-6">
+                {transactions.filter(t => t.status === 'COMPLETED').map(t => (
+                    <div key={t.id} className="p-6 border rounded-[2rem] hover:shadow-lg transition-all bg-white border-slate-200 print:rounded-none print:shadow-none print:border-slate-300 print:mb-8">
+                        <div className="flex justify-between items-start mb-6">
+                             <div>
+                                <h3 className="font-bold text-xl text-slate-800">{t.plate} <span className="text-sm font-normal text-slate-500 ml-2">| Conductor: {t.driver}</span></h3>
+                                <p className="text-xs text-slate-400 mt-1 uppercase font-bold tracking-widest">ID TRANSACCIÓN: {t.id}</p>
+                             </div>
+                             <div className="text-right text-xs text-slate-500 space-y-1">
+                                <p><span className="font-bold text-slate-700">DESPACHO:</span> {new Date(t.exitTime || '').toLocaleString()}</p>
+                                <p><span className="font-bold text-slate-700">RETORNO:</span> {new Date(t.entryTime || '').toLocaleString()}</p>
+                             </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-6 text-sm">
+                            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 print:bg-white">
+                                <h4 className="font-bold text-orange-500 mb-2 uppercase text-[10px] tracking-widest print:text-slate-900 print:underline">Declaración E/S (Salida)</h4>
+                                <ul className="space-y-1 text-slate-600 font-medium">
+                                    {t.exitItems_ES.map((i, idx) => <li key={idx} className="flex justify-between"><span>{i.name}</span> <span className="font-bold">{i.quantity}</span></li>)}
+                                </ul>
                             </div>
-                            <div className="grid grid-cols-2 gap-4 mt-4 text-sm">
-                                <div className="bg-slate-50 p-3 rounded border border-slate-100">
-                                    <h4 className="font-bold text-orange-500 mb-1">Declarado Salida (E/S)</h4>
-                                    <ul className="list-disc pl-4 text-slate-600">
-                                        {t.exitItems_ES.map((i, idx) => <li key={idx}>{i.quantity}x {i.name} {i.details && `(${i.details})`}</li>)}
-                                    </ul>
-                                </div>
-                                <div className="bg-slate-50 p-3 rounded border border-slate-100">
-                                    <h4 className="font-bold text-purple-500 mb-1">Declarado Entrada (E/S)</h4>
-                                    <ul className="list-disc pl-4 text-slate-600">
-                                        {t.entryItems_ES.map((i, idx) => <li key={idx}>{i.quantity}x {i.name} {i.details && `(${i.details})`}</li>)}
-                                    </ul>
-                                </div>
+                            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 print:bg-white">
+                                <h4 className="font-bold text-purple-500 mb-2 uppercase text-[10px] tracking-widest print:text-slate-900 print:underline">Declaración E/S (Retorno)</h4>
+                                <ul className="space-y-1 text-slate-600 font-medium">
+                                    {t.entryItems_ES.map((i, idx) => <li key={idx} className="flex justify-between"><span>{i.name}</span> <span className="font-bold">{i.quantity}</span></li>)}
+                                </ul>
                             </div>
                         </div>
-                    ))}
-                    {transactions.filter(t => t.status === 'COMPLETED').length === 0 && (
-                        <p className="text-center text-slate-400 py-8">No hay registros completados para auditoría.</p>
-                    )}
-                </div>
+                    </div>
+                ))}
             </div>
         </div>
     );
