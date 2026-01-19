@@ -8,7 +8,7 @@ import {
   ClipboardCheck, MapPin, Car, 
   Users, Settings, FileText, Bell, AlertTriangle, Info, CheckCircle,
   Trash2, Search, Sun, Clock, ChevronDown, CloudRain, Cloud, CloudLightning,
-  User as UserIcon, Edit2, Camera, Save, Box, FileSpreadsheet
+  User as UserIcon, Edit2, Camera, Save, Box, FileSpreadsheet, Download
 } from 'lucide-react';
 
 // --- TYPES FOR SEARCH ---
@@ -127,10 +127,17 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
   
   const [time, setTime] = useState(new Date());
   const [weather, setWeather] = useState<{temp: number, code: number} | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  
+  // Responsive sidebar state
+  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 1024);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 1024);
+  
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
+  
+  // PWA Install State
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   
   // Search States
   const [searchQuery, setSearchQuery] = useState('');
@@ -142,6 +149,40 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
   const searchRef = useRef<HTMLDivElement>(null);
 
   const unreadCount = notifications.filter(n => !n.read).length;
+
+  // Handle Resize for Responsive Layout
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth <= 1024;
+      setIsMobile(mobile);
+      if (!mobile) setIsSidebarOpen(true);
+      else setIsSidebarOpen(false);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Capture PWA Install Prompt
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  }, []);
+
+  const handleInstallClick = () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then((choiceResult: any) => {
+        if (choiceResult.outcome === 'accepted') {
+          console.log('User accepted the install prompt');
+        }
+        setDeferredPrompt(null);
+      });
+    }
+  };
 
   // --- CLOCK & WEATHER ---
   useEffect(() => {
@@ -282,6 +323,85 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
       }
   };
 
+  const SidebarContent = () => (
+    <>
+      <div className={`h-20 flex items-center bg-slate-950/50 border-b border-slate-800/50 ${isSidebarOpen ? 'justify-between px-6' : 'justify-center px-0'}`}>
+        {isSidebarOpen && (
+          <div className="flex items-center animate-in fade-in slide-in-from-left-2 duration-500">
+             <span className="text-sm font-black text-white tracking-[0.3em] uppercase italic opacity-90 truncate">
+               {appName}
+             </span>
+          </div>
+        )}
+        {!isMobile && (
+          <button 
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)} 
+            className={`p-2.5 rounded-xl transition-all duration-200 ${isSidebarOpen ? 'hover:bg-slate-800 text-slate-500 hover:text-white' : 'bg-slate-800/80 text-white hover:bg-blue-600'}`}
+          >
+            {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+        )}
+        {isMobile && (
+           <button onClick={() => setIsSidebarOpen(false)} className="text-white">
+             <X size={24} />
+           </button>
+        )}
+      </div>
+      
+      <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-2 custom-scrollbar flex flex-col items-center">
+        {isSidebarOpen && (
+          <p className="w-full px-4 text-[0.7rem] font-black text-slate-600 uppercase tracking-[0.3em] mb-6 animate-in fade-in duration-300">
+            Panel Operativo
+          </p>
+        )}
+        
+        {MODULES.map((module) => (
+          <button
+            key={module.id}
+            onClick={() => { setActiveModule(module.id); if(isMobile) setIsSidebarOpen(false); }}
+            title={!isSidebarOpen ? module.label : undefined}
+            className={`w-full flex items-center rounded-2xl transition-all duration-300 group relative
+              ${isSidebarOpen ? 'p-3.5' : 'p-3 justify-center'}
+              ${activeModule === module.id 
+                ? 'bg-blue-600 text-white shadow-xl shadow-blue-900/40' 
+                : 'text-slate-500 hover:bg-slate-800 hover:text-white'
+              }`}
+          >
+            <module.icon size={18} className={`${activeModule === module.id ? 'text-white' : 'text-slate-500 group-hover:text-white'} transition-colors flex-shrink-0`} />
+            {isSidebarOpen && (
+              <span className="ml-4 font-bold text-xs uppercase tracking-wider truncate animate-in fade-in duration-300">
+                {module.label}
+              </span>
+            )}
+            {!isSidebarOpen && activeModule === module.id && (
+              <div className="absolute left-0 top-2 bottom-2 w-1 bg-white rounded-r-full shadow-[0_0_10px_rgba(255,255,255,0.5)]"></div>
+            )}
+          </button>
+        ))}
+      </nav>
+
+      <div className={`p-4 bg-slate-950/40 border-t border-slate-800/50 flex flex-col items-center space-y-2`}>
+        {deferredPrompt && isSidebarOpen && (
+           <button 
+             onClick={handleInstallClick}
+             className="w-full flex items-center justify-center p-3 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl transition-all shadow-lg animate-pulse"
+           >
+             <Download size={16} className="mr-2"/>
+             <span className="font-bold text-[0.7rem] uppercase tracking-wider">Instalar App</span>
+           </button>
+        )}
+        <button 
+          onClick={logout}
+          className={`w-full flex items-center text-slate-500 hover:bg-red-950/30 hover:text-red-400 rounded-2xl transition-all duration-300 ${isSidebarOpen ? 'p-3.5' : 'p-3 justify-center'}`}
+          title={!isSidebarOpen ? "Cerrar Sesión" : undefined}
+        >
+          <LogOut size={18} className="flex-shrink-0" />
+          {isSidebarOpen && <span className="ml-4 font-bold text-[0.7rem] uppercase tracking-[0.2em] truncate">Cerrar Sesión</span>}
+        </button>
+      </div>
+    </>
+  );
+
   return (
     <div className="h-screen flex overflow-hidden bg-slate-50 font-sans relative">
       
@@ -292,91 +412,53 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
         </div>
       )}
 
-      {/* Sidebar */}
-      <aside 
-        className={`${isSidebarOpen ? 'w-64' : 'w-20'} bg-slate-900 text-slate-300 transition-all duration-300 flex flex-col z-30 shadow-xl flex-shrink-0 relative`}
-      >
-        {/* Cabecera con nombre de App y botón de colapso */}
-        <div className={`h-20 flex items-center bg-slate-950/50 border-b border-slate-800/50 ${isSidebarOpen ? 'justify-between px-6' : 'justify-center px-0'}`}>
-          {isSidebarOpen && (
-            <div className="flex items-center animate-in fade-in slide-in-from-left-2 duration-500">
-               <span className="text-sm font-black text-white tracking-[0.3em] uppercase italic opacity-90 truncate">
-                 {appName}
-               </span>
-            </div>
-          )}
-          <button 
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)} 
-            className={`p-2.5 rounded-xl transition-all duration-200 ${isSidebarOpen ? 'hover:bg-slate-800 text-slate-500 hover:text-white' : 'bg-slate-800/80 text-white hover:bg-blue-600'}`}
-          >
-            {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
-        </div>
-        
-        <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-2 custom-scrollbar flex flex-col items-center">
-          {isSidebarOpen && (
-            <p className="w-full px-4 text-[0.7rem] font-black text-slate-600 uppercase tracking-[0.3em] mb-6 animate-in fade-in duration-300">
-              Panel Operativo
-            </p>
-          )}
-          
-          {MODULES.map((module) => (
-            <button
-              key={module.id}
-              onClick={() => setActiveModule(module.id)}
-              title={!isSidebarOpen ? module.label : undefined}
-              className={`w-full flex items-center rounded-2xl transition-all duration-300 group relative
-                ${isSidebarOpen ? 'p-3.5' : 'p-3 justify-center'}
-                ${activeModule === module.id 
-                  ? 'bg-blue-600 text-white shadow-xl shadow-blue-900/40' 
-                  : 'text-slate-500 hover:bg-slate-800 hover:text-white'
-                }`}
-            >
-              <module.icon size={18} className={`${activeModule === module.id ? 'text-white' : 'text-slate-500 group-hover:text-white'} transition-colors flex-shrink-0`} />
-              {isSidebarOpen && (
-                <span className="ml-4 font-bold text-xs uppercase tracking-wider truncate animate-in fade-in duration-300">
-                  {module.label}
-                </span>
-              )}
-              {!isSidebarOpen && activeModule === module.id && (
-                <div className="absolute left-0 top-2 bottom-2 w-1 bg-white rounded-r-full shadow-[0_0_10px_rgba(255,255,255,0.5)]"></div>
-              )}
-            </button>
-          ))}
-        </nav>
+      {/* MOBILE SIDEBAR OVERLAY */}
+      {isMobile && isSidebarOpen && (
+         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-40" onClick={() => setIsSidebarOpen(false)}></div>
+      )}
 
-        <div className={`p-4 bg-slate-950/40 border-t border-slate-800/50 flex flex-col items-center`}>
-          <button 
-            onClick={logout}
-            className={`w-full flex items-center text-slate-500 hover:bg-red-950/30 hover:text-red-400 rounded-2xl transition-all duration-300 ${isSidebarOpen ? 'p-3.5' : 'p-3 justify-center'}`}
-            title={!isSidebarOpen ? "Cerrar Sesión" : undefined}
-          >
-            <LogOut size={18} className="flex-shrink-0" />
-            {isSidebarOpen && <span className="ml-4 font-bold text-[0.7rem] uppercase tracking-[0.2em] truncate">Cerrar Sesión</span>}
-          </button>
-        </div>
+      {/* SIDEBAR */}
+      <aside 
+        className={`
+           transition-all duration-300 flex flex-col z-50 shadow-2xl flex-shrink-0 bg-slate-900 text-slate-300
+           ${isMobile 
+              ? `fixed inset-y-0 left-0 w-72 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}` 
+              : `relative ${isSidebarOpen ? 'w-64' : 'w-20'}`
+           }
+        `}
+      >
+        <SidebarContent />
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10">
-        <header className="h-20 bg-white border-b border-slate-200 flex justify-between items-center px-8 z-20 shadow-sm flex-shrink-0">
+        <header className="h-20 bg-white border-b border-slate-200 flex justify-between items-center px-4 md:px-8 z-20 shadow-sm flex-shrink-0">
           
-          {/* Left Side: Greeting & Location */}
-          <div className="flex flex-col">
-             <h2 className="text-lg font-bold text-slate-900 leading-tight">
-               {getGreeting()}, {user?.name}
-             </h2>
-             <div className="flex items-center mt-1 text-slate-500">
-                <MapPin size={12} className="mr-1.5 text-blue-500" />
-                <span className="text-xs font-medium uppercase tracking-wide">
-                    {user?.role === 'ADMIN' ? 'Comando Central / General' : (user?.location || 'Ubicación General')}
-                </span>
+          <div className="flex items-center space-x-4">
+             {/* Mobile Menu Button */}
+             {isMobile && (
+                <button onClick={() => setIsSidebarOpen(true)} className="p-2 -ml-2 text-slate-600">
+                   <Menu size={24} />
+                </button>
+             )}
+
+             {/* Left Side: Greeting & Location */}
+             <div className="flex flex-col">
+               <h2 className="text-base md:text-lg font-bold text-slate-900 leading-tight">
+                 {getGreeting()}, {user?.name.split(' ')[0]}
+               </h2>
+               <div className="flex items-center mt-1 text-slate-500">
+                  <MapPin size={12} className="mr-1.5 text-blue-500" />
+                  <span className="text-[10px] md:text-xs font-medium uppercase tracking-wide truncate max-w-[150px] md:max-w-none">
+                      {user?.role === 'ADMIN' ? 'Comando Central' : (user?.location || 'Ubicación General')}
+                  </span>
+               </div>
              </div>
           </div>
           
           {/* Right Side: Widgets & Profile */}
-          <div className="flex items-center space-x-6">
+          <div className="flex items-center space-x-2 md:space-x-6">
              
-             {/* Weather & Time Widget */}
+             {/* Weather & Time Widget (Hidden on Mobile) */}
              <div className="hidden lg:flex items-center bg-slate-50 rounded-2xl px-5 py-2.5 border border-slate-100 shadow-sm">
                 <div className="flex items-center pr-5 border-r border-slate-200">
                    {getWeatherIcon(weather?.code || 0)}
@@ -393,7 +475,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
                 </div>
              </div>
 
-             {/* Intelligent Search Bar */}
+             {/* Intelligent Search Bar (Hidden on Mobile) */}
              <div className="hidden md:flex relative w-80" ref={searchRef}>
                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                  <input 
@@ -445,7 +527,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
                     {unreadCount > 0 && <span className="absolute top-1.5 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span>}
                 </button>
                 {showNotifications && (
-                    <div className="absolute right-0 mt-4 w-80 bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden z-50 animate-in slide-in-from-top-2 fade-in duration-300">
+                    <div className="absolute right-0 mt-4 w-72 md:w-80 bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden z-50 animate-in slide-in-from-top-2 fade-in duration-300">
                          <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50/50">
                              <h3 className="text-[0.65rem] font-black text-slate-800 uppercase tracking-widest">Notificaciones</h3>
                              <button onClick={clearNotifications} className="text-[0.65rem] font-bold text-slate-400 hover:text-red-500 flex items-center uppercase tracking-widest transition-colors">
@@ -482,7 +564,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
                     onClick={() => setShowProfileMenu(!showProfileMenu)}
                     className="flex items-center cursor-pointer group p-1 rounded-xl hover:bg-slate-50 transition-colors"
                 >
-                    <div className="h-10 w-10 bg-slate-200 rounded-full overflow-hidden border-2 border-white shadow-sm mr-3 relative">
+                    <div className="h-9 w-9 md:h-10 md:w-10 bg-slate-200 rounded-full overflow-hidden border-2 border-white shadow-sm mr-2 md:mr-3 relative">
                        {user?.photo ? (
                            <img src={user.photo} alt="Profile" className="w-full h-full object-cover" />
                        ) : (
@@ -495,7 +577,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
                        <span className="text-sm font-bold text-slate-800 leading-none">{user?.name}</span>
                        <span className="text-[0.65rem] font-medium text-slate-400 mt-1">{user?.role === 'ADMIN' ? 'Admin' : 'Operador'}</span>
                     </div>
-                    <ChevronDown size={14} className={`text-slate-400 group-hover:text-slate-600 transition-transform duration-300 ${showProfileMenu ? 'rotate-180' : ''}`} />
+                    <ChevronDown size={14} className={`text-slate-400 group-hover:text-slate-600 transition-transform duration-300 hidden md:block ${showProfileMenu ? 'rotate-180' : ''}`} />
                 </div>
 
                 {/* Profile Dropdown Menu */}
@@ -506,6 +588,15 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
                             <p className="text-[10px] text-slate-400 truncate">{user?.location}</p>
                         </div>
                         <div className="p-2">
+                            {deferredPrompt && (
+                               <button 
+                                 onClick={() => { handleInstallClick(); setShowProfileMenu(false); }}
+                                 className="w-full flex items-center px-3 py-2 text-xs font-bold text-purple-600 hover:bg-purple-50 rounded-lg transition-colors mb-1"
+                               >
+                                 <Download size={14} className="mr-2" />
+                                 Instalar App Móvil
+                               </button>
+                            )}
                             <button 
                                 onClick={() => { setShowEditProfile(true); setShowProfileMenu(false); }}
                                 className="w-full flex items-center px-3 py-2 text-xs font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors mb-1"
