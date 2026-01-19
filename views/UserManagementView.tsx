@@ -1,36 +1,415 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useApp } from '../store/AppContext';
 import { CHILE_GEO_DATA } from '../constants';
 import { User } from '../types';
 import { 
-  Users, UserPlus, Shield, Fingerprint, MapPin, 
-  Globe, Building2, Save, X, Trash2, Search,
-  CheckCircle2, Info, ChevronRight, UserCheck, 
-  Circle, CheckCircle, ShieldCheck, Briefcase
+  Search, Plus, MoreHorizontal, MapPin, 
+  Shield, User as UserIcon, Mail, Lock, 
+  CreditCard, ChevronDown, Check, X,
+  Grid, List, Copy, Edit2, Info,
+  ClipboardList, Box, CheckSquare, CheckCircle2,
+  Settings, LayoutGrid, Truck, HelpCircle, DoorOpen,
+  ArrowLeftRight, FileCheck, History, Download, Minus,
+  LayoutDashboard, Package, ClipboardCheck, Car, Users, FileText
 } from 'lucide-react';
 
-const labelClass = "text-xs font-semibold text-slate-500 ml-1 mb-2 block";
-const inputClass = "w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm text-slate-900 placeholder:text-slate-300 focus:bg-white focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 outline-none transition-all duration-300 shadow-sm";
+// --- COMPONENTS LOCALES ---
+
+const TabButton = ({ label, active, onClick }: { label: string, active: boolean, onClick: () => void }) => (
+  <button 
+    onClick={onClick}
+    className={`pb-4 px-1 text-sm font-bold transition-all relative ${active ? 'text-purple-600 border-b-2 border-purple-600' : 'text-slate-500 hover:text-slate-700 border-b-2 border-transparent'}`}
+  >
+    {label}
+  </button>
+);
+
+const ModalInput = ({ label, icon: Icon, placeholder, value, onChange, type = "text", className = "" }: any) => (
+  <div className={`space-y-1.5 ${className}`}>
+    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">{label}</label>
+    <div className="relative group">
+      {Icon && <Icon className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />}
+      <input 
+        type={type}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className={`w-full ${Icon ? 'pl-10' : 'pl-3.5'} pr-3.5 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 placeholder:text-slate-400 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-sm`}
+      />
+    </div>
+  </div>
+);
+
+const ModalSelect = ({ label, placeholder, options, value, onChange, disabled = false }: any) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(event.target as Node)) setIsOpen(false);
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    const selectedLabel = options.find((o: any) => o.value === value)?.label || value;
+
+    return (
+        <div className="space-y-1.5 relative" ref={containerRef}>
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">{label}</label>
+            <div 
+                onClick={() => !disabled && setIsOpen(!isOpen)}
+                className={`w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-lg text-sm flex justify-between items-center cursor-pointer shadow-sm transition-all ${isOpen ? 'border-blue-500 ring-1 ring-blue-500' : ''} ${disabled ? 'bg-slate-50 text-slate-400' : 'text-slate-700'}`}
+            >
+                <span className={!value ? 'text-slate-400' : ''}>{value ? selectedLabel : placeholder}</span>
+                <ChevronDown size={14} className="text-slate-400" />
+            </div>
+            {isOpen && (
+                <div className="absolute top-[105%] left-0 right-0 bg-white border border-slate-200 rounded-lg shadow-xl z-50 max-h-48 overflow-y-auto">
+                    {options.map((opt: any) => (
+                        <div 
+                            key={opt.value} 
+                            onClick={() => { onChange(opt.value); setIsOpen(false); }}
+                            className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 cursor-pointer flex justify-between items-center"
+                        >
+                            {opt.label}
+                            {value === opt.value && <Check size={14} className="text-blue-600"/>}
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
+// --- MATRIX VIEW HELPERS ---
+
+type PermissionStatus = 'TOTAL' | 'PARCIAL' | 'NONE';
+
+const PermissionBadge = ({ status }: { status: PermissionStatus }) => {
+    if (status === 'TOTAL') {
+        return (
+            <div className="inline-flex items-center justify-center px-3 py-1 rounded bg-emerald-100 text-emerald-600 space-x-1.5 min-w-[70px]">
+                <Check size={12} strokeWidth={3} />
+                <span className="text-[10px] font-bold">Total</span>
+            </div>
+        );
+    }
+    if (status === 'PARCIAL') {
+        return (
+            <div className="inline-flex items-center justify-center px-3 py-1 rounded bg-blue-100 text-blue-600 space-x-1.5 min-w-[70px]">
+                <Minus size={12} strokeWidth={3} />
+                <span className="text-[10px] font-bold">Parcial</span>
+            </div>
+        );
+    }
+    return (
+        <div className="inline-flex items-center justify-center px-3 py-1 text-slate-300">
+            <X size={14} strokeWidth={2} />
+        </div>
+    );
+};
+
+// --- ROLES VIEW COMPONENT ---
+const RolesView = () => {
+    const [viewMode, setViewMode] = useState<'HIERARCHY' | 'MATRIX'>('MATRIX');
+    const [selectedRole, setSelectedRole] = useState("ADMINISTRADOR");
+    
+    // State to manage individual toggles for hierarchy view
+    const [activePermissions, setActivePermissions] = useState<Record<string, string[]>>({
+        'dashboard': ['Leer'],
+        'stock': ['Crear', 'Leer', 'Actualizar', 'Eliminar'],
+        'reception': ['Crear', 'Leer', 'Actualizar', 'Eliminar']
+    });
+
+    const togglePermission = (moduleId: string, action: string) => {
+        setActivePermissions(prev => {
+            const currentActions = prev[moduleId] || [];
+            if (currentActions.includes(action)) {
+                return { ...prev, [moduleId]: currentActions.filter(a => a !== action) };
+            } else {
+                return { ...prev, [moduleId]: [...currentActions, action] };
+            }
+        });
+    };
+
+    // Roles Reales del Sistema
+    const roles = [
+        "ADMINISTRADOR", "OPERADOR", "SUPERVISOR"
+    ];
+
+    // Módulos Reales del Sistema (Basado en Layout.tsx)
+    const matrixModules = [
+        { name: "Informe General", icon: LayoutDashboard, perms: ['TOTAL', 'PARCIAL', 'PARCIAL'] },
+        { name: "Gestión Almacenaje", icon: Package, perms: ['TOTAL', 'TOTAL', 'PARCIAL'] },
+        { name: "Recepción", icon: ClipboardCheck, perms: ['TOTAL', 'TOTAL', 'PARCIAL'] },
+        { name: "Despacho", icon: Truck, perms: ['TOTAL', 'TOTAL', 'PARCIAL'] },
+        { name: "Control Puerta", icon: DoorOpen, perms: ['TOTAL', 'NONE', 'TOTAL'] },
+        { name: "Control E/S", icon: ArrowLeftRight, perms: ['TOTAL', 'NONE', 'TOTAL'] },
+        { name: "Historial", icon: History, perms: ['TOTAL', 'NONE', 'PARCIAL'] },
+        { name: "Control VTA", icon: FileText, perms: ['TOTAL', 'NONE', 'NONE'] },
+        { name: "Flota", icon: Car, perms: ['TOTAL', 'NONE', 'TOTAL'] },
+        { name: "Usuarios y Roles", icon: Users, perms: ['TOTAL', 'NONE', 'NONE'] },
+        { name: "Configuración", icon: Settings, perms: ['TOTAL', 'NONE', 'NONE'] },
+    ];
+
+    // Data for Hierarchy View (Updated to match Real Modules)
+    const hierarchyModules = [
+        {
+            id: 'dashboard',
+            title: 'Informe General',
+            desc: 'Visualización de KPIs y estadísticas',
+            icon: LayoutDashboard,
+            checks: ['Ver KPIs Financieros', 'Ver KPIs Operativos'],
+            actions: ['Leer']
+        },
+        {
+            id: 'stock',
+            title: 'Gestión Almacenaje',
+            desc: 'Control de inventario y existencias',
+            icon: Package,
+            checks: ['Ajuste de Inventario', 'Carga Masiva'],
+            actions: ['Crear', 'Leer', 'Actualizar', 'Eliminar']
+        },
+        {
+            id: 'gate',
+            title: 'Control Puerta',
+            desc: 'Validación de seguridad en accesos',
+            icon: DoorOpen,
+            checks: ['Autorizar Salida', 'Autorizar Ingreso', 'Denegar Acceso'],
+            actions: ['Crear', 'Leer', 'Actualizar']
+        }
+    ];
+
+    return (
+        <div className="flex flex-col h-full space-y-6 animate-in fade-in duration-300">
+            {/* Header Card */}
+            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-start space-x-4">
+                     <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
+                        <Settings size={24} />
+                     </div>
+                     <div>
+                         <h2 className="text-lg font-bold text-slate-800">Gestión de Roles y Permisos</h2>
+                         <p className="text-xs text-slate-500 mt-1">Administre los niveles de acceso y perfiles de usuario.</p>
+                     </div>
+                </div>
+                <div className="flex items-center space-x-3">
+                     <div className="flex bg-slate-100 p-1 rounded-lg">
+                         <button 
+                            onClick={() => setViewMode('HIERARCHY')}
+                            className={`flex items-center px-3 py-1.5 text-xs font-bold rounded-md transition-all ${viewMode === 'HIERARCHY' ? 'text-blue-600 bg-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                         >
+                             <List size={14} className="mr-1.5" /> Jerárquico
+                         </button>
+                         <button 
+                            onClick={() => setViewMode('MATRIX')}
+                            className={`flex items-center px-3 py-1.5 text-xs font-bold rounded-md transition-all ${viewMode === 'MATRIX' ? 'text-blue-600 bg-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                         >
+                             <LayoutGrid size={14} className="mr-1.5" /> Matriz
+                         </button>
+                     </div>
+                     <button className="flex items-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition-colors shadow-md shadow-blue-500/20">
+                         <Plus size={16} className="mr-2" /> Nuevo Rol
+                     </button>
+                </div>
+            </div>
+
+            {viewMode === 'MATRIX' ? (
+                /* MATRIX VIEW */
+                <div className="flex-1 w-full overflow-hidden bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col animate-in fade-in slide-in-from-bottom-2">
+                    <div className="p-4 border-b border-slate-100 flex justify-end">
+                        <button className="flex items-center px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors">
+                            <Download size={14} className="mr-2" />
+                            Exportar CSV
+                        </button>
+                    </div>
+                    <div className="flex-1 overflow-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="border-b border-slate-200 bg-white sticky top-0 z-10">
+                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-800 bg-white border-r border-slate-100 min-w-[200px] sticky left-0 z-20">
+                                        Módulo del Sistema
+                                    </th>
+                                    {roles.map(role => (
+                                        <th key={role} className="px-4 py-4 text-[10px] font-bold text-slate-500 text-center min-w-[120px] bg-white">
+                                            {role}
+                                        </th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {matrixModules.map((mod, idx) => (
+                                    <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
+                                        <td className="px-6 py-4 bg-white border-r border-slate-100 sticky left-0 z-10">
+                                            <div className="flex items-center space-x-3">
+                                                <div className="text-slate-400">
+                                                    <mod.icon size={16} />
+                                                </div>
+                                                <span className="text-xs font-bold text-slate-800">{mod.name}</span>
+                                            </div>
+                                        </td>
+                                        {mod.perms.map((perm, pIdx) => (
+                                            <td key={pIdx} className="px-4 py-3 text-center">
+                                                <PermissionBadge status={perm as PermissionStatus} />
+                                            </td>
+                                        ))}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            ) : (
+                /* HIERARCHY VIEW */
+                <div className="flex flex-col lg:flex-row gap-6 items-start h-full overflow-hidden animate-in fade-in slide-in-from-left-2">
+                    {/* Sidebar Roles List */}
+                    <div className="w-full lg:w-72 flex-shrink-0 space-y-4 h-full flex flex-col">
+                        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm flex-1">
+                            <div className="px-5 py-4 border-b border-slate-100">
+                                <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center">
+                                    <UserIcon size={12} className="mr-2" /> LISTA DE ROLES ({roles.length})
+                                </h3>
+                            </div>
+                            <div className="py-2 overflow-y-auto max-h-[400px]">
+                                {roles.map(role => (
+                                    <div 
+                                        key={role} 
+                                        onClick={() => setSelectedRole(role)}
+                                        className={`px-5 py-3 flex items-center justify-between cursor-pointer transition-colors border-l-2 ${selectedRole === role ? 'bg-blue-50/50 border-blue-500' : 'bg-transparent border-transparent hover:bg-slate-50'}`}
+                                    >
+                                        <span className={`text-xs font-bold ${selectedRole === role ? 'text-blue-600' : 'text-slate-600'}`}>{role}</span>
+                                        <div className="flex items-center text-slate-400">
+                                            {selectedRole === role && <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-3"></div>}
+                                            <Edit2 size={12} className="hover:text-blue-500" />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="bg-blue-50 border border-blue-100 rounded-xl p-5 flex items-start space-x-3">
+                            <Info size={18} className="text-blue-500 flex-shrink-0 mt-0.5" />
+                            <div>
+                                <h4 className="text-xs font-bold text-blue-700 mb-1">Información</h4>
+                                <p className="text-[11px] text-blue-600/80 leading-relaxed">Los permisos definidos aquí afectan directamente qué módulos pueden ver y utilizar los usuarios asignados a este rol.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Main Permission Area */}
+                    <div className="flex-1 w-full space-y-6 overflow-y-auto h-full pr-2">
+                        {/* Permission Header */}
+                        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                <div className="flex items-center space-x-3">
+                                    <div className="p-2.5 bg-purple-100 text-purple-600 rounded-lg">
+                                        <Shield size={20} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-sm font-bold text-slate-900">Permisos: {selectedRole}</h3>
+                                        <p className="text-xs text-slate-500">Visualizando estructura de acceso jerárquico</p>
+                                    </div>
+                                </div>
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                                    <input 
+                                        type="text" 
+                                        placeholder="Buscar módulo..."
+                                        className="pl-9 pr-10 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-600 w-64 focus:border-blue-500 outline-none transition-all"
+                                    />
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 cursor-pointer hover:text-slate-600">
+                                        <Copy size={14} />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">OPERACIONES</h4>
+
+                        <div className="space-y-4">
+                            {hierarchyModules.map(module => (
+                                <div key={module.id} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                                    <div className="p-5 border-b border-slate-50 flex justify-between items-start">
+                                        <div className="flex items-start space-x-4">
+                                            <div className="p-2.5 bg-blue-50 text-blue-600 rounded-lg">
+                                                <module.icon size={20} />
+                                            </div>
+                                            <div>
+                                                <h4 className="text-sm font-bold text-slate-800">{module.title}</h4>
+                                                <p className="text-xs text-slate-400 mt-0.5">{module.desc}</p>
+                                            </div>
+                                        </div>
+                                        <button className="flex items-center space-x-1 bg-emerald-500 text-white px-3 py-1 rounded text-[10px] font-bold hover:bg-emerald-600 transition-colors shadow-sm shadow-emerald-200">
+                                            <span>Habilitado</span>
+                                            <ChevronDown size={12} />
+                                        </button>
+                                    </div>
+                                    <div className="p-5">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8 mb-6">
+                                            {module.checks.map(check => (
+                                                <label key={check} className="flex items-center space-x-2.5 cursor-pointer group">
+                                                    <div className="text-emerald-500">
+                                                        <CheckCircle2 size={16} />
+                                                    </div>
+                                                    <span className="text-xs font-medium text-slate-600 group-hover:text-slate-900 transition-colors">{check}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                        <div className="flex flex-wrap gap-2">
+                                            {module.actions.map(action => {
+                                                const isActive = activePermissions[module.id]?.includes(action);
+                                                return (
+                                                    <button 
+                                                        key={action} 
+                                                        onClick={() => togglePermission(module.id, action)}
+                                                        className={`px-3 py-1 rounded-full border text-[10px] font-bold transition-all select-none active:scale-95 ${isActive 
+                                                            ? 'border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 shadow-sm' 
+                                                            : 'border-slate-100 bg-white text-slate-300 hover:text-slate-400 hover:border-slate-200'
+                                                        }`}
+                                                    >
+                                                        {action}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
 
 export const UserManagementView: React.FC = () => {
-  const { users, addUser, emplacements } = useApp();
-  const [activeTab, setActiveTab] = useState<'users' | 'roles'>('users');
+  const { users, addUser } = useApp();
+  const [activeTab, setActiveTab] = useState('roles'); 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const [newUser, setNewUser] = useState<Partial<User>>({
-    name: '',
-    rut: '',
-    role: 'OPERATOR',
-    location: '',
-    commune: '',
-    password: ''
+  // Form State
+  const [formData, setFormData] = useState({
+      name: '',
+      rutBody: '',
+      rutDv: '',
+      username: '',
+      email: '',
+      password: '',
+      role: '',
+      region: '',
+      commune: ''
   });
 
-  const allCommunes = useMemo(() => {
-    return CHILE_GEO_DATA.flatMap(r => r.communes).sort();
-  }, []);
+  const regions = useMemo(() => CHILE_GEO_DATA.map(r => ({ label: r.region, value: r.region })), []);
+  const communes = useMemo(() => {
+      if (!formData.region) return [];
+      const regionData = CHILE_GEO_DATA.find(r => r.region === formData.region);
+      return regionData ? regionData.communes.map(c => ({ label: c, value: c })) : [];
+  }, [formData.region]);
 
   const filteredUsers = useMemo(() => {
     return users.filter(u => 
@@ -39,269 +418,190 @@ export const UserManagementView: React.FC = () => {
     );
   }, [users, searchTerm]);
 
-  const handleCreateUser = () => {
-    if (newUser.name && newUser.rut && newUser.location && newUser.role) {
+  const handleCreate = () => {
+      if(!formData.name || !formData.rutBody || !formData.role) return;
+      
+      const fullRut = `${formData.rutBody}-${formData.rutDv}`;
       addUser({
-        ...newUser,
-        id: Date.now().toString(),
-        password: newUser.password || '123456'
-      } as User);
+          id: Date.now().toString(),
+          name: formData.name,
+          rut: fullRut,
+          role: formData.role,
+          location: formData.commune || 'General',
+          commune: formData.commune,
+          password: formData.password || '123456'
+      });
       setIsModalOpen(false);
-      setNewUser({ name: '', rut: '', role: 'OPERATOR', location: '', commune: '', password: '' });
-    } else {
-      alert("Validación de seguridad: Por favor complete los campos requeridos.");
-    }
+      setFormData({ name: '', rutBody: '', rutDv: '', username: '', email: '', password: '', role: '', region: '', commune: '' });
   };
 
-  const rolesList = [
-    { id: 'ADMIN', label: 'Administrador Central', desc: 'Control total de la infraestructura', icon: ShieldCheck },
-    { id: 'OPERATOR', label: 'Operador Logístico', desc: 'Gestión de inventario y flujos', icon: Briefcase },
-    { id: 'DRIVER', label: 'Personal en Ruta', desc: 'Transporte y entregas técnicas', icon: MapPin },
-  ];
+  const getRoleBadge = (role: string) => {
+      switch(role) {
+          case 'ADMIN': return <span className="inline-flex items-center px-2.5 py-1 rounded border border-slate-200 bg-slate-50 text-xs font-medium text-slate-700"><Shield size={12} className="mr-1.5 text-slate-400"/> Administrador General</span>;
+          case 'DRIVER': return <span className="inline-flex items-center px-2.5 py-1 rounded border border-slate-200 bg-slate-50 text-xs font-medium text-slate-700"><MapPin size={12} className="mr-1.5 text-slate-400"/> Supervisor de zona</span>;
+          default: return <span className="inline-flex items-center px-2.5 py-1 rounded border border-slate-200 bg-slate-50 text-xs font-medium text-slate-700"><UserIcon size={12} className="mr-1.5 text-slate-400"/> Operador</span>;
+      }
+  };
+
+  const getInitials = (name: string) => name.substring(0,2).toUpperCase();
+  const getHandle = (name: string) => `@${name.split(' ')[0].toLowerCase()}${name.split(' ')[1] ? name.split(' ')[1].substring(0,1).toLowerCase() : ''}`;
 
   return (
-    <div className="h-full flex flex-col bg-white overflow-hidden">
-      {/* Header & Tabs */}
-      <div className="px-12 py-10 border-b border-slate-100 bg-white flex-shrink-0">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
-          <div className="flex items-center space-x-4">
-            <div className="bg-slate-900 p-3 rounded-2xl text-white shadow-lg flex-shrink-0">
-              <Users size={24} />
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold text-slate-900 tracking-tight uppercase leading-none">Gestión de Personal</h2>
-              <p className="text-sm text-slate-500 font-medium mt-1">Administración de credenciales y permisos de seguridad</p>
-            </div>
-          </div>
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="bg-slate-900 hover:bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold text-sm flex items-center shadow-lg transition-all duration-300 active:scale-95 group"
-          >
-            <UserPlus size={18} className="mr-3 group-hover:scale-110 transition-transform" /> 
-            Añadir Colaborador
-          </button>
-        </div>
-
-        <div className="flex space-x-10 border-b border-slate-100">
-          <button 
-            onClick={() => setActiveTab('users')}
-            className={`pb-4 px-2 text-sm font-bold transition-all relative ${activeTab === 'users' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
-          >
-            Base de Usuarios
-            {activeTab === 'users' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-full animate-in fade-in zoom-in"></div>}
-          </button>
-          <button 
-            onClick={() => setActiveTab('roles')}
-            className={`pb-4 px-2 text-sm font-bold transition-all relative ${activeTab === 'roles' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
-          >
-            Matriz de Permisos
-            {activeTab === 'roles' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-full animate-in fade-in zoom-in"></div>}
-          </button>
-        </div>
+    <div className="h-full flex flex-col bg-slate-50/50">
+      {/* Top Navigation Tabs */}
+      <div className="bg-white border-b border-slate-200 px-8 pt-6 sticky top-0 z-20">
+         <div className="flex space-x-6">
+            <TabButton label="Gestión de Usuarios" active={activeTab === 'users'} onClick={() => setActiveTab('users')} />
+            <TabButton label="Roles y Permisos" active={activeTab === 'roles'} onClick={() => setActiveTab('roles')} />
+         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto bg-slate-50/50 p-12">
-        {activeTab === 'users' ? (
-          <div className="max-w-6xl mx-auto space-y-8">
-            <div className="flex items-center justify-between">
-              <div className="relative w-96 group">
-                <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={18} />
-                <input 
-                  type="text" 
-                  placeholder="Buscar por identidad o nombre..." 
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-14 pr-6 py-4 bg-white border border-slate-200 rounded-2xl text-sm outline-none focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 transition-all shadow-sm"
-                />
+      <div className="flex-1 overflow-hidden p-6 lg:p-8">
+        
+        {/* USERS TAB CONTENT */}
+        {activeTab === 'users' && (
+           <div className="h-full flex flex-col bg-white rounded-xl shadow-sm border border-slate-200 animate-in fade-in duration-300">
+               {/* HEADER SECTION */}
+              <div className="px-8 py-8 border-b border-slate-100">
+                <h1 className="text-xl font-bold text-slate-900">Administración de Accesos</h1>
+                <p className="text-sm text-slate-500 mt-1">Gestión integral de usuarios, roles y permisos.</p>
               </div>
-              <div className="bg-white px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-500">
-                {filteredUsers.length} REGISTROS ACTIVOS
-              </div>
-            </div>
 
-            <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-              <table className="w-full text-left">
-                <thead className="bg-slate-50/50 text-slate-500 font-bold text-[11px] uppercase tracking-wider border-b border-slate-100">
-                  <tr>
-                    <th className="px-10 py-6">Colaborador</th>
-                    <th className="px-10 py-6">Identidad Física</th>
-                    <th className="px-10 py-6">Rango Asignado</th>
-                    <th className="px-10 py-6">Ubicación</th>
-                    <th className="px-10 py-6 text-right">Estatus</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {filteredUsers.map(u => (
-                    <tr key={u.id} className="hover:bg-slate-50/80 transition-colors group">
-                      <td className="px-10 py-6">
-                        <div className="flex items-center space-x-4">
-                          <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center font-bold text-sm shadow-inner group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
-                            {u.name.substring(0,2).toUpperCase()}
-                          </div>
-                          <div>
-                            <div className="font-bold text-slate-900 text-base">{u.name}</div>
-                            <div className="text-xs text-slate-400 font-medium">{u.commune || 'Jurisdicción No Definida'}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-10 py-6 font-mono text-xs font-semibold text-slate-500">{u.rut}</td>
-                      <td className="px-10 py-6">
-                        <span className={`px-4 py-1.5 rounded-full text-[10px] font-bold border ${u.role === 'ADMIN' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : u.role === 'OPERATOR' ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-teal-50 text-teal-600 border-teal-100'}`}>
-                          {u.role}
-                        </span>
-                      </td>
-                      <td className="px-10 py-6">
-                        <div className="flex items-center text-sm font-semibold text-slate-700">
-                          <Building2 size={16} className="mr-2.5 text-slate-300" />
-                          {u.location}
-                        </div>
-                      </td>
-                      <td className="px-10 py-6 text-right">
-                        <div className="flex items-center justify-end space-x-2.5">
-                          <div className="w-2 h-2 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.4)]"></div>
-                          <span className="text-xs font-bold text-slate-400">ONLINE</span>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        ) : (
-          <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10 animate-in fade-in duration-500">
-             <div className="bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-sm space-y-8">
-              <h3 className="text-lg font-bold text-slate-900 flex items-center">
-                <Shield size={20} className="mr-4 text-blue-600" /> Jerarquía Corporativa
-              </h3>
-              <div className="space-y-5">
-                {rolesList.map(r => (
-                  <div key={r.id} className="p-6 bg-slate-50 rounded-3xl border border-slate-100 flex items-center space-x-6 hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300">
-                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-blue-600 shadow-sm border border-slate-100">
-                      <r.icon size={24} />
-                    </div>
-                    <div>
-                      <p className="font-bold text-slate-900 text-sm">{r.label}</p>
-                      <p className="text-xs text-slate-500 font-medium mt-1">{r.desc}</p>
-                    </div>
+              {/* CONTROLS SECTION */}
+              <div className="px-8 py-6 flex justify-between items-center bg-slate-50/50">
+                  <div className="relative w-96">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                      <input 
+                        type="text" 
+                        placeholder="Buscar por nombre, usuario o email..."
+                        value={searchTerm}
+                        onChange={e => setSearchTerm(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-600 focus:border-blue-500 outline-none transition-colors"
+                      />
                   </div>
-                ))}
+                  <button 
+                    onClick={() => setIsModalOpen(true)}
+                    className="flex items-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-sm"
+                  >
+                      <Plus size={16} className="mr-2" />
+                      Nuevo Usuario
+                  </button>
               </div>
-            </div>
-            
-            <div className="bg-slate-900 p-12 rounded-[2.5rem] shadow-2xl text-white space-y-8 relative overflow-hidden group">
-               <Fingerprint size={200} className="absolute -right-20 -bottom-20 text-white/5 group-hover:rotate-12 transition-transform duration-1000" />
-               <h3 className="text-lg font-bold flex items-center">
-                  <Fingerprint size={20} className="mr-4 text-blue-400" /> Registro de Seguridad
-               </h3>
-               <p className="text-sm text-slate-400 leading-relaxed font-medium">
-                  Toda credencial emitida está sujeta a la norma de seguridad ISO/IEC 27001, garantizando que cada transacción sea auditada en tiempo real por el sistema central.
-               </p>
-               <div className="pt-6 grid grid-cols-1 gap-4">
-                  <div className="flex items-center text-xs font-bold text-blue-400 bg-white/5 px-4 py-3 rounded-2xl border border-white/5">
-                     <CheckCircle2 size={16} className="mr-3" /> Cifrado de Punto a Extremo
-                  </div>
-                  <div className="flex items-center text-xs font-bold text-blue-400 bg-white/5 px-4 py-3 rounded-2xl border border-white/5">
-                     <CheckCircle2 size={16} className="mr-3" /> Trazabilidad de Dispositivo
-                  </div>
-               </div>
-            </div>
-          </div>
+
+              {/* TABLE SECTION */}
+              <div className="flex-1 overflow-auto px-8">
+                  <table className="w-full text-left border-collapse">
+                      <thead>
+                          <tr className="border-b border-slate-100">
+                              <th className="py-4 text-xs font-bold text-slate-500 uppercase tracking-wide">Usuario</th>
+                              <th className="py-4 text-xs font-bold text-slate-500 uppercase tracking-wide">Rol</th>
+                              <th className="py-4 text-xs font-bold text-slate-500 uppercase tracking-wide">Permisos Especiales</th>
+                              <th className="py-4 text-xs font-bold text-slate-500 uppercase tracking-wide">Emplazamiento/Comuna</th>
+                              <th className="py-4 text-xs font-bold text-slate-500 uppercase tracking-wide text-right">Acciones</th>
+                          </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-50">
+                          {filteredUsers.map(u => (
+                              <tr key={u.id} className="group hover:bg-slate-50/50 transition-colors">
+                                  <td className="py-4 pr-4">
+                                      <div className="flex items-center">
+                                          <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold mr-3">
+                                              {getInitials(u.name)}
+                                          </div>
+                                          <div>
+                                              <div className="text-sm font-bold text-slate-800">{u.name}</div>
+                                              <div className="text-xs text-slate-400">{getHandle(u.name)}</div>
+                                          </div>
+                                      </div>
+                                  </td>
+                                  <td className="py-4 pr-4">
+                                      {getRoleBadge(u.role)}
+                                  </td>
+                                  <td className="py-4 pr-4">
+                                      <div className="flex items-center text-xs text-slate-500">
+                                          <MapPin size={12} className="mr-1.5 text-slate-400" />
+                                          {u.commune || 'General'}
+                                      </div>
+                                  </td>
+                                  <td className="py-4 pr-4">
+                                      <div className="flex flex-wrap gap-2">
+                                          <span className="inline-block px-2 py-0.5 bg-blue-50 text-blue-600 border border-blue-100 rounded text-[10px] font-bold uppercase">
+                                              VTA {u.location.substring(0,3).toUpperCase()}
+                                          </span>
+                                          {u.role === 'ADMIN' && (
+                                             <span className="inline-block px-2 py-0.5 bg-slate-100 text-slate-500 border border-slate-200 rounded text-[10px] font-bold uppercase">
+                                               +1
+                                             </span>
+                                          )}
+                                      </div>
+                                  </td>
+                                  <td className="py-4 text-right">
+                                      <button className="text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100 transition-colors">
+                                          <MoreHorizontal size={18} />
+                                      </button>
+                                  </td>
+                              </tr>
+                          ))}
+                      </tbody>
+                  </table>
+              </div>
+           </div>
         )}
+
+        {/* ROLES TAB CONTENT */}
+        {activeTab === 'roles' && <RolesView />}
       </div>
 
+      {/* MODAL FOR NEW USER */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-950/40 backdrop-blur-[25px] animate-in fade-in duration-500 overflow-hidden">
-          <div className="bg-white w-full h-full flex flex-col animate-in slide-in-from-bottom-12 duration-700 ease-[cubic-bezier(0.23,1,0.32,1)]">
-            <div className="px-12 py-10 border-b border-slate-100 flex justify-between items-center bg-white flex-shrink-0">
-               <div className="flex items-center space-x-6">
-                  <div className="bg-slate-900 p-5 rounded-[1.5rem] text-white shadow-2xl">
-                    <UserPlus size={36} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+              <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                  <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-start">
+                      <div>
+                          <h3 className="text-lg font-bold text-slate-900">Crear Nuevo Usuario</h3>
+                          <p className="text-sm text-slate-500 mt-1">Complete los datos requeridos para generar un nuevo perfil de acceso al sistema.</p>
+                      </div>
+                      <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                          <X size={20} />
+                      </button>
                   </div>
-                  <div>
-                    <h3 className="text-4xl font-black text-slate-900 tracking-tight leading-none italic uppercase">ALTA DE PERSONAL</h3>
-                    <p className="text-sm font-semibold text-slate-400 mt-3 flex items-center">
-                      <ShieldCheck size={16} className="mr-2 text-blue-500" /> Protocolo de Registro en Red Centralizada
-                    </p>
-                  </div>
-               </div>
-               <button onClick={() => setIsModalOpen(false)} className="group p-4 bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-2xl transition-all duration-300 border border-slate-100 hover:border-red-100">
-                  <X size={32} />
-               </button>
-            </div>
-            <div className="flex-1 overflow-y-auto bg-slate-50/30">
-               <div className="max-w-6xl mx-auto px-12 py-20">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-24 gap-y-16">
-                     <div className="space-y-12">
-                        <div className="flex items-center space-x-4 mb-2">
-                           <div className="w-1 h-8 bg-blue-600 rounded-full"></div>
-                           <h4 className="text-lg font-bold text-slate-900 tracking-tight uppercase">DATOS DE IDENTIDAD</h4>
-                        </div>
-                        <div className="space-y-2">
-                           <label className={labelClass}><UserCheck size={14} className="inline mr-2 text-blue-600" /> Nombre Completo</label>
-                           <input placeholder="Nombre y Apellidos" value={newUser.name} onChange={e => setNewUser({...newUser, name: e.target.value.toUpperCase()})} className={inputClass} />
-                        </div>
-                        <div className="space-y-2">
-                           <label className={labelClass}><Fingerprint size={14} className="inline mr-2 text-blue-600" /> RUT / ID Nacional</label>
-                           <input placeholder="12.345.678-9" value={newUser.rut} onChange={e => setNewUser({...newUser, rut: e.target.value})} className={`${inputClass} font-mono`} />
-                        </div>
-                        <div className="space-y-2">
-                           <label className={labelClass}><Shield size={14} className="inline mr-2 text-blue-600" /> Clave Temporal</label>
-                           <input type="password" placeholder="••••••••" value={newUser.password} onChange={e => setNewUser({...newUser, password: e.target.value})} className={inputClass} />
-                        </div>
-                     </div>
-                     <div className="space-y-12">
-                        <div className="flex items-center space-x-4 mb-2">
-                           <div className="w-1 h-8 bg-blue-600 rounded-full"></div>
-                           <h4 className="text-lg font-bold text-slate-900 tracking-tight uppercase">ASIGNACIÓN Y RANGO</h4>
-                        </div>
-                        <div className="space-y-6">
-                           <div className="space-y-2">
-                             <label className={labelClass}><Globe size={14} className="inline mr-2 text-blue-600" /> Comuna Jurisdiccional</label>
-                             <select value={newUser.commune} onChange={e => setNewUser({...newUser, commune: e.target.value})} className={`${inputClass} appearance-none cursor-pointer`}>
-                                <option value="">Seleccionar Comuna...</option>
-                                {allCommunes.map(c => <option key={c} value={c}>{c}</option>)}
-                             </select>
-                           </div>
-                           <div className="space-y-2">
-                             <label className={labelClass}><MapPin size={14} className="inline mr-2 text-blue-600" /> Emplazamiento Activo</label>
-                             <select value={newUser.location} onChange={e => setNewUser({...newUser, location: e.target.value})} className={`${inputClass} appearance-none cursor-pointer font-bold text-blue-600`}>
-                                <option value="">Seleccionar Nodo de Red...</option>
-                                {emplacements.map(e => <option key={e} value={e}>{e}</option>)}
-                             </select>
-                           </div>
-                           <div className="space-y-3">
-                              <label className={labelClass}><ShieldCheck size={14} className="inline mr-2 text-blue-600" /> Rol en la Estructura</label>
-                              <div className="flex flex-col space-y-3">
-                                 {rolesList.map(r => (
-                                    <button key={r.id} type="button" onClick={() => setNewUser({...newUser, role: r.id})} className={`flex items-center p-5 rounded-2xl border text-left transition-all duration-300 group ${newUser.role === r.id ? 'bg-blue-600 border-blue-600 text-white shadow-xl shadow-blue-200' : 'bg-white border-slate-200 text-slate-500 hover:border-blue-300 hover:bg-slate-50'}`}>
-                                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center mr-5 transition-colors ${newUser.role === r.id ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-400 group-hover:text-blue-600'}`}>
-                                          <r.icon size={20} />
-                                       </div>
-                                       <div className="flex-1">
-                                          <p className="font-bold text-sm tracking-tight">{r.label}</p>
-                                          <p className={`text-[11px] mt-0.5 font-medium ${newUser.role === r.id ? 'text-white/70' : 'text-slate-400'}`}>{r.desc}</p>
-                                       </div>
-                                       <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${newUser.role === r.id ? 'bg-white border-white' : 'border-slate-200'}`}>
-                                          {newUser.role === r.id && <CheckCircle className="text-blue-600" size={16} />}
-                                       </div>
-                                    </button>
-                                 ))}
+
+                  <div className="p-8 space-y-6 bg-white">
+                      <ModalInput label="NOMBRE COMPLETO" icon={UserIcon} placeholder="nombre usuario" value={formData.name} onChange={(e: any) => setFormData({...formData, name: e.target.value})} />
+                      <div className="grid grid-cols-2 gap-6">
+                          <div className="space-y-1.5">
+                              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">RUT</label>
+                              <div className="flex gap-3">
+                                  <div className="relative flex-1 group">
+                                      <CreditCard className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
+                                      <input type="text" placeholder="12345678" value={formData.rutBody} onChange={(e) => setFormData({...formData, rutBody: e.target.value})} className="w-full pl-10 pr-3.5 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-sm" />
+                                  </div>
+                                  <span className="self-center text-slate-300">-</span>
+                                  <input type="text" placeholder="K" value={formData.rutDv} onChange={(e) => setFormData({...formData, rutDv: e.target.value})} className="w-14 text-center py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-sm" />
                               </div>
-                           </div>
-                        </div>
-                     </div>
+                              <p className="text-[10px] text-slate-400 pt-0.5">Ingrese sin puntos ni guión</p>
+                          </div>
+                          <ModalInput label="USUARIO" icon={UserIcon} placeholder="" value={formData.username} onChange={(e: any) => setFormData({...formData, username: e.target.value})} />
+                      </div>
+                      <ModalInput label="CORREO ELECTRÓNICO" icon={Mail} placeholder="almarzamiguel97@gmail.com" value={formData.email} onChange={(e: any) => setFormData({...formData, email: e.target.value})} />
+                      <div className="grid grid-cols-2 gap-6">
+                          <ModalInput label="CONTRASEÑA" icon={Lock} type="password" placeholder="••••" value={formData.password} onChange={(e: any) => setFormData({...formData, password: e.target.value})} />
+                          <ModalSelect label="ROL DE ACCESO" placeholder="Seleccionar rol" value={formData.role} onChange={(val: string) => setFormData({...formData, role: val})} options={[{ label: 'Administrador General', value: 'ADMIN' }, { label: 'Operador', value: 'OPERATOR' }, { label: 'Supervisor de zona', value: 'DRIVER' }]} />
+                      </div>
+                      <div className="grid grid-cols-2 gap-6">
+                          <ModalSelect label="REGIÓN" placeholder="Seleccionar región" value={formData.region} onChange={(val: string) => setFormData({...formData, region: val, commune: ''})} options={regions} />
+                          <ModalSelect label="COMUNA" placeholder="Seleccionar comuna" value={formData.commune} onChange={(val: string) => setFormData({...formData, commune: val})} options={communes} disabled={!formData.region} />
+                      </div>
+                      <div className="space-y-1.5 opacity-50 pointer-events-none">
+                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">EMPLAZAMIENTOS (SUCURSALES)</label>
+                      </div>
                   </div>
-               </div>
-            </div>
-            <div className="px-12 py-12 bg-white border-t border-slate-100 flex justify-between items-center flex-shrink-0">
-               <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-900 font-bold text-sm transition-colors px-6 py-3">Abortar Procedimiento</button>
-               <button onClick={handleCreateUser} className="bg-slate-900 hover:bg-blue-600 text-white px-24 py-6 rounded-[1.5rem] font-bold text-base shadow-2xl transition-all flex items-center group overflow-hidden relative">
-                 <span className="relative z-10 flex items-center"><Save size={20} className="mr-4 group-hover:scale-110 transition-transform" />CERTIFICAR USUARIO</span>
-               </button>
-            </div>
+                  <div className="px-8 py-5 border-t border-slate-100 bg-white flex justify-end space-x-4">
+                      <button onClick={() => setIsModalOpen(false)} className="px-6 py-2.5 rounded-lg border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">Cancelar</button>
+                      <button onClick={handleCreate} className="px-6 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-sm font-bold text-white shadow-md shadow-blue-500/20 transition-all active:scale-95">Crear Usuario</button>
+                  </div>
+              </div>
           </div>
-        </div>
       )}
     </div>
   );

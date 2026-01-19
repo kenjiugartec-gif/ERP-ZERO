@@ -7,7 +7,7 @@ import {
   DoorOpen, ArrowLeftRight, History, 
   ClipboardCheck, MapPin, Car, 
   Users, Settings, FileText, Bell, AlertTriangle, Info, CheckCircle,
-  Trash2, Layers
+  Trash2, Search, Sun, Clock, ChevronDown
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -144,70 +144,102 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10">
-        <header className="h-16 bg-white border-b border-slate-200 flex justify-between items-center px-8 z-20 shadow-sm flex-shrink-0">
-          <div className="flex items-center">
-             <div className="flex items-center space-x-3 bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100">
-                <Layers size={14} className="text-blue-600" />
-                <span className="text-slate-500 text-[10px] font-black uppercase tracking-widest">{user?.location}</span>
+        <header className="h-20 bg-white border-b border-slate-200 flex justify-between items-center px-8 z-20 shadow-sm flex-shrink-0">
+          
+          {/* Left Side: Greeting & Location */}
+          <div className="flex flex-col">
+             <h2 className="text-lg font-bold text-slate-900 leading-tight">
+               {getGreeting()}, {user?.name}
+             </h2>
+             <div className="flex items-center mt-1 text-slate-500">
+                <MapPin size={12} className="mr-1.5 text-blue-500" />
+                <span className="text-[11px] font-medium">{user?.location || 'Ubicación General'}</span>
              </div>
-             <span className="text-slate-200 mx-4">/</span>
-             <h2 className="text-[11px] font-black text-slate-800 tracking-[0.2em] uppercase">
-              {activeModule ? MODULES.find(m => m.id === activeModule)?.label : 'Escritorio'}
-            </h2>
           </div>
           
-          <div className="flex items-center space-x-8">
-             <div className="hidden md:flex flex-col items-end">
-                <span className="text-slate-700 text-xs font-bold leading-none">{getGreeting()}, <span className="text-slate-900">{user?.name}</span></span>
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] mt-2">{user?.role}</span>
+          {/* Right Side: Widgets & Profile */}
+          <div className="flex items-center space-x-6">
+             
+             {/* Weather & Time Widget */}
+             <div className="hidden lg:flex items-center bg-slate-50 rounded-2xl px-5 py-2.5 border border-slate-100 shadow-sm">
+                <div className="flex items-center pr-5 border-r border-slate-200">
+                   <Sun size={18} className="text-amber-500 mr-3" />
+                   <div className="flex flex-col">
+                      <span className="text-sm font-black text-slate-800 leading-none">33°</span>
+                      <span className="text-[10px] text-slate-400 font-bold">Santiago</span>
+                   </div>
+                </div>
+                <div className="flex items-center pl-5">
+                   <Clock size={18} className="text-blue-500 mr-3" />
+                   <span className="text-sm font-bold text-slate-700 font-mono tracking-wide">
+                      {time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                   </span>
+                </div>
+             </div>
+
+             {/* Search Bar */}
+             <div className="hidden md:flex relative w-64">
+                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                 <input 
+                   type="text" 
+                   placeholder="Buscar..." 
+                   className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-100 transition-all placeholder:text-slate-400"
+                 />
+             </div>
+
+             {/* Notifications */}
+             <div className="relative" ref={notifRef}>
+                <button onClick={() => setShowNotifications(!showNotifications)} className="relative p-2 text-slate-400 hover:text-slate-600 transition-colors">
+                    <Bell size={22} />
+                    {unreadCount > 0 && <span className="absolute top-1.5 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span>}
+                </button>
+                {showNotifications && (
+                    <div className="absolute right-0 mt-4 w-80 bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden z-50 animate-in slide-in-from-top-2 fade-in duration-300">
+                         <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50/50">
+                             <h3 className="text-[11px] font-black text-slate-800 uppercase tracking-widest">Notificaciones</h3>
+                             <button onClick={clearNotifications} className="text-[10px] font-bold text-slate-400 hover:text-red-500 flex items-center uppercase tracking-widest transition-colors">
+                                 <Trash2 size={12} className="mr-2" /> Limpiar
+                             </button>
+                         </div>
+                         <div className="max-h-80 overflow-y-auto">
+                             {notifications.length === 0 ? (
+                                 <div className="p-12 text-center text-slate-400 text-[11px] font-bold uppercase tracking-widest leading-relaxed">Sin alertas pendientes en el sistema central.</div>
+                             ) : (
+                                 notifications.map(n => (
+                                     <div key={n.id} onClick={() => markNotificationRead(n.id)} className={`p-5 border-b border-slate-50 hover:bg-slate-50 cursor-pointer transition-colors ${!n.read ? 'bg-blue-50/30' : ''}`}>
+                                         <div className="flex items-start">
+                                             <div className="mt-1 mr-4 flex-shrink-0">{getNotifIcon(n.type)}</div>
+                                             <div className="flex-1 min-w-0">
+                                                 <p className={`text-xs truncate ${!n.read ? 'font-black text-slate-900' : 'font-bold text-slate-500 uppercase tracking-tight'}`}>{n.title}</p>
+                                                 <p className="text-[11px] text-slate-500 mt-1.5 leading-relaxed">{n.message}</p>
+                                             </div>
+                                             {!n.read && <div className="ml-4 w-2 h-2 rounded-full bg-blue-600 flex-shrink-0 mt-2 shadow-[0_0_8px_rgba(37,99,235,0.4)]"></div>}
+                                         </div>
+                                     </div>
+                                 ))
+                             )}
+                         </div>
+                    </div>
+                )}
              </div>
 
              <div className="h-8 w-[1px] bg-slate-200 hidden md:block"></div>
 
-             <div className="flex items-center space-x-5">
-                <div className="text-right hidden sm:block">
-                   <p className="text-[10px] font-black text-slate-700 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200 tracking-widest tabular-nums shadow-sm">{time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second: '2-digit'})}</p>
+             {/* User Profile */}
+             <div className="flex items-center cursor-pointer group">
+                <div className="h-10 w-10 bg-slate-200 rounded-full overflow-hidden border-2 border-white shadow-sm mr-3">
+                   {/* Placeholder avatar or initial */}
+                   <div className="w-full h-full bg-slate-800 flex items-center justify-center text-white font-bold text-sm">
+                      {user?.name.charAt(0)}
+                   </div>
                 </div>
-                
-                <div className="relative" ref={notifRef}>
-                    <button onClick={() => setShowNotifications(!showNotifications)} className={`relative p-2.5 rounded-full transition-all duration-300 ${showNotifications ? 'bg-blue-50 text-blue-600' : 'text-slate-400 hover:bg-slate-50 hover:text-blue-500'}`}>
-                        <Bell size={20} />
-                        {unreadCount > 0 && <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>}
-                    </button>
-                    {showNotifications && (
-                        <div className="absolute right-0 mt-4 w-80 bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden z-50 animate-in slide-in-from-top-2 fade-in duration-300">
-                             <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50/50">
-                                 <h3 className="text-[11px] font-black text-slate-800 uppercase tracking-widest">Notificaciones</h3>
-                                 <button onClick={clearNotifications} className="text-[10px] font-bold text-slate-400 hover:text-red-500 flex items-center uppercase tracking-widest transition-colors">
-                                     <Trash2 size={12} className="mr-2" /> Limpiar
-                                 </button>
-                             </div>
-                             <div className="max-h-80 overflow-y-auto">
-                                 {notifications.length === 0 ? (
-                                     <div className="p-12 text-center text-slate-400 text-[11px] font-bold uppercase tracking-widest leading-relaxed">Sin alertas pendientes en el sistema central.</div>
-                                 ) : (
-                                     notifications.map(n => (
-                                         <div key={n.id} onClick={() => markNotificationRead(n.id)} className={`p-5 border-b border-slate-50 hover:bg-slate-50 cursor-pointer transition-colors ${!n.read ? 'bg-blue-50/30' : ''}`}>
-                                             <div className="flex items-start">
-                                                 <div className="mt-1 mr-4 flex-shrink-0">{getNotifIcon(n.type)}</div>
-                                                 <div className="flex-1 min-w-0">
-                                                     <p className={`text-xs truncate ${!n.read ? 'font-black text-slate-900' : 'font-bold text-slate-500 uppercase tracking-tight'}`}>{n.title}</p>
-                                                     <p className="text-[11px] text-slate-500 mt-1.5 leading-relaxed">{n.message}</p>
-                                                 </div>
-                                                 {!n.read && <div className="ml-4 w-2 h-2 rounded-full bg-blue-600 flex-shrink-0 mt-2 shadow-[0_0_8px_rgba(37,99,235,0.4)]"></div>}
-                                             </div>
-                                         </div>
-                                     ))
-                                 )}
-                             </div>
-                        </div>
-                    )}
+                <div className="hidden md:flex flex-col items-start mr-2">
+                   <span className="text-sm font-bold text-slate-800 leading-none">{user?.name}</span>
+                   <span className="text-[10px] font-medium text-slate-400 mt-1">{user?.role === 'ADMIN' ? 'Admin' : 'Operador'}</span>
                 </div>
-
-                <div className="h-10 w-10 bg-slate-900 rounded-2xl flex items-center justify-center text-white shadow-xl border border-slate-700 font-bold text-sm tracking-tighter hover:bg-slate-800 transition-colors cursor-pointer">
-                  {user?.name.charAt(0)}
-                </div>
+                <ChevronDown size={14} className="text-slate-400 group-hover:text-slate-600 transition-colors" />
              </div>
+
           </div>
         </header>
 
