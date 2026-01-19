@@ -12,7 +12,7 @@ import { StockControl } from './views/StockControl';
 import { GeographyView } from './views/GeographyView';
 import { UserManagementView } from './views/UserManagementView';
 import { SettingsView } from './views/SettingsView';
-import { X, LayoutTemplate } from 'lucide-react';
+import { X } from 'lucide-react';
 
 const DynamicStyles: React.FC = () => {
   const { currentConfig } = useApp();
@@ -28,16 +28,15 @@ const DynamicStyles: React.FC = () => {
       document.head.appendChild(styleTag);
     }
     
+    // Aplicamos font-size al html para que rem se escale proporcionalmente en todo el sitio
+    // Aplicamos font-family a todos los elementos de texto interactivos
     styleTag.innerHTML = `
-      :root {
-        --base-font-family: ${currentConfig.fontFamily};
-        --base-font-size: ${currentConfig.fontSize}px;
-        --base-line-height: ${currentConfig.lineHeight};
+      html {
+        font-size: ${currentConfig.fontSize}px !important;
       }
-      body {
-        font-family: var(--base-font-family);
-        font-size: var(--base-font-size);
-        line-height: var(--base-line-height);
+      body, button, input, select, textarea, h1, h2, h3, h4, h5, h6, span, p, div {
+        font-family: ${currentConfig.fontFamily} !important;
+        line-height: ${currentConfig.lineHeight} !important;
         ${currentConfig.disableBold ? 'font-weight: 400 !important;' : ''}
       }
       ${currentConfig.disableBold ? '* { font-weight: 400 !important; }' : ''}
@@ -48,8 +47,8 @@ const DynamicStyles: React.FC = () => {
 };
 
 const AppContent: React.FC = () => {
-  const { user, appName } = useApp();
-  const [activeModule, setActiveModule] = useState('dashboard');
+  const { user, currentConfig } = useApp();
+  const [activeModule, setActiveModule] = useState('');
 
   if (!user) {
     return <Login />;
@@ -79,12 +78,25 @@ const AppContent: React.FC = () => {
       <WelcomeModal />
       <Layout activeModule={activeModule} setActiveModule={setActiveModule}>
         
-        <div className="absolute inset-0 flex flex-col items-center justify-center opacity-30 pointer-events-none select-none">
-           <div className="w-32 h-32 bg-slate-200 rounded-2xl flex items-center justify-center mb-6">
-              <LayoutTemplate size={64} className="text-slate-400" />
-           </div>
-           <h1 className="text-4xl font-bold text-slate-300 tracking-tight mb-2 uppercase">{appName}</h1>
-           <p className="text-slate-400">Seleccione un módulo del menú para comenzar</p>
+        <div className="absolute inset-0 flex flex-col items-center justify-center overflow-hidden">
+           {/* Main Background Image - Controlada por Configuración */}
+           {currentConfig.bgImage && (
+             <div className="absolute inset-0 pointer-events-none select-none z-0">
+               <img 
+                 src={currentConfig.bgImage} 
+                 alt="Workspace Background" 
+                 style={{ 
+                   opacity: currentConfig.bgOpacity / 100, 
+                   filter: `blur(${currentConfig.bgBlur}px)`,
+                   objectFit: currentConfig.bgFit
+                 }}
+                 className="w-full h-full grayscale-[0.2]"
+               />
+               <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-white/30"></div>
+             </div>
+           )}
+
+           {/* Se han eliminado los elementos de branding central para dejar el espacio limpio */}
         </div>
 
         {activeModule && (

@@ -3,6 +3,11 @@ export type UserRole = 'ADMIN' | 'OPERATOR' | 'DRIVER';
 
 export interface AppConfig {
   logo?: string;
+  loginImage?: string;
+  bgImage?: string;
+  bgOpacity: number;
+  bgBlur: number;
+  bgFit: 'cover' | 'contain' | 'auto';
   slogan: string;
   fontFamily: string;
   fontSize: number; // en px
@@ -56,6 +61,7 @@ export interface Vehicle {
   brand: string;
   model: string;
   year: number;
+  km: number;
   commune: string;
   location: string;
   driver: string;

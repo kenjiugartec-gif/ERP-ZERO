@@ -1,7 +1,7 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useApp } from '../store/AppContext';
-import { Eye, EyeOff, Lock, User, ShieldCheck, MapPin, ArrowRight, XCircle } from 'lucide-react';
+import { Eye, EyeOff, Lock, User, ShieldCheck, MapPin, ArrowRight, XCircle, ChevronDown, CheckCircle2 } from 'lucide-react';
 
 const labelClass = "text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] ml-1 mb-2 block";
 const inputClass = "w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none transition-all text-slate-900 placeholder-slate-300 text-sm font-medium shadow-sm";
@@ -15,12 +15,26 @@ export const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isAdminMode, setIsAdminMode] = useState(false);
+  const [isSelectOpen, setIsSelectOpen] = useState(false);
+  const selectRef = useRef<HTMLDivElement>(null);
+
+  // Close custom select when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (selectRef.current && !selectRef.current.contains(event.target as Node)) {
+        setIsSelectOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Dynamic branding based on selection
   const activeConfig = useMemo(() => {
     return configs[selectedEmplacement] || {
       slogan: "Innovative solutions for technical logistics and industrial management.",
-      logo: undefined
+      logo: undefined,
+      loginImage: "https://images.unsplash.com/photo-1553413077-190dd305871c?q=80&w=2070&auto=format&fit=crop"
     };
   }, [selectedEmplacement, configs]);
 
@@ -56,9 +70,9 @@ export const Login: React.FC = () => {
       {/* SECCIÓN VISUAL IZQUIERDA */}
       <div className="hidden lg:flex lg:w-3/5 relative overflow-hidden">
         <img 
-          src="https://images.unsplash.com/photo-1553413077-190dd305871c?q=80&w=2070&auto=format&fit=crop" 
+          src={activeConfig.loginImage || "https://images.unsplash.com/photo-1553413077-190dd305871c?q=80&w=2070&auto=format&fit=crop"} 
           alt="Logistics Operations" 
-          className="absolute inset-0 w-full h-full object-cover grayscale-[0.3] contrast-[1.2]"
+          className="absolute inset-0 w-full h-full object-cover grayscale-[0.3] contrast-[1.2] transition-all duration-700"
         />
         <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-[2px]"></div>
         
@@ -91,7 +105,12 @@ export const Login: React.FC = () => {
       <div className="w-full lg:w-2/5 flex flex-col justify-center items-center p-12 lg:p-24 bg-white relative">
         <div className="w-full max-sm px-4">
           <header className="mb-14">
-            <h2 className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">Inicio de Sesión</h2>
+            <h2 
+              style={{ fontFamily: 'Arial, sans-serif', fontSize: '19px', fontWeight: 700, fontStyle: 'normal' }}
+              className="text-slate-900 tracking-widest uppercase leading-none"
+            >
+              INICIO DE SESIÓN
+            </h2>
             <p className="text-slate-400 text-sm font-medium mt-3 border-l-2 border-slate-100 pl-4 ml-1">Ingreso de las credenciales para inicio de sesión</p>
           </header>
 
@@ -137,24 +156,45 @@ export const Login: React.FC = () => {
             <div 
               className={`overflow-hidden transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] ${isAdminMode ? 'max-h-0 opacity-0 mb-0 scale-95 pointer-events-none' : 'max-h-40 opacity-100 mb-8 scale-100'}`}
             >
-              <div className="space-y-1.5 pt-2">
+              <div className="space-y-1.5 pt-2" ref={selectRef}>
                 <label className={labelClass}>Emplazamiento</label>
                 <div className="relative group">
                   <MapPin className={iconClass} size={18} />
-                  <select
-                    value={selectedEmplacement}
-                    onChange={(e) => setSelectedEmplacement(e.target.value)}
-                    className={`${inputClass} appearance-none cursor-pointer pr-10 font-bold text-slate-700`}
-                    required={!isAdminMode}
+                  
+                  {/* Custom Styled Select Trigger */}
+                  <div 
+                    onClick={() => setIsSelectOpen(!isSelectOpen)}
+                    className={`${inputClass} cursor-pointer flex items-center justify-between group select-none ${isSelectOpen ? 'ring-4 ring-blue-500/5 bg-white border-blue-500' : ''}`}
                   >
-                    <option value="">Seleccione Ubicación...</option>
-                    {emplacements.map(emp => (
-                      <option key={emp} value={emp}>{emp}</option>
-                    ))}
-                  </select>
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-300">
-                    <ChevronDownIcon size={16} />
+                    <span className={selectedEmplacement ? 'text-slate-700 font-bold' : 'text-slate-300'}>
+                      {selectedEmplacement || "Seleccione Ubicación..."}
+                    </span>
+                    <ChevronDown size={18} className={`text-slate-300 transition-transform duration-300 ${isSelectOpen ? 'rotate-180 text-blue-500' : ''}`} />
                   </div>
+
+                  {/* Custom Styled Select List */}
+                  {isSelectOpen && (
+                    <div className="absolute top-[110%] left-0 right-0 bg-white border border-slate-200 rounded-lg shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                      <div className="max-h-60 overflow-y-auto">
+                        <div 
+                          onClick={() => { setSelectedEmplacement(''); setIsSelectOpen(false); }}
+                          className="px-6 py-4 text-sm text-slate-300 hover:bg-slate-50 cursor-pointer transition-colors border-b border-slate-50"
+                        >
+                          Seleccione Ubicación...
+                        </div>
+                        {emplacements.map(emp => (
+                          <div 
+                            key={emp}
+                            onClick={() => { setSelectedEmplacement(emp); setIsSelectOpen(false); }}
+                            className={`px-6 py-4 text-sm font-bold flex items-center justify-between hover:bg-slate-50 cursor-pointer transition-colors ${selectedEmplacement === emp ? 'text-blue-600 bg-blue-50/50' : 'text-slate-700'}`}
+                          >
+                            <span>{emp}</span>
+                            {selectedEmplacement === emp && <CheckCircle2 size={16} className="text-blue-600" />}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -187,9 +227,3 @@ export const Login: React.FC = () => {
     </div>
   );
 };
-
-const ChevronDownIcon = ({ size }: { size: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-    <path d="m6 9 6 6 6-6"/>
-  </svg>
-);
