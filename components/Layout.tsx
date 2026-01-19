@@ -2,11 +2,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../store/AppContext';
 import { 
-  CloudSun, LogOut, Menu, X, 
+  LogOut, Menu, X, 
   LayoutDashboard, Package, Truck, 
   DoorOpen, ArrowLeftRight, History, 
   ClipboardCheck, MapPin, Car, 
-  Users, Settings, FileText, Bell, XCircle, AlertTriangle, Info, CheckCircle,
+  Users, Settings, FileText, Bell, AlertTriangle, Info, CheckCircle,
   Trash2, Layers
 } from 'lucide-react';
 
