@@ -29,12 +29,12 @@ const DynamicStyles: React.FC = () => {
     }
     
     // Aplicamos font-size al html para que rem se escale proporcionalmente en todo el sitio
-    // Aplicamos font-family a todos los elementos de texto interactivos
+    // Aplicamos font-family a todos los elementos de texto interactivos, incluyendo ASIDE y NAV
     styleTag.innerHTML = `
       html {
         font-size: ${currentConfig.fontSize}px !important;
       }
-      body, button, input, select, textarea, h1, h2, h3, h4, h5, h6, span, p, div {
+      body, button, input, select, textarea, h1, h2, h3, h4, h5, h6, span, p, div, aside, nav {
         font-family: ${currentConfig.fontFamily} !important;
         line-height: ${currentConfig.lineHeight} !important;
         ${currentConfig.disableBold ? 'font-weight: 400 !important;' : ''}

@@ -68,12 +68,44 @@ export const CHILE_GEO_DATA = [
 
 export const EMPLACEMENTS = [];
 
-export const CAR_BRANDS = ["Toyota", "Hyundai", "Kia", "Chevrolet", "Peugeot", "Mercedes-Benz"];
-export const CAR_MODELS = {
-  "Toyota": ["Hilux", "Yaris", "Corolla"],
-  "Hyundai": ["H-1", "Porter", "Tucson"],
-  "Kia": ["Frontier", "Rio", "Sportage"],
-  "Chevrolet": ["N400", "Silverado"],
-  "Peugeot": ["Partner", "Boxer"],
-  "Mercedes-Benz": ["Sprinter", "Vito"]
+export const CAR_MODELS: Record<string, string[]> = {
+  "Toyota": ["Hilux", "Yaris", "Corolla", "RAV4", "Fortuner", "4Runner", "Land Cruiser", "Urban Cruiser", "Prius", "Rush"],
+  "Chevrolet": ["Silverado", "Colorado", "D-Max", "N400", "Sail", "Groove", "Tracker", "Captiva", "Tahoe", "Suburban", "Blazer"],
+  "Hyundai": ["H-1", "Porter", "Tucson", "Santa Fe", "Accent", "Grand i10", "Creta", "Staria", "Elantra", "Palisade", "Venue"],
+  "Kia": ["Frontier", "Rio", "Soluto", "Sportage", "Sorento", "Morning", "Sonet", "Seltos", "Carnival", "Cerato"],
+  "Nissan": ["Navara", "NP300", "Versa", "Kicks", "X-Trail", "Qashqai", "Terrano", "Pathfinder", "Murano", "Sentra"],
+  "Mitsubishi": ["L200", "Katana", "Montero Sport", "Outlander", "ASX", "Xpander", "Eclipse Cross", "Mirage"],
+  "Ford": ["Ranger", "F-150", "Transit", "Territory", "Explorer", "Escape", "Maverick", "Bronco", "Mustang"],
+  "Peugeot": ["Partner", "Boxer", "Expert", "208", "2008", "3008", "5008", "Landtrek", "Rifter", "Traveller", "308"],
+  "Suzuki": ["Swift", "Baleno", "Jimny", "Vitara", "S-Presso", "Dzire", "Ertiga", "Grand Vitara", "Alto", "Celerio"],
+  "Maxus": ["T60", "T90", "Deliver 9", "G10", "V80", "E-Deliver 3", "D60", "D90"],
+  "MG": ["ZS", "ZX", "HS", "MG3", "MG5", "MG6", "RX5", "One", "GT"],
+  "Chery": ["Tiggo 2", "Tiggo 2 Pro", "Tiggo 3", "Tiggo 7 Pro", "Tiggo 8", "Tiggo 8 Pro"],
+  "Volkswagen": ["Amarok", "Saveiro", "Gol", "Voyage", "T-Cross", "Taos", "Tiguan", "Crafter", "Transporter", "Polo", "Virtus", "Nivus"],
+  "Mercedes-Benz": ["Sprinter", "Vito", "A-Class", "C-Class", "GLC", "GLE", "Actros", "Arocs", "Atego"],
+  "Citroën": ["Berlingo", "Jumper", "C3", "C-Elysée", "C4", "C5 Aircross", "Jumpy"],
+  "Renault": ["Oroch", "Alaskan", "Kangoo", "Kwid", "Duster", "Symbol", "Master", "Arkana", "Koleos"],
+  "JAC": ["T8", "T6", "T8 Pro", "JS2", "JS3", "JS4", "JS6", "Refine", "Sunray", "X200"],
+  "Great Wall": ["Poer", "Wingle 5", "Wingle 7", "Poer Plus"],
+  "Haval": ["Jolion", "H6", "Dargo"],
+  "RAM": ["700", "1000", "1500", "2500", "V700", "V1000", "Rampage"],
+  "Opel": ["Combo", "Vivaro", "Corsa", "Mokka", "Crossland", "Grandland"],
+  "Changan": ["Hunter", "CS15", "CS35 Plus", "CS55 Plus", "CX70", "Uni-T", "Uni-K"],
+  "Foton": ["Terracota", "Midi", "View", "Aumark", "Tunland"],
+  "Dongfeng": ["DF6", "Rich 6", "SX5", "T5 Evo"],
+  "SsangYong": ["Musso", "Grand Musso", "Rexton", "Korando", "Tivoli", "Torres"],
+  "Subaru": ["Forester", "XV", "Crosstrek", "Outback", "Evoltis", "Impreza", "WRX"],
+  "Mazda": ["BT-50", "Mazda2", "Mazda3", "CX-3", "CX-30", "CX-5", "CX-50", "CX-60", "CX-9", "CX-90"],
+  "Honda": ["Ridgeline", "CR-V", "HR-V", "Pilot", "Civic", "City", "WR-V"],
+  "Jeep": ["Renegade", "Compass", "Cherokee", "Grand Cherokee", "Wrangler", "Gladiator", "Commander"],
+  "Volvo": ["XC40", "XC60", "XC90", "C40", "FH", "FM", "FMX"],
+  "Scania": ["R-Series", "S-Series", "P-Series", "G-Series"],
+  "MAN": ["TGX", "TGS", "TGM", "TGL"],
+  "Fiat": ["Fiorino", "Strada", "Ducato", "Mobi", "Argo", "Pulse", "Fastback"],
+  "Mahindra": ["Pik Up", "XUV 500", "Scorpio"],
+  "JMC": ["Vigus", "Vigus Plus", "Conquer", "Carrying"],
+  "DFSK": ["C31", "C32", "C35", "500", "580"]
 };
+
+// Generar array de marcas ordenado alfabéticamente basado en las llaves del objeto
+export const CAR_BRANDS = Object.keys(CAR_MODELS).sort();

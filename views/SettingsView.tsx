@@ -1,12 +1,64 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../store/AppContext';
 import { 
   Settings, Type, Image as ImageIcon, Layout, 
   Save, Upload, Sliders, BoxSelect, CheckCircle, 
   Laptop, Monitor, Layers, ToggleLeft, ToggleRight,
-  User, Lock, Eye, Building2, ChevronDown, ChevronRight
+  User, Lock, Eye, Building2, ChevronDown, ChevronRight, CheckCircle2
 } from 'lucide-react';
+
+// --- CUSTOM SETTINGS SELECT ---
+interface SettingsSelectProps {
+  value: string;
+  onChange: (value: string) => void;
+  options: { label: string; value: string }[];
+  className?: string;
+}
+
+const SettingsSelect: React.FC<SettingsSelectProps> = ({ value, onChange, options, className }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selectedLabel = options.find(o => o.value === value)?.label || value;
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <div 
+        onClick={() => setIsOpen(!isOpen)}
+        className={`${className} flex justify-between items-center cursor-pointer transition-all ${isOpen ? 'bg-white ring-4 ring-blue-500/5 border-blue-400' : ''}`}
+      >
+        <span>{selectedLabel}</span>
+        <ChevronDown size={14} className={`text-slate-400 transition-transform ${isOpen ? 'rotate-180 text-blue-500' : ''}`} />
+      </div>
+
+      {isOpen && (
+        <div className="absolute top-[110%] left-0 right-0 bg-white border border-slate-100 rounded-xl shadow-xl z-50 overflow-hidden max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-1">
+          {options.map((option) => (
+            <div
+              key={option.value}
+              onClick={() => { onChange(option.value); setIsOpen(false); }}
+              className={`px-4 py-3 text-sm cursor-pointer hover:bg-slate-50 flex items-center justify-between transition-colors ${value === option.value ? 'bg-blue-50 text-blue-600 font-bold' : 'text-slate-700'}`}
+            >
+              <span style={{ fontFamily: option.value }}>{option.label}</span>
+              {value === option.value && <CheckCircle2 size={14} className="text-blue-500"/>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export const SettingsView: React.FC = () => {
   const { user, updateConfig, configs, appName, setAppName } = useApp();
@@ -249,19 +301,20 @@ export const SettingsView: React.FC = () => {
                 <div className="space-y-6">
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Familia Tipográfica Global</label>
-                    <select 
-                      value={localConfig.fontFamily}
-                      onChange={(e) => setLocalConfig({...localConfig, fontFamily: e.target.value})}
-                      className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 outline-none focus:bg-white transition-all appearance-none cursor-pointer"
-                    >
-                      <option value="'Inter', sans-serif">Inter (Industrial Moderno)</option>
-                      <option value="'Arial', sans-serif">Arial (Clásico Estándar)</option>
-                      <option value="'Roboto', sans-serif">Roboto (Google Standard)</option>
-                      <option value="'Open Sans', sans-serif">Open Sans (Lectura Clara)</option>
-                      <option value="'Montserrat', sans-serif">Montserrat (Geométrico)</option>
-                      <option value="'Sora', sans-serif">Sora (SaaS Tech)</option>
-                      <option value="'Roboto Mono', monospace">Roboto Mono (Técnico / Código)</option>
-                    </select>
+                    <SettingsSelect
+                        value={localConfig.fontFamily}
+                        onChange={(val) => setLocalConfig({...localConfig, fontFamily: val})}
+                        options={[
+                            { label: 'Inter (Industrial Moderno)', value: "'Inter', sans-serif" },
+                            { label: 'Arial (Clásico Estándar)', value: "'Arial', sans-serif" },
+                            { label: 'Roboto (Google Standard)', value: "'Roboto', sans-serif" },
+                            { label: 'Open Sans (Lectura Clara)', value: "'Open Sans', sans-serif" },
+                            { label: 'Montserrat (Geométrico)', value: "'Montserrat', sans-serif" },
+                            { label: 'Sora (SaaS Tech)', value: "'Sora', sans-serif" },
+                            { label: 'Roboto Mono (Técnico / Código)', value: "'Roboto Mono', monospace" }
+                        ]}
+                        className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900"
+                    />
                   </div>
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">

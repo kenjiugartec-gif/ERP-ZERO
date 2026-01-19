@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../store/AppContext';
 import { GateTransaction, TransactionItem } from '../types';
-import { ChevronDown, ChevronRight, Save, Lock, Unlock, LogIn, LogOut, Truck, AlertTriangle, XCircle, CheckSquare, ShieldCheck, User, Box, Activity } from 'lucide-react';
+import { ChevronDown, ChevronRight, Save, Lock, Unlock, LogIn, LogOut, Truck, AlertTriangle, XCircle, CheckSquare, ShieldCheck, User, Box, Activity, CheckCircle2 } from 'lucide-react';
 
 // --- CONSTANTS SPECIFIC TO PROMPT ---
 const ASSETS_LIST = [
@@ -15,6 +16,67 @@ const SUPPLIES_LIST = [
   "Extensión de 7mts", "Extensión de 2mts", "Carro tipo E", 
   "Mangueras Cortas", "Vasos Humidificadores"
 ];
+
+// --- CUSTOM GATE SELECT COMPONENT ---
+interface GateSelectProps {
+  value: string;
+  options: { label: string; value: string }[];
+  placeholder?: string;
+  onChange: (value: string) => void;
+  disabled?: boolean;
+  className?: string;
+}
+
+const GateSelect: React.FC<GateSelectProps> = ({ value, options, placeholder = "Seleccionar...", onChange, disabled = false, className }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selectedLabel = options.find(o => o.value === value)?.label || value;
+  const baseClasses = className || "w-full p-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-700";
+
+  return (
+    <div className={`relative ${disabled ? 'opacity-50 pointer-events-none' : ''}`} ref={containerRef}>
+      <div 
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        className={`${baseClasses} flex justify-between items-center cursor-pointer transition-all ${isOpen ? 'ring-2 ring-blue-500/20 border-blue-500 shadow-sm' : ''} ${disabled ? 'bg-slate-50 text-slate-400' : ''}`}
+      >
+        <span className={`${!value ? 'text-slate-400 font-normal' : 'font-medium truncate'}`}>
+          {value ? selectedLabel : placeholder}
+        </span>
+        <ChevronDown size={14} className={`text-slate-400 flex-shrink-0 ml-2 transition-transform duration-200 ${isOpen ? 'rotate-180 text-blue-500' : ''}`} />
+      </div>
+
+      {isOpen && (
+        <div className="absolute top-[110%] left-0 right-0 bg-white border border-slate-100 rounded-lg shadow-xl z-50 overflow-hidden max-h-48 overflow-y-auto animate-in fade-in slide-in-from-top-1">
+          {options.map((option) => (
+            <div
+              key={option.value}
+              onClick={() => { onChange(option.value); setIsOpen(false); }}
+              className={`px-3 py-2.5 text-xs font-medium cursor-pointer hover:bg-slate-50 flex items-center justify-between transition-colors ${value === option.value ? 'bg-blue-50 text-blue-600' : 'text-slate-600'}`}
+            >
+              <span className="truncate">{option.label}</span>
+              {value === option.value && <CheckCircle2 size={12} className="text-blue-500 flex-shrink-0 ml-2"/>}
+            </div>
+          ))}
+          {options.length === 0 && (
+              <div className="px-3 py-2.5 text-xs text-slate-400 italic">No hay opciones disponibles</div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 
 // --- HELPER COMPONENTS ---
 
@@ -281,17 +343,13 @@ export const GateControl: React.FC = () => {
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="text-xs font-bold text-slate-700 mb-1 block">Vehículo</label>
-                                <div className="relative">
-                                    <select 
-                                        value={selectedExitPlate}
-                                        onChange={e => setSelectedExitPlate(e.target.value)}
-                                        className="w-full p-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-red-100 focus:border-red-400 outline-none appearance-none"
-                                    >
-                                        <option value="">Selecciona vehículo</option>
-                                        {pendingExit.map(t => <option key={t.plate} value={t.plate}>{t.plate}</option>)}
-                                    </select>
-                                    <ChevronDown size={16} className="absolute right-3 top-3 text-slate-400 pointer-events-none"/>
-                                </div>
+                                <GateSelect 
+                                    value={selectedExitPlate}
+                                    onChange={setSelectedExitPlate}
+                                    options={pendingExit.map(t => ({ label: t.plate, value: t.plate }))}
+                                    placeholder="Selecciona vehículo"
+                                    className="w-full p-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-red-100 focus:border-red-400"
+                                />
                             </div>
                             <div>
                                 <label className="text-xs font-bold text-slate-700 mb-1 block">Operador</label>
@@ -506,20 +564,17 @@ export const IOControl: React.FC = () => {
                          <label className="text-xs font-bold text-slate-700 mb-1 block">
                              {mode === 'EXIT' ? 'Seleccionar Móvil Disponible' : 'Móvil Autorizado por Puerta'}
                          </label>
-                         <div className="relative">
-                             <select 
-                                value={selectedPlate}
-                                onChange={e => { setSelectedPlate(e.target.value); setItems([]); }}
-                                className={`w-full p-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-700 focus:ring-2 outline-none appearance-none ${mode === 'EXIT' ? 'focus:ring-amber-100 focus:border-amber-400' : 'focus:ring-teal-100 focus:border-teal-400'}`}
-                             >
-                                 <option value="">-- Seleccionar --</option>
-                                 {mode === 'EXIT' 
-                                    ? availableForExit.map(v => <option key={v.plate} value={v.plate}>{v.plate} - {v.driver}</option>)
-                                    : availableForEntry.map(t => <option key={t.plate} value={t.plate}>{t.plate} - {t.driver}</option>)
-                                 }
-                             </select>
-                             <ChevronDown size={16} className="absolute right-3 top-3 text-slate-400 pointer-events-none"/>
-                         </div>
+                         <GateSelect 
+                            value={selectedPlate}
+                            onChange={(val) => { setSelectedPlate(val); setItems([]); }}
+                            options={
+                                mode === 'EXIT' 
+                                ? availableForExit.map(v => ({ label: `${v.plate} - ${v.driver}`, value: v.plate }))
+                                : availableForEntry.map(t => ({ label: `${t.plate} - ${t.driver}`, value: t.plate }))
+                            }
+                            placeholder="-- Seleccionar --"
+                            className={`w-full p-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-700 focus:ring-2 ${mode === 'EXIT' ? 'focus:ring-amber-100 focus:border-amber-400' : 'focus:ring-teal-100 focus:border-teal-400'}`}
+                         />
                      </div>
                      <div>
                          <label className="text-xs font-bold text-slate-700 mb-1 block">Responsable E/S</label>

@@ -17,7 +17,6 @@ const inputBaseClass = "w-full p-4 bg-slate-50 border border-slate-200 rounded-x
 const labelClass = "flex items-center text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] ml-1 mb-2.5";
 
 // --- CUSTOM SELECT COMPONENT ---
-// Replaces native select to avoid black borders and match input style perfectly
 interface FormSelectProps {
   value: string;
   options: { label: string; value: string }[];
@@ -25,9 +24,10 @@ interface FormSelectProps {
   onChange: (value: string) => void;
   disabled?: boolean;
   icon?: React.ReactNode;
+  className?: string; // Permitir personalización de clases
 }
 
-const FormSelect: React.FC<FormSelectProps> = ({ value, options, placeholder = "Seleccionar...", onChange, disabled = false, icon }) => {
+const FormSelect: React.FC<FormSelectProps> = ({ value, options, placeholder = "Seleccionar...", onChange, disabled = false, icon, className }) => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -43,13 +43,16 @@ const FormSelect: React.FC<FormSelectProps> = ({ value, options, placeholder = "
 
   const selectedLabel = options.find(o => o.value === value)?.label || value;
 
+  // Clases por defecto si no se pasa className (estilo FleetView), de lo contrario usa className (estilo Dispatch/Reception)
+  const baseClasses = className || "w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-sm text-slate-700";
+
   return (
     <div className={`relative ${disabled ? 'opacity-50 pointer-events-none' : ''}`} ref={containerRef}>
       <div 
         onClick={() => !disabled && setIsOpen(!isOpen)}
-        className={`w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 flex justify-between items-center cursor-pointer transition-all ${isOpen ? 'ring-2 ring-blue-500/20 border-blue-500 shadow-sm' : ''} ${disabled ? 'bg-slate-50 text-slate-400' : ''}`}
+        className={`${baseClasses} flex justify-between items-center cursor-pointer transition-all ${isOpen ? 'ring-2 ring-blue-500/20 border-blue-500 shadow-sm' : ''} ${disabled ? 'bg-slate-50 text-slate-400' : ''}`}
       >
-        <span className={`${!value ? 'text-slate-300 font-normal' : 'font-bold'}`}>
+        <span className={`${!value ? 'text-slate-400 font-normal' : 'font-medium'}`}>
           {value ? selectedLabel : placeholder}
         </span>
         <div className="flex items-center">
@@ -224,6 +227,8 @@ export const ReceptionView: React.FC = () => {
     setEditingId(null);
   };
 
+  const selectStyle = "w-full p-2.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 font-medium";
+
   return (
     <div className="h-full overflow-y-auto p-6 bg-slate-50/50 font-sans">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -268,17 +273,13 @@ export const ReceptionView: React.FC = () => {
                   </div>
                   <div className="md:col-span-7">
                       <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center"><MapPin size={12} className="mr-1.5"/> SUCURSAL (EMPLAZAMIENTO)</label>
-                      <div className="relative">
-                        <select 
-                            value={formData.location} 
-                            onChange={e => handleChange('location', e.target.value)}
-                            className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 outline-none focus:border-blue-500 transition-colors appearance-none font-medium"
-                        >
-                            <option value="">Seleccionar ubicación...</option>
-                            {emplacements.map(e => <option key={e} value={e}>{e}</option>)}
-                        </select>
-                        <ChevronDown size={14} className="absolute right-3 top-3 text-slate-400 pointer-events-none"/>
-                      </div>
+                      <FormSelect 
+                        value={formData.location}
+                        onChange={(val) => handleChange('location', val)}
+                        options={emplacements.map(e => ({ label: e, value: e }))}
+                        placeholder="Seleccionar ubicación..."
+                        className={selectStyle}
+                      />
                   </div>
               </div>
 
@@ -287,18 +288,18 @@ export const ReceptionView: React.FC = () => {
                   <div className="md:col-span-5">
                       <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center"><UserIcon size={12} className="mr-1.5"/> PROVEEDOR</label>
                       <div className="flex gap-2">
-                          <div className="relative flex-1">
-                            <select 
+                          <div className="flex-1">
+                            <FormSelect 
                                 value={formData.provider}
-                                onChange={e => handleChange('provider', e.target.value)}
-                                className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 outline-none focus:border-blue-500 transition-colors appearance-none font-medium"
-                            >
-                                <option value="">Seleccionar proveedor...</option>
-                                <option value="Air Liquide">Air Liquide</option>
-                                <option value="Linde">Linde</option>
-                                <option value="Indura">Indura</option>
-                            </select>
-                            <ChevronDown size={14} className="absolute right-3 top-3 text-slate-400 pointer-events-none"/>
+                                onChange={(val) => handleChange('provider', val)}
+                                options={[
+                                    { label: 'Air Liquide', value: 'Air Liquide' },
+                                    { label: 'Linde', value: 'Linde' },
+                                    { label: 'Indura', value: 'Indura' }
+                                ]}
+                                placeholder="Seleccionar proveedor..."
+                                className={selectStyle}
+                            />
                           </div>
                           <button className="p-2.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors border border-blue-100"><Plus size={16}/></button>
                       </div>
@@ -307,17 +308,15 @@ export const ReceptionView: React.FC = () => {
                       <div className="grid grid-cols-12 gap-4">
                           <div className="col-span-4">
                               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center"><FileText size={12} className="mr-1.5"/> N° DOCUMENTO</label>
-                              <div className="relative">
-                                <select 
-                                    value={formData.docType}
-                                    onChange={e => handleChange('docType', e.target.value)}
-                                    className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 outline-none focus:border-blue-500 transition-colors appearance-none font-medium"
-                                >
-                                    <option>Factura</option>
-                                    <option>Guía Despacho</option>
-                                </select>
-                                <ChevronDown size={14} className="absolute right-3 top-3 text-slate-400 pointer-events-none"/>
-                              </div>
+                              <FormSelect 
+                                value={formData.docType}
+                                onChange={(val) => handleChange('docType', val)}
+                                options={[
+                                    { label: 'Factura', value: 'Factura' },
+                                    { label: 'Guía Despacho', value: 'Guía Despacho' }
+                                ]}
+                                className={selectStyle}
+                              />
                           </div>
                           <div className="col-span-8">
                               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 opacity-0">Number</label>
@@ -337,19 +336,17 @@ export const ReceptionView: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
                   <div className="md:col-span-8">
                       <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center"><Package size={12} className="mr-1.5"/> MATERIAL / PRODUCTO</label>
-                      <div className="relative">
-                        <select 
-                            value={formData.material}
-                            onChange={e => handleChange('material', e.target.value)}
-                            className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 outline-none focus:border-blue-500 transition-colors appearance-none font-medium"
-                        >
-                            <option value="">Seleccionar material...</option>
-                            <option value="Cilindro Oxígeno 10m3">Cilindro Oxígeno 10m3</option>
-                            <option value="Cilindro Oxígeno 1m3">Cilindro Oxígeno 1m3</option>
-                            <option value="Regulador 0-15">Regulador 0-15</option>
-                        </select>
-                        <ChevronDown size={14} className="absolute right-3 top-3 text-slate-400 pointer-events-none"/>
-                      </div>
+                      <FormSelect 
+                        value={formData.material}
+                        onChange={(val) => handleChange('material', val)}
+                        options={[
+                            { label: 'Cilindro Oxígeno 10m3', value: 'Cilindro Oxígeno 10m3' },
+                            { label: 'Cilindro Oxígeno 1m3', value: 'Cilindro Oxígeno 1m3' },
+                            { label: 'Regulador 0-15', value: 'Regulador 0-15' }
+                        ]}
+                        placeholder="Seleccionar material..."
+                        className={selectStyle}
+                      />
                   </div>
                   <div className="md:col-span-4 flex flex-col justify-end">
                       <div className="flex items-center justify-end mb-2">
@@ -365,11 +362,13 @@ export const ReceptionView: React.FC = () => {
                       </div>
                       <div className="relative">
                         <div className="absolute -top-6 left-0 text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center"><Hash size={12} className="mr-1.5"/> CÓDIGO (SKU)</div>
-                        <select className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-500 outline-none focus:border-blue-500 transition-colors appearance-none font-medium"
-                        >
-                            <option>Auto / Manual</option>
-                        </select>
-                        <ChevronDown size={14} className="absolute right-3 top-3 text-slate-400 pointer-events-none"/>
+                        <FormSelect 
+                            value="Auto / Manual"
+                            onChange={() => {}}
+                            options={[{label: 'Auto / Manual', value: 'Auto / Manual'}]}
+                            className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-500 font-medium"
+                            disabled
+                        />
                       </div>
                   </div>
               </div>
@@ -387,18 +386,16 @@ export const ReceptionView: React.FC = () => {
                   </div>
                   <div className="md:col-span-2">
                       <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center"><Box size={12} className="mr-1.5"/> U/M</label>
-                      <div className="relative">
-                        <select 
-                            value={formData.um}
-                            onChange={e => handleChange('um', e.target.value)}
-                            className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 outline-none focus:border-blue-500 transition-colors appearance-none font-medium"
-                        >
-                            <option value="UN">UN</option>
-                            <option value="KG">KG</option>
-                            <option value="L">L</option>
-                        </select>
-                        <ChevronDown size={14} className="absolute right-3 top-3 text-slate-400 pointer-events-none"/>
-                      </div>
+                      <FormSelect 
+                        value={formData.um}
+                        onChange={(val) => handleChange('um', val)}
+                        options={[
+                            { label: 'UN', value: 'UN' },
+                            { label: 'KG', value: 'KG' },
+                            { label: 'L', value: 'L' }
+                        ]}
+                        className={selectStyle}
+                      />
                   </div>
                    <div className="md:col-span-2">
                       <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center"><Calculator size={12} className="mr-1.5"/> Q* U/M</label>
@@ -557,6 +554,7 @@ export const DispatchView: React.FC = () => {
   });
 
   const inputStyle = "w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 outline-none focus:border-orange-500 transition-colors font-medium placeholder:font-normal placeholder:text-slate-400";
+  const selectStyle = "w-full p-2.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 font-medium";
   const labelStyle = "block text-xs font-bold text-slate-700 mb-1.5";
   const requiredStar = <span className="text-orange-500 ml-0.5">*</span>;
 
@@ -784,58 +782,49 @@ export const DispatchView: React.FC = () => {
                   {/* Row 1 */}
                   <div>
                       <label className={labelStyle}>Emplazamiento {requiredStar}</label>
-                      <div className="relative">
-                          <select 
-                            value={formData.emplacement}
-                            onChange={e => setFormData({...formData, emplacement: e.target.value})}
-                            className={`${inputStyle} appearance-none bg-white`}
-                          >
-                              <option value="">Seleccionar...</option>
-                              {emplacements.map(e => <option key={e} value={e}>{e}</option>)}
-                          </select>
-                          <ChevronDown size={14} className="absolute right-3 top-3 text-slate-400 pointer-events-none"/>
-                      </div>
+                      <FormSelect 
+                        value={formData.emplacement}
+                        onChange={(val) => setFormData({...formData, emplacement: val})}
+                        options={emplacements.map(e => ({ label: e, value: e }))}
+                        className={selectStyle}
+                      />
                   </div>
                   <div>
                       <label className={labelStyle}>Salida {requiredStar}</label>
-                      <div className="relative">
-                          <select className={`${inputStyle} appearance-none bg-white`}>
-                              <option>Origen Central</option>
-                          </select>
-                          <ChevronDown size={14} className="absolute right-3 top-3 text-slate-400 pointer-events-none"/>
-                      </div>
+                      <FormSelect 
+                        value="Origen Central"
+                        onChange={() => {}}
+                        options={[{ label: 'Origen Central', value: 'Origen Central' }]}
+                        className={selectStyle}
+                      />
                   </div>
                   <div>
                       <label className={labelStyle}>Hasta {requiredStar}</label>
-                      <div className="relative">
-                          <select 
-                             value={formData.destination}
-                             onChange={e => setFormData({...formData, destination: e.target.value})}
-                             className={`${inputStyle} appearance-none bg-white`}
-                          >
-                              <option value="">Destino...</option>
-                              <option value="Faena Norte">Faena Norte</option>
-                              <option value="Hospital Regional">Hospital Regional</option>
-                              <option value="Planta Procesos">Planta Procesos</option>
-                          </select>
-                          <ChevronDown size={14} className="absolute right-3 top-3 text-slate-400 pointer-events-none"/>
-                      </div>
+                      <FormSelect 
+                        value={formData.destination}
+                        onChange={(val) => setFormData({...formData, destination: val})}
+                        options={[
+                            { label: 'Faena Norte', value: 'Faena Norte' },
+                            { label: 'Hospital Regional', value: 'Hospital Regional' },
+                            { label: 'Planta Procesos', value: 'Planta Procesos' }
+                        ]}
+                        placeholder="Destino..."
+                        className={selectStyle}
+                      />
                   </div>
                   <div>
                       <label className={labelStyle}>Material {requiredStar}</label>
-                      <div className="relative">
-                          <select 
-                            value={formData.material}
-                            onChange={e => setFormData({...formData, material: e.target.value})}
-                            className={`${inputStyle} appearance-none bg-white`}
-                          >
-                              <option value="">Seleccione Material</option>
-                              <option value="Cilindro Oxígeno 10m3">Cilindro Oxígeno 10m3</option>
-                              <option value="Cilindro Oxígeno 1m3">Cilindro Oxígeno 1m3</option>
-                              <option value="Regulador">Regulador</option>
-                          </select>
-                          <ChevronDown size={14} className="absolute right-3 top-3 text-slate-400 pointer-events-none"/>
-                      </div>
+                      <FormSelect 
+                        value={formData.material}
+                        onChange={(val) => setFormData({...formData, material: val})}
+                        options={[
+                            { label: 'Cilindro Oxígeno 10m3', value: 'Cilindro Oxígeno 10m3' },
+                            { label: 'Cilindro Oxígeno 1m3', value: 'Cilindro Oxígeno 1m3' },
+                            { label: 'Regulador', value: 'Regulador' }
+                        ]}
+                        placeholder="Seleccione Material"
+                        className={selectStyle}
+                      />
                   </div>
 
                   {/* Row 2 */}
@@ -855,19 +844,17 @@ export const DispatchView: React.FC = () => {
                   </div>
                   <div>
                       <label className={labelStyle}>Motivo Despacho {requiredStar}</label>
-                      <div className="relative">
-                          <select 
-                             value={formData.reason}
-                             onChange={e => setFormData({...formData, reason: e.target.value})}
-                             className={`${inputStyle} appearance-none bg-white`}
-                          >
-                              <option value="">Seleccionar motivo...</option>
-                              <option value="Entrega Cliente">Entrega Cliente</option>
-                              <option value="Transferencia Sucursal">Transferencia Sucursal</option>
-                              <option value="Mantenimiento">Mantenimiento</option>
-                          </select>
-                          <ChevronDown size={14} className="absolute right-3 top-3 text-slate-400 pointer-events-none"/>
-                      </div>
+                      <FormSelect 
+                        value={formData.reason}
+                        onChange={(val) => setFormData({...formData, reason: val})}
+                        options={[
+                            { label: 'Entrega Cliente', value: 'Entrega Cliente' },
+                            { label: 'Transferencia Sucursal', value: 'Transferencia Sucursal' },
+                            { label: 'Mantenimiento', value: 'Mantenimiento' }
+                        ]}
+                        placeholder="Seleccionar motivo..."
+                        className={selectStyle}
+                      />
                   </div>
                   <div>
                       <label className={labelStyle}>Usuario Responsable</label>
@@ -1043,6 +1030,12 @@ export const FleetView: React.FC = () => {
   const regions = useMemo(() => CHILE_GEO_DATA.map(r => r.region), []);
   const communes = useMemo(() => selectedRegion ? CHILE_GEO_DATA.find(r => r.region === selectedRegion)?.communes || [] : [], [selectedRegion]);
   const availableDrivers = useMemo(() => users.filter(u => u.role === 'DRIVER'), [users]);
+
+  // NEW: Calculate available models based on selected brand
+  const availableModels = useMemo(() => {
+      if (!newVehicle.brand) return [];
+      return (CAR_MODELS as Record<string, string[]>)[newVehicle.brand] || [];
+  }, [newVehicle.brand]);
 
   const handleAdd = () => {
       if(newVehicle.plate && newVehicle.brand && newVehicle.model) {
@@ -1242,22 +1235,21 @@ export const FleetView: React.FC = () => {
                     <div className="grid grid-cols-2 gap-6">
                         <div>
                             <label className="text-xs font-bold text-slate-700 mb-1.5 block">Marca <span className="text-red-500">*</span></label>
-                            <input 
-                                type="text" 
-                                placeholder="Ej: Toyota" 
-                                value={newVehicle.brand}
-                                onChange={e => setNewVehicle({...newVehicle, brand: e.target.value})}
-                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-slate-300"
+                            <FormSelect 
+                                value={newVehicle.brand || ''}
+                                onChange={(val) => setNewVehicle({...newVehicle, brand: val, model: ''})}
+                                options={CAR_BRANDS.map(b => ({ label: b, value: b }))}
+                                placeholder="Seleccionar Marca"
                             />
                         </div>
                         <div>
                             <label className="text-xs font-bold text-slate-700 mb-1.5 block">Modelo <span className="text-red-500">*</span></label>
-                            <input 
-                                type="text" 
-                                placeholder="Ej: Hilux" 
-                                value={newVehicle.model}
-                                onChange={e => setNewVehicle({...newVehicle, model: e.target.value})}
-                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-slate-300"
+                            <FormSelect 
+                                value={newVehicle.model || ''}
+                                onChange={(val) => setNewVehicle({...newVehicle, model: val})}
+                                options={availableModels.map(m => ({ label: m, value: m }))}
+                                placeholder="Seleccionar Modelo"
+                                disabled={!newVehicle.brand}
                             />
                         </div>
                     </div>

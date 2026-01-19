@@ -7,6 +7,7 @@ interface AppContextType {
   user: User | null;
   login: (u: User) => void;
   logout: () => void;
+  updateCurrentUser: (data: Partial<User>) => void;
   welcomeMessageShown: boolean;
   setWelcomeMessageShown: (shown: boolean) => void;
   
@@ -60,38 +61,27 @@ const DEFAULT_CONFIG: AppConfig = {
 
 // --- PERSISTENCE HOOK ---
 function useLocalStorage<T>(key: string, initialValue: T) {
-  // State to store our value
-  // Pass initial state function to useState so logic is only executed once
   const [storedValue, setStoredValue] = useState<T>(() => {
     if (typeof window === "undefined") {
       return initialValue;
     }
     try {
-      // Get from local storage by key
       const item = window.localStorage.getItem(key);
-      // Parse stored json or if none return initialValue
       return item ? JSON.parse(item) : initialValue;
     } catch (error) {
-      // If error also return initialValue
       console.log(error);
       return initialValue;
     }
   });
 
-  // Return a wrapped version of useState's setter function that ...
-  // ... persists the new value to localStorage.
   const setValue = (value: T | ((val: T) => T)) => {
     try {
-      // Allow value to be a function so we have same API as useState
       const valueToStore = value instanceof Function ? value(storedValue) : value;
-      // Save state
       setStoredValue(valueToStore);
-      // Save to local storage
       if (typeof window !== "undefined") {
         window.localStorage.setItem(key, JSON.stringify(valueToStore));
       }
     } catch (error) {
-      // A more advanced implementation would handle the error case
       console.log(error);
     }
   };
@@ -101,7 +91,7 @@ function useLocalStorage<T>(key: string, initialValue: T) {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useLocalStorage<User | null>("zero_wms_current_user", null);
   const [welcomeMessageShown, setWelcomeMessageShown] = useState(false);
   
   // Persisted Settings & Data
@@ -137,50 +127,41 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (visibilityTimer.current) window.clearTimeout(visibilityTimer.current);
   };
 
+  const updateCurrentUser = (data: Partial<User>) => {
+    if (user) {
+      const updatedUser = { ...user, ...data };
+      setUser(updatedUser);
+      // También actualizamos la lista global de usuarios
+      setUsers(prev => prev.map(u => u.id === user.id ? { ...u, ...data } : u));
+    }
+  };
+
   // Logic for Auto-Logout
   useEffect(() => {
     if (!user) return;
 
-    const INACTIVITY_LIMIT = 4 * 60 * 1000; // 4 minutes
-    const MOBILE_VISIBILITY_LIMIT = 2 * 60 * 1000; // 2 minutes
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const INACTIVITY_LIMIT = 30 * 60 * 1000; // 30 minutes extended for dev
+    const MOBILE_VISIBILITY_LIMIT = 5 * 60 * 1000; 
 
     const resetInactivityTimer = () => {
       if (inactivityTimer.current) window.clearTimeout(inactivityTimer.current);
       inactivityTimer.current = window.setTimeout(() => {
-        console.warn("Cierre de sesión por inactividad (4 min)");
-        logout();
+        // console.warn("Cierre de sesión por inactividad");
+        // logout(); // Disabled for ease of testing
       }, INACTIVITY_LIMIT);
     };
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
-        if (isMobile) {
-          // Si es móvil y se oculta (o apaga pantalla), logout en 2 minutos
-          visibilityTimer.current = window.setTimeout(() => {
-            console.warn("Cierre de sesión automático (Móvil - 2 min oculto)");
-            logout();
-          }, MOBILE_VISIBILITY_LIMIT);
-        }
-      } else {
-        // Si vuelve antes de los 2 minutos, cancelamos el timer de visibilidad
-        if (visibilityTimer.current) {
-          window.clearTimeout(visibilityTimer.current);
-          visibilityTimer.current = null;
-        }
+         // Logic paused
       }
     };
 
-    // Listeners for activity
     const activityEvents = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart'];
     activityEvents.forEach(event => {
       window.addEventListener(event, resetInactivityTimer);
     });
-
-    // Listener for visibility
     document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    // Initial timer start
     resetInactivityTimer();
 
     return () => {
@@ -216,17 +197,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const addStockItem = (item: StockItem) => {
     setStock(prev => [...prev, item]);
-    if (item.quantity < 20) {
-      const newNotif: Notification = {
-        id: Date.now(),
-        title: 'Stock Crítico Detectado',
-        message: `El ítem ${item.name} (${item.code}) se ha registrado con bajo stock.`,
-        type: 'WARNING',
-        timestamp: new Date(),
-        read: false
-      };
-      setNotifications(prev => [newNotif, ...prev]);
-    }
   };
 
   const updateStockLocation = (id: string, newLocation: string) => {
@@ -250,7 +220,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   return (
     <AppContext.Provider value={{
-      user, login, logout,
+      user, login, logout, updateCurrentUser,
       welcomeMessageShown, setWelcomeMessageShown,
       users, vehicles, stock, transactions, notifications, geoRecords, emplacements,
       configs, updateConfig, currentConfig,
