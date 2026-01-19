@@ -4,7 +4,8 @@ import { useApp } from '../store/AppContext';
 import { 
   Settings, Type, Image as ImageIcon, Layout, 
   Save, Upload, Sliders, BoxSelect, CheckCircle, 
-  Laptop, Monitor, Layers, ToggleLeft, ToggleRight
+  Laptop, Monitor, Layers, ToggleLeft, ToggleRight,
+  User, Lock, Eye, Building2, ChevronDown, ChevronRight
 } from 'lucide-react';
 
 export const SettingsView: React.FC = () => {
@@ -351,21 +352,46 @@ export const SettingsView: React.FC = () => {
                          </div>
                       </div>
                    ) : previewMode === 'LOGIN' ? (
-                      <div className="w-full bg-white rounded-[2rem] shadow-2xl animate-in zoom-in-95 duration-500 overflow-hidden flex h-80 border border-white/10">
-                         <div className="w-1/2 relative bg-slate-800">
+                      <div className="w-full bg-white rounded-[2rem] shadow-2xl animate-in zoom-in-95 duration-500 overflow-hidden flex h-96 border border-white/10">
+                         {/* Split screen preview reflecting new login design */}
+                         <div className="hidden md:block w-1/2 relative bg-slate-800">
                             <img src={localConfig.loginImage} className="w-full h-full object-cover opacity-50" />
-                            <div className="absolute inset-0 p-4 flex flex-col justify-center">
-                               <h1 style={{ fontFamily: localConfig.fontFamily }} className="text-white text-xl font-black uppercase italic leading-tight">
-                                  {appName.split(' ')[0]} <br/> <span className="text-blue-500">{appName.split(' ').slice(1).join(' ') || 'WMS'}</span>
+                            <div className="absolute inset-0 p-6 flex flex-col justify-end">
+                               <h1 style={{ fontFamily: localConfig.fontFamily, fontSize: `${localConfig.fontSize + 6}px` }} className="text-white font-black leading-tight mb-1">
+                                  {appName}
                                </h1>
+                               <p className="text-white/60 text-[10px]">{localConfig.slogan.substring(0, 40)}...</p>
                             </div>
                          </div>
-                         <div className="w-1/2 p-6 flex flex-col justify-center bg-white">
-                            <h2 style={{ fontFamily: 'Arial, sans-serif', fontSize: '12px', fontWeight: 700, fontStyle: 'normal' }} className="text-slate-900 tracking-widest uppercase mb-4">INICIO DE SESIÓN</h2>
-                            <div className="space-y-2">
-                               <div className="h-6 w-full bg-slate-100 rounded"></div>
-                               <div className="h-6 w-full bg-slate-100 rounded"></div>
-                               <div className="h-8 w-full bg-blue-600 rounded mt-2"></div>
+                         <div className="w-full md:w-1/2 p-6 flex flex-col justify-center bg-white">
+                            <div style={{ fontFamily: localConfig.fontFamily }}>
+                                <h2 style={{ fontSize: `${localConfig.fontSize + 4}px`, fontWeight: localConfig.disableBold ? 400 : 700 }} className="text-slate-900 mb-1">Iniciar Sesión</h2>
+                                <p style={{ fontSize: `${localConfig.fontSize - 2}px` }} className="text-slate-500 mb-6">Ingrese sus credenciales</p>
+                                
+                                <div className="space-y-3">
+                                   <div className="relative">
+                                     <User size={14} className="absolute left-3 top-2.5 text-slate-400" />
+                                     <div className="w-full pl-9 py-2 border rounded text-xs text-slate-400">Nombre de usuario</div>
+                                   </div>
+                                   <div className="relative">
+                                     <Lock size={14} className="absolute left-3 top-2.5 text-slate-400" />
+                                     <div className="w-full pl-9 py-2 border rounded text-xs text-slate-400">Contraseña</div>
+                                   </div>
+                                   
+                                   <div className="pt-2">
+                                     <label style={{ fontSize: `${localConfig.fontSize - 3}px` }} className="block font-bold text-slate-800 mb-1">Seleccionar Sucursal</label>
+                                     <div className="relative">
+                                        <Building2 size={14} className="absolute left-3 top-2.5 text-slate-400" />
+                                        <div className="w-full pl-9 py-2 border rounded text-xs text-slate-400 flex justify-between">
+                                            <span>Sucursal</span> <ChevronDown size={12}/>
+                                        </div>
+                                     </div>
+                                   </div>
+
+                                   <div className="w-full bg-blue-600 h-9 rounded mt-4 flex items-center justify-center text-white text-xs">
+                                       Ingresar al Sistema <ChevronRight size={12} className="ml-1"/>
+                                   </div>
+                                </div>
                             </div>
                          </div>
                       </div>

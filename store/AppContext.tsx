@@ -58,24 +58,65 @@ const DEFAULT_CONFIG: AppConfig = {
   disableBold: false
 };
 
+// --- PERSISTENCE HOOK ---
+function useLocalStorage<T>(key: string, initialValue: T) {
+  // State to store our value
+  // Pass initial state function to useState so logic is only executed once
+  const [storedValue, setStoredValue] = useState<T>(() => {
+    if (typeof window === "undefined") {
+      return initialValue;
+    }
+    try {
+      // Get from local storage by key
+      const item = window.localStorage.getItem(key);
+      // Parse stored json or if none return initialValue
+      return item ? JSON.parse(item) : initialValue;
+    } catch (error) {
+      // If error also return initialValue
+      console.log(error);
+      return initialValue;
+    }
+  });
+
+  // Return a wrapped version of useState's setter function that ...
+  // ... persists the new value to localStorage.
+  const setValue = (value: T | ((val: T) => T)) => {
+    try {
+      // Allow value to be a function so we have same API as useState
+      const valueToStore = value instanceof Function ? value(storedValue) : value;
+      // Save state
+      setStoredValue(valueToStore);
+      // Save to local storage
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(key, JSON.stringify(valueToStore));
+      }
+    } catch (error) {
+      // A more advanced implementation would handle the error case
+      console.log(error);
+    }
+  };
+  return [storedValue, setValue] as const;
+}
+
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [welcomeMessageShown, setWelcomeMessageShown] = useState(false);
-  const [appName, setAppName] = useState("ZERO WMS");
+  
+  // Persisted Settings & Data
+  const [appName, setAppName] = useLocalStorage("zero_wms_appname", "ZERO WMS");
+  const [configs, setConfigs] = useLocalStorage<Record<string, AppConfig>>("zero_wms_configs", {});
 
-  // Multi-tenant styling config
-  const [configs, setConfigs] = useState<Record<string, AppConfig>>({});
-
-  const [users, setUsers] = useState<User[]>([
+  const [users, setUsers] = useLocalStorage<User[]>("zero_wms_users", [
     { id: '1', name: 'Admin', rut: '1-9', password: '174545219', role: 'ADMIN', location: 'Central' }
   ]);
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]); 
-  const [stock, setStock] = useState<StockItem[]>([]); 
-  const [transactions, setTransactions] = useState<GateTransaction[]>([]);
-  const [geoRecords, setGeoRecords] = useState<GeoLocationRecord[]>([]);
-  const [emplacements, setEmplacements] = useState<string[]>(INITIAL_EMPLACEMENTS);
+  const [vehicles, setVehicles] = useLocalStorage<Vehicle[]>("zero_wms_vehicles", []); 
+  const [stock, setStock] = useLocalStorage<StockItem[]>("zero_wms_stock", []); 
+  const [transactions, setTransactions] = useLocalStorage<GateTransaction[]>("zero_wms_transactions", []);
+  const [geoRecords, setGeoRecords] = useLocalStorage<GeoLocationRecord[]>("zero_wms_georecords", []);
+  const [emplacements, setEmplacements] = useLocalStorage<string[]>("zero_wms_emplacements", INITIAL_EMPLACEMENTS);
+
   const [notifications, setNotifications] = useState<Notification[]>([
     { id: 1, title: 'Sistema Iniciado', message: 'Plataforma lista para operar.', type: 'INFO', timestamp: new Date(), read: false }
   ]);

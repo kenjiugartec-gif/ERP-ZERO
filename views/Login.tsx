@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useApp } from '../store/AppContext';
-import { Eye, EyeOff, Lock, User, MapPin, ChevronRight, XCircle, ChevronDown, CheckCircle2, Building2 } from 'lucide-react';
+import { Eye, EyeOff, Lock, User, Building2, ChevronRight, XCircle, ChevronDown, CheckCircle2 } from 'lucide-react';
 
 export const Login: React.FC = () => {
   const { login, users, emplacements, configs, appName } = useApp();
@@ -61,7 +61,7 @@ export const Login: React.FC = () => {
   return (
     <div className="min-h-screen flex bg-white font-sans">
       
-      {/* SECCIÓN IMAGEN IZQUIERDA (Mantenida igual para contexto) */}
+      {/* SECCIÓN IMAGEN IZQUIERDA */}
       <div className="relative w-1/2 hidden lg:block overflow-hidden bg-slate-900">
         <img 
           src={activeConfig.loginImage} 
@@ -75,15 +75,15 @@ export const Login: React.FC = () => {
         </div>
       </div>
 
-      {/* SECCIÓN FORMULARIO DERECHA - REDISEÑADO */}
+      {/* SECCIÓN FORMULARIO DERECHA - REDISEÑADO SEGÚN IMAGEN */}
       <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-8 bg-white">
-        <div className="w-full max-w-[400px]">
+        <div className="w-full max-w-[420px] space-y-8">
           
-          <header className="mb-10">
-            <h2 className="text-3xl font-bold text-slate-900 tracking-tight mb-2">
+          <header>
+            <h2 className="text-3xl font-bold text-slate-900 mb-2">
               Iniciar Sesión
             </h2>
-            <p className="text-slate-500 text-sm font-normal">
+            <p className="text-slate-500 text-sm">
               Ingrese sus credenciales para continuar
             </p>
           </header>
@@ -91,7 +91,7 @@ export const Login: React.FC = () => {
           <form onSubmit={handleLogin} className="space-y-5">
             
             {/* Usuario */}
-            <div className="relative group">
+            <div className="relative">
               <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
                  <User size={20} strokeWidth={1.5} />
               </div>
@@ -99,7 +99,7 @@ export const Login: React.FC = () => {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 placeholder:text-slate-400 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+                className="w-full pl-12 pr-4 py-3.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 placeholder:text-slate-400 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
                 placeholder="Nombre de usuario"
                 required
               />
@@ -107,7 +107,7 @@ export const Login: React.FC = () => {
 
             {/* Contraseña */}
             <div className="space-y-2">
-                <div className="relative group">
+                <div className="relative">
                   <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
                      <Lock size={20} strokeWidth={1.5} />
                   </div>
@@ -115,7 +115,7 @@ export const Login: React.FC = () => {
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-12 pr-12 py-3 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 placeholder:text-slate-400 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+                    className="w-full pl-12 pr-12 py-3.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 placeholder:text-slate-400 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
                     placeholder="Contraseña"
                     required
                   />
@@ -135,25 +135,25 @@ export const Login: React.FC = () => {
                 </div>
             </div>
 
-            {/* Selector de Sucursal con Transición Suave */}
+            {/* Selector de Sucursal */}
             <div 
               ref={selectRef}
-              className={`transition-all duration-700 ease-in-out overflow-hidden ${
+              className={`transition-all duration-500 ease-in-out ${
                 isAdminMode 
-                  ? 'max-h-0 opacity-0 -translate-y-4 pointer-events-none' 
-                  : 'max-h-32 opacity-100 translate-y-0 pt-2'
+                  ? 'max-h-0 opacity-0 overflow-hidden' 
+                  : 'max-h-32 opacity-100'
               }`}
             >
-                <label className="block text-sm font-bold text-slate-700 mb-2">
+                <label className="block text-sm font-bold text-slate-800 mb-2">
                     Seleccionar Sucursal <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
-                     <Building2 size={18} strokeWidth={1.5} />
+                     <Building2 size={20} strokeWidth={1.5} />
                   </div>
                   <div 
                     onClick={() => setIsSelectOpen(!isSelectOpen)}
-                    className={`w-full pl-12 pr-10 py-3 bg-white border border-slate-200 rounded-lg text-sm cursor-pointer flex items-center justify-between outline-none ${isSelectOpen ? 'border-blue-500 ring-1 ring-blue-500' : ''}`}
+                    className={`w-full pl-12 pr-10 py-3.5 bg-white border border-slate-200 rounded-lg text-sm cursor-pointer flex items-center justify-between outline-none ${isSelectOpen ? 'border-blue-500 ring-1 ring-blue-500' : ''}`}
                   >
                     <span className={selectedEmplacement ? 'text-slate-700 font-medium' : 'text-slate-400'}>
                       {selectedEmplacement || "Seleccionar Sucursal"}
@@ -192,7 +192,7 @@ export const Login: React.FC = () => {
 
             <button
               type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-lg font-bold text-sm shadow-lg shadow-blue-500/20 transition-all active:scale-[0.98] flex items-center justify-center mt-6"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-lg font-bold text-sm shadow-lg shadow-blue-500/20 transition-all active:scale-[0.98] flex items-center justify-center mt-4"
             >
               Ingresar al Sistema 
               <ChevronRight size={18} className="ml-2" strokeWidth={2.5} />
@@ -200,7 +200,7 @@ export const Login: React.FC = () => {
 
           </form>
 
-          <footer className="mt-16 text-center space-y-1">
+          <footer className="pt-8 text-center space-y-1">
               <p className="text-xs text-slate-400 font-medium">© 2026 ZERO. Todos los derechos reservados.</p>
               <p className="text-xs text-slate-400">Versión 2.5.0 Enterprise</p>
           </footer>
