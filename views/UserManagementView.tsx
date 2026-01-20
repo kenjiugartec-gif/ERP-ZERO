@@ -1,5 +1,6 @@
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useApp } from '../store/AppContext';
 import { CHILE_GEO_DATA, MODULES } from '../constants';
 import { User, Role } from '../types';
@@ -45,14 +46,30 @@ const ModalInput = ({ label, icon: Icon, placeholder, value, onChange, type = "t
 const ModalSelect = ({ label, placeholder, options, value, onChange, disabled = false, icon: Icon }: any) => {
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
+    const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
 
     useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (containerRef.current && !containerRef.current.contains(event.target as Node)) setIsOpen(false);
-        };
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
+        const handleScroll = () => { if(isOpen) setIsOpen(false); };
+        window.addEventListener('scroll', handleScroll, true);
+        window.addEventListener('resize', handleScroll);
+        return () => {
+             window.removeEventListener('scroll', handleScroll, true);
+             window.removeEventListener('resize', handleScroll);
+        }
+    }, [isOpen]);
+
+    const handleToggle = (e: React.MouseEvent) => {
+        if (disabled) return;
+        if (!isOpen) {
+             const rect = e.currentTarget.getBoundingClientRect();
+             setCoords({
+                 top: rect.bottom + 4,
+                 left: rect.left,
+                 width: rect.width
+             });
+        }
+        setIsOpen(!isOpen);
+    };
 
     const selectedLabel = options.find((o: any) => o.value === value)?.label || value;
 
@@ -63,28 +80,46 @@ const ModalSelect = ({ label, placeholder, options, value, onChange, disabled = 
                 {label}
             </label>
             <div 
-                onClick={() => !disabled && setIsOpen(!isOpen)}
+                onClick={handleToggle}
                 className={`w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium flex justify-between items-center cursor-pointer shadow-sm transition-all ${isOpen ? 'bg-white border-blue-500 ring-4 ring-blue-500/10' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : 'text-slate-700'}`}
             >
                 <span className={!value ? 'text-slate-400' : 'text-slate-800'}>{value ? selectedLabel : placeholder}</span>
                 <ChevronDown size={16} className={`text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180 text-blue-500' : ''}`} />
             </div>
-            {isOpen && (
-                <div className="absolute top-[110%] left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-2xl z-50 max-h-72 overflow-y-auto animate-in fade-in slide-in-from-top-2">
-                    {options.map((opt: any) => (
-                        <div 
-                            key={opt.value} 
-                            onClick={() => { onChange(opt.value); setIsOpen(false); }}
-                            className={`px-4 py-3 text-sm cursor-pointer flex justify-between items-center border-b border-slate-50 last:border-0 transition-colors ${value === opt.value ? 'bg-blue-50 text-blue-700 font-bold' : 'text-slate-600 hover:bg-slate-50'}`}
-                        >
-                            {opt.label}
-                            {value === opt.value && <Check size={16} className="text-blue-600"/>}
+            {isOpen && createPortal(
+                <div 
+                    className="fixed inset-0 z-[9999]" 
+                    onClick={(e) => { e.stopPropagation(); setIsOpen(false); }}
+                >
+                     <div className="absolute inset-0 bg-transparent" />
+                     <div 
+                        className="absolute bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col"
+                        style={{
+                            top: coords.top,
+                            left: coords.left,
+                            width: coords.width,
+                            maxHeight: '300px'
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                     >
+                        <div className="overflow-y-auto max-h-72">
+                            {options.map((opt: any) => (
+                                <div 
+                                    key={opt.value} 
+                                    onClick={() => { onChange(opt.value); setIsOpen(false); }}
+                                    className={`px-4 py-3 text-sm cursor-pointer flex justify-between items-center border-b border-slate-50 last:border-0 transition-colors ${value === opt.value ? 'bg-blue-50 text-blue-700 font-bold' : 'text-slate-600 hover:bg-slate-50'}`}
+                                >
+                                    {opt.label}
+                                    {value === opt.value && <Check size={16} className="text-blue-600"/>}
+                                </div>
+                            ))}
+                            {options.length === 0 && (
+                                <div className="p-4 text-center text-slate-400 text-xs italic">No hay opciones disponibles</div>
+                            )}
                         </div>
-                    ))}
-                    {options.length === 0 && (
-                        <div className="p-4 text-center text-slate-400 text-xs italic">No hay opciones disponibles</div>
-                    )}
-                </div>
+                     </div>
+                </div>,
+                document.body
             )}
         </div>
     );

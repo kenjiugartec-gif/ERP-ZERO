@@ -1,5 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useApp } from '../store/AppContext';
 import { CHILE_GEO_DATA } from '../constants';
 import { 
@@ -25,52 +26,87 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
 
+  // Close on scroll or resize to prevent detached menu
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
+    const handleScroll = () => { if (isOpen) setIsOpen(false); };
+    window.addEventListener('scroll', handleScroll, true);
+    window.addEventListener('resize', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll, true);
+      window.removeEventListener('resize', handleScroll);
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [isOpen]);
+
+  const handleToggle = () => {
+      if (disabled) return;
+      if (!isOpen && containerRef.current) {
+          const rect = containerRef.current.getBoundingClientRect();
+          setCoords({
+              top: rect.bottom + 4,
+              left: rect.left,
+              width: rect.width
+          });
+      }
+      setIsOpen(!isOpen);
+  };
 
   return (
-    <div className={`relative ${disabled ? 'opacity-40 pointer-events-none' : ''}`} ref={containerRef}>
-      <label className="flex items-center text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">
-         <span className="text-blue-600 mr-1.5">{icon}</span>
-         {step && <span className="mr-1 text-slate-500">{step}.</span>} {label}
-      </label>
-      
-      <div 
-        onClick={() => !disabled && setIsOpen(!isOpen)}
-        className={`w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 flex justify-between items-center cursor-pointer transition-all hover:bg-slate-100 ${isOpen ? 'ring-2 ring-blue-500/10 border-blue-400 bg-white' : ''}`}
-      >
-        <span className={value ? 'text-slate-800' : 'text-slate-400 font-normal truncate'}>
-          {value || placeholder}
-        </span>
-        <ChevronDown size={14} className={`text-slate-400 transition-transform flex-shrink-0 ml-2 ${isOpen ? 'rotate-180 text-blue-500' : ''}`} />
-      </div>
-
-      {isOpen && (
-        <div className="absolute top-[105%] left-0 right-0 bg-white border border-slate-200 rounded-lg shadow-xl z-50 overflow-hidden max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-1">
-          {options.map(opt => (
+    <>
+        <div className={`relative ${disabled ? 'opacity-40 pointer-events-none' : ''}`} ref={containerRef}>
+            <label className="flex items-center text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">
+                <span className="text-blue-600 mr-1.5">{icon}</span>
+                {step && <span className="mr-1 text-slate-500">{step}.</span>} {label}
+            </label>
+            
             <div 
-              key={opt}
-              onClick={() => { onSelect(opt); setIsOpen(false); }}
-              className={`px-4 py-3 text-xs font-bold cursor-pointer hover:bg-slate-50 transition-colors flex items-center justify-between ${value === opt ? 'text-blue-600 bg-blue-50' : 'text-slate-600'}`}
+                onClick={handleToggle}
+                className={`w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 flex justify-between items-center cursor-pointer transition-all hover:bg-slate-100 ${isOpen ? 'ring-2 ring-blue-500/10 border-blue-400 bg-white' : ''}`}
             >
-              <span>{opt}</span>
-              {value === opt && <CheckCircle2 size={14} />}
+                <span className={value ? 'text-slate-800' : 'text-slate-400 font-normal truncate'}>
+                {value || placeholder}
+                </span>
+                <ChevronDown size={14} className={`text-slate-400 transition-transform flex-shrink-0 ml-2 ${isOpen ? 'rotate-180 text-blue-500' : ''}`} />
             </div>
-          ))}
-          {options.length === 0 && (
-              <div className="px-4 py-3 text-xs text-slate-400 italic">No hay opciones disponibles</div>
-          )}
         </div>
-      )}
-    </div>
+
+        {isOpen && createPortal(
+            <div className="fixed inset-0 z-[9999]" onClick={(e) => { e.stopPropagation(); setIsOpen(false); }}>
+                {/* Invisible backdrop to close on click outside */}
+                <div className="absolute inset-0 bg-transparent" />
+                
+                {/* Dropdown Menu - Rendered in Body via Portal */}
+                <div 
+                    className="absolute bg-white border border-slate-200 rounded-lg shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+                    style={{
+                        top: coords.top,
+                        left: coords.left,
+                        width: coords.width,
+                        maxHeight: '300px'
+                    }}
+                    onClick={(e) => e.stopPropagation()} 
+                >
+                    <div className="max-h-60 overflow-y-auto">
+                        {options.map(opt => (
+                            <div 
+                            key={opt}
+                            onClick={() => { onSelect(opt); setIsOpen(false); }}
+                            className={`px-4 py-3 text-xs font-bold cursor-pointer hover:bg-slate-50 transition-colors flex items-center justify-between ${value === opt ? 'text-blue-600 bg-blue-50' : 'text-slate-600'}`}
+                            >
+                            <span>{opt}</span>
+                            {value === opt && <CheckCircle2 size={14} />}
+                            </div>
+                        ))}
+                        {options.length === 0 && (
+                            <div className="px-4 py-3 text-xs text-slate-400 italic">No hay opciones disponibles</div>
+                        )}
+                    </div>
+                </div>
+            </div>,
+            document.body
+        )}
+    </>
   );
 };
 
