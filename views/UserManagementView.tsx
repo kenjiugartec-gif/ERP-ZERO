@@ -112,7 +112,7 @@ const PermissionBadge = ({ status }: { status: PermissionStatus }) => {
 // --- ROLES VIEW COMPONENT ---
 const RolesView = () => {
     const { roles, addRole } = useApp();
-    const [viewMode, setViewMode] = useState<'HIERARCHY' | 'MATRIX'>('MATRIX');
+    const [viewMode, setViewMode] = useState<'HIERARCHY' | 'MATRIX'>('HIERARCHY');
     const [selectedRole, setSelectedRole] = useState(roles[0]?.id || "ADMIN");
     const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
     
