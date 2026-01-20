@@ -27,7 +27,7 @@ export const Login: React.FC = () => {
   const activeConfig = useMemo(() => {
     // Fallback config if no specific config for emplacement exists
     return configs[selectedEmplacement] || {
-      slogan: "Innovative solutions for technical logistics and industrial management.",
+      slogan: "Innovative Solutions, Comprehensive Logistics Solutions.",
       logo: undefined,
       loginImage: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=2070&auto=format&fit=crop"
     };
@@ -62,22 +62,45 @@ export const Login: React.FC = () => {
   return (
     <div className="min-h-screen flex bg-white font-sans">
       
-      {/* SECCIÓN IZQUIERDA - IMAGEN Y BRANDING */}
-      <div className="relative w-1/2 hidden lg:flex flex-col justify-end overflow-hidden bg-slate-900">
-        <img 
-          src={activeConfig.loginImage} 
-          alt="Login Cover" 
-          className="absolute inset-0 w-full h-full object-cover opacity-50"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/20 to-transparent"></div>
-        
-        <div className="relative z-10 px-16 py-16">
-           <h1 className="text-5xl font-black text-white tracking-tighter uppercase mb-4">
-             {appName}
-           </h1>
-           <p className="text-slate-300 text-lg font-medium leading-relaxed max-w-lg">
-             {activeConfig.slogan}
-           </p>
+      {/* SECCIÓN IZQUIERDA - IMAGEN Y BRANDING (LOGO PERMANENTE) */}
+      <div className="relative w-1/2 hidden lg:flex flex-col justify-center items-center overflow-hidden bg-slate-900 relative">
+        {/* Abstract Background Elements */}
+        <div className="absolute inset-0 bg-slate-900">
+            <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-slate-800 via-slate-900 to-black opacity-80"></div>
+            <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(#475569 1px, transparent 1px)', backgroundSize: '30px 30px' }}></div>
+        </div>
+
+        {/* LOGO ZERO HARDCODED */}
+        <div className="relative z-10 flex flex-col items-center justify-center p-12 scale-125">
+            <div className="relative w-64 h-64 border-[6px] border-slate-700/50 rounded-full flex items-center justify-center bg-slate-800/30 backdrop-blur-sm shadow-2xl">
+                {/* Inner Ring */}
+                <div className="absolute inset-2 border-2 border-slate-600/30 rounded-full border-dashed animate-spin-slow"></div>
+                
+                {/* Tech Accents */}
+                <div className="absolute -right-2 top-1/2 w-4 h-4 bg-blue-500 rounded-full shadow-[0_0_15px_rgba(59,130,246,0.8)]"></div>
+                <div className="absolute -left-1 bottom-1/3 w-2 h-2 bg-slate-500 rounded-full"></div>
+
+                <div className="flex flex-col items-center justify-center text-center">
+                    <h1 className="text-7xl font-black text-white tracking-tighter italic" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                        ZERO
+                    </h1>
+                    <div className="h-1 w-24 bg-blue-600 my-2 rounded-full"></div>
+                    <p className="text-[10px] font-bold text-slate-300 uppercase tracking-[0.3em]">
+                        INNOVATIVE SOLUTIONS
+                    </p>
+                </div>
+            </div>
+            
+            <div className="mt-12 text-center max-w-md">
+                <p className="text-slate-400 text-lg font-medium leading-relaxed">
+                    {activeConfig.slogan}
+                </p>
+            </div>
+        </div>
+
+        {/* Footer Brand */}
+        <div className="absolute bottom-8 text-slate-600 text-xs font-mono uppercase tracking-widest">
+            System V2.5.0 • Authorized Access Only
         </div>
       </div>
 
@@ -213,6 +236,15 @@ export const Login: React.FC = () => {
 
         </div>
       </div>
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes spin-slow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin-slow {
+            animation: spin-slow 12s linear infinite;
+        }
+      `}} />
     </div>
   );
 };

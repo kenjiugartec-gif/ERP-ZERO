@@ -2,7 +2,8 @@
 import React, { useMemo } from 'react';
 import { useApp } from '../store/AppContext';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Truck, CheckCircle, AlertOctagon, LayoutDashboard, Globe, Info } from 'lucide-react';
+// Added missing Clock icon import
+import { Truck, CheckCircle, AlertOctagon, LayoutDashboard, Globe, Info, ShieldCheck, Terminal, Clock } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
   const { transactions, stock, vehicles, user } = useApp();
@@ -64,6 +65,43 @@ export const Dashboard: React.FC = () => {
             <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
             DATOS ACTUALIZADOS: {new Date().toLocaleTimeString()}
          </div>
+      </div>
+
+      {/* DIDACTIC INDUSTRIAL PROMPT PANEL */}
+      <div className="bg-slate-950 rounded-[2rem] p-8 border-l-8 border-orange-500 shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-8 opacity-10 text-white pointer-events-none">
+              <ShieldCheck size={120} />
+          </div>
+          <div className="relative z-10">
+              <div className="flex items-center space-x-3 text-orange-500 mb-4">
+                  <Terminal size={20} />
+                  <span className="text-xs font-black uppercase tracking-[0.3em]">Protocolo Operativo Alpha - V2.5</span>
+              </div>
+              <h2 className="text-xl md:text-2xl font-black text-white uppercase tracking-tighter mb-4">
+                  Manual de Integridad Logística
+              </h2>
+              <div className="max-w-3xl space-y-4">
+                  <p className="text-slate-400 text-sm leading-relaxed font-mono">
+                      <span className="text-white font-bold">[DIDÁCTICO]</span> Este sistema gestiona flujos críticos de alta fidelidad. 
+                      Como operador autorizado, su responsabilidad es asegurar la <span className="text-orange-400">congruencia absoluta</span> entre el stock físico y el registro digital. 
+                  </p>
+                  <p className="text-slate-500 text-xs leading-relaxed font-mono italic">
+                      "La integridad de la data es el activo más valioso de la planta. Cada ingreso o salida debe ser validado por el protocolo de seguridad Gate-In/Out para evitar discrepancias operativas."
+                  </p>
+                  <div className="flex flex-wrap gap-4 pt-4 border-t border-white/5">
+                      <div className="flex items-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                          <CheckCircle size={14} className="mr-2 text-green-500" /> Margen de Error: 0.00%
+                      </div>
+                      <div className="flex items-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                          <ShieldCheck size={14} className="mr-2 text-blue-500" /> Conexión Encriptada
+                      </div>
+                      <div className="flex items-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                          {/* Fix: Using imported Clock icon component */}
+                          <Clock size={14} className="mr-2 text-orange-500" /> Sincronización: 100ms
+                      </div>
+                  </div>
+              </div>
+          </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">

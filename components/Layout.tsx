@@ -9,7 +9,7 @@ import {
   ClipboardCheck, MapPin, Car, 
   Users, Settings, FileText, Bell, AlertTriangle, Info, CheckCircle,
   Trash2, Search, Sun, Clock, ChevronDown, CloudRain, Cloud, CloudLightning,
-  User as UserIcon, Edit2, Camera, Save, Box, FileSpreadsheet, Download
+  User as UserIcon, Edit2, Camera, Box, FileSpreadsheet, Download, ShieldCheck
 } from 'lucide-react';
 
 // --- TYPES FOR SEARCH ---
@@ -370,10 +370,10 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
         {deferredPrompt && isSidebarOpen && (
            <button 
              onClick={handleInstallClick}
-             className="w-full flex items-center justify-center p-3 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl transition-all shadow-lg animate-pulse"
+             className="w-full flex items-center justify-center p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl transition-all shadow-lg animate-pulse border border-blue-400/30"
            >
-             <Download size={16} className="mr-2"/>
-             <span className="font-bold text-[0.7rem] uppercase tracking-wider">Instalar App</span>
+             <ShieldCheck size={16} className="mr-2"/>
+             <span className="font-bold text-[0.7rem] uppercase tracking-wider text-center">Protocolo de Seguridad <br/> (Descargar Terminal)</span>
            </button>
         )}
         <button 
@@ -577,10 +577,10 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
                             {deferredPrompt && (
                                <button 
                                  onClick={() => { handleInstallClick(); setShowProfileMenu(false); }}
-                                 className="w-full flex items-center px-3 py-2 text-xs font-bold text-purple-600 hover:bg-purple-50 rounded-lg transition-colors mb-1"
+                                 className="w-full flex items-center px-3 py-2 text-xs font-bold text-blue-600 hover:bg-blue-50 rounded-lg transition-colors mb-1"
                                >
-                                 <Download size={14} className="mr-2" />
-                                 Instalar App Móvil
+                                 <ShieldCheck size={14} className="mr-2" />
+                                 Instalar Terminal Seguro
                                </button>
                             )}
                             <button 

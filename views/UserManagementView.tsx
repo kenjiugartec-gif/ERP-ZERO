@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useApp } from '../store/AppContext';
 import { CHILE_GEO_DATA, MODULES } from '../constants';
-import { User } from '../types';
+import { User, Role } from '../types';
 import { GoogleGenAI } from "@google/genai";
 import { 
   Search, Plus, MoreHorizontal, MapPin, 
@@ -15,7 +15,6 @@ import {
   LayoutDashboard, Package, ClipboardCheck, Car, Users, FileText, Trash2, Send, Save, Loader2
 } from 'lucide-react';
 
-// ... (Helper Components: TabButton, ModalInput, ModalSelect, PermissionBadge stay same) ...
 const TabButton = ({ label, active, onClick }: { label: string, active: boolean, onClick: () => void }) => (
   <button 
     onClick={onClick}
@@ -109,12 +108,12 @@ const PermissionBadge = ({ status }: { status: PermissionStatus }) => {
     );
 };
 
-// --- ROLES VIEW COMPONENT ---
 const RolesView = () => {
-    const { roles, addRole } = useApp();
+    const { roles, addRole, updateRole, deleteRole } = useApp();
     const [viewMode, setViewMode] = useState<'HIERARCHY' | 'MATRIX'>('HIERARCHY');
     const [selectedRole, setSelectedRole] = useState(roles[0]?.id || "ADMIN");
     const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
+    const [editingRoleId, setEditingRoleId] = useState<string | null>(null);
     
     const [newRoleData, setNewRoleData] = useState({
         name: '',
@@ -135,16 +134,54 @@ const RolesView = () => {
         });
     };
 
-    const handleCreateRole = () => {
+    const handleSaveRole = () => {
         if (!newRoleData.name) return;
-        addRole({
-            id: newRoleData.name.toUpperCase().replace(/\s+/g, '_'),
-            name: newRoleData.name,
-            description: newRoleData.description,
-            permissions: newRoleData.permissions
-        });
+
+        if (editingRoleId) {
+            updateRole(editingRoleId, {
+                name: newRoleData.name,
+                description: newRoleData.description,
+                permissions: newRoleData.permissions
+            });
+        } else {
+            addRole({
+                id: newRoleData.name.toUpperCase().replace(/\s+/g, '_'),
+                name: newRoleData.name,
+                description: newRoleData.description,
+                permissions: newRoleData.permissions
+            });
+        }
+        
         setIsRoleModalOpen(false);
         setNewRoleData({ name: '', description: '', permissions: {} });
+        setEditingRoleId(null);
+    };
+
+    const handleEditRole = (role: Role) => {
+        setNewRoleData({
+            name: role.name,
+            description: role.description,
+            permissions: role.permissions || {}
+        });
+        setEditingRoleId(role.id);
+        setIsRoleModalOpen(true);
+    };
+
+    const handleDeleteRole = (role: Role) => {
+        if (role.isSystem) {
+            alert('No se pueden eliminar roles protegidos del sistema.');
+            return;
+        }
+        if (confirm(`¿Eliminar rol ${role.name}? Esta acción afectará a los usuarios asignados.`)) {
+            deleteRole(role.id);
+            if (selectedRole === role.id) setSelectedRole(roles[0]?.id || 'ADMIN');
+        }
+    };
+
+    const handleNewRole = () => {
+        setNewRoleData({ name: '', description: '', permissions: {} });
+        setEditingRoleId(null);
+        setIsRoleModalOpen(true);
     };
 
     return (
@@ -175,7 +212,7 @@ const RolesView = () => {
                          </button>
                      </div>
                      <button 
-                        onClick={() => setIsRoleModalOpen(true)}
+                        onClick={handleNewRole}
                         className="flex items-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition-colors shadow-md shadow-blue-500/20"
                      >
                          <Plus size={16} className="mr-2" /> Nuevo Rol
@@ -199,8 +236,11 @@ const RolesView = () => {
                                         Módulo del Sistema
                                     </th>
                                     {roles.map(role => (
-                                        <th key={role.id} className="px-4 py-4 text-[10px] font-bold text-slate-500 text-center min-w-[120px] bg-white">
-                                            {role.name}
+                                        <th key={role.id} className="px-4 py-4 text-[10px] font-bold text-slate-500 text-center min-w-[120px] bg-white group cursor-pointer hover:bg-slate-50" onClick={() => handleEditRole(role)}>
+                                            <div className="flex flex-col items-center">
+                                                <span>{role.name}</span>
+                                                <Edit2 size={10} className="mt-1 opacity-0 group-hover:opacity-100 text-blue-500" />
+                                            </div>
                                         </th>
                                     ))}
                                 </tr>
@@ -250,9 +290,24 @@ const RolesView = () => {
                                         className={`px-5 py-3 flex items-center justify-between cursor-pointer transition-colors border-l-2 ${selectedRole === role.id ? 'bg-blue-50/50 border-blue-500' : 'bg-transparent border-transparent hover:bg-slate-50'}`}
                                     >
                                         <span className={`text-xs font-bold ${selectedRole === role.id ? 'text-blue-600' : 'text-slate-600'}`}>{role.name}</span>
-                                        <div className="flex items-center text-slate-400">
-                                            {selectedRole === role.id && <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-3"></div>}
-                                            <Edit2 size={12} className="hover:text-blue-500" />
+                                        <div className="flex items-center text-slate-400 space-x-1">
+                                            {selectedRole === role.id && <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-2"></div>}
+                                            <button 
+                                                onClick={(e) => { e.stopPropagation(); handleEditRole(role); }}
+                                                className="hover:bg-blue-100 p-1.5 rounded transition-colors"
+                                                title="Editar Rol"
+                                            >
+                                                <Edit2 size={12} className="text-slate-400 hover:text-blue-600" />
+                                            </button>
+                                            {!role.isSystem && (
+                                                <button 
+                                                    onClick={(e) => { e.stopPropagation(); handleDeleteRole(role); }}
+                                                    className="hover:bg-red-50 p-1.5 rounded transition-colors group"
+                                                    title="Eliminar Rol"
+                                                >
+                                                    <Trash2 size={12} className="text-slate-400 group-hover:text-red-500" />
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
@@ -325,10 +380,9 @@ const RolesView = () => {
             {isRoleModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
                     <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-                         {/* ... Modal content ... */}
                          <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-start bg-white sticky top-0 z-10">
                             <div>
-                                <h3 className="text-lg font-bold text-slate-900">Crear Nuevo Rol</h3>
+                                <h3 className="text-lg font-bold text-slate-900">{editingRoleId ? 'Editar Rol Existente' : 'Crear Nuevo Rol'}</h3>
                                 <p className="text-sm text-slate-500 mt-1">Defina el nombre, descripción y asigne los módulos permitidos.</p>
                             </div>
                             <button onClick={() => setIsRoleModalOpen(false)} className="text-slate-400 hover:text-slate-600">
@@ -344,7 +398,6 @@ const RolesView = () => {
                                 value={newRoleData.name} 
                                 onChange={(e: any) => setNewRoleData({...newRoleData, name: e.target.value})} 
                             />
-                            {/* ... */}
                             <div className="border-t border-slate-100 pt-6">
                                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-4 block">ASIGNACIÓN DE MÓDULOS</label>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -372,7 +425,7 @@ const RolesView = () => {
 
                         <div className="px-8 py-5 border-t border-slate-100 bg-white flex justify-end space-x-4 sticky bottom-0 z-10">
                             <button onClick={() => setIsRoleModalOpen(false)} className="px-6 py-2.5 rounded-lg border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">Cancelar</button>
-                            <button onClick={handleCreateRole} className="px-6 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-sm font-bold text-white shadow-md shadow-blue-500/20 transition-all active:scale-95">Crear Rol</button>
+                            <button onClick={handleSaveRole} className="px-6 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-sm font-bold text-white shadow-md shadow-blue-500/20 transition-all active:scale-95">{editingRoleId ? 'Guardar Cambios' : 'Crear Rol'}</button>
                         </div>
                     </div>
                 </div>
@@ -382,7 +435,7 @@ const RolesView = () => {
 };
 
 export const UserManagementView: React.FC = () => {
-  const { users, roles, addUser, editUser, deleteUser } = useApp();
+  const { users, roles, addUser, editUser, deleteUser, emplacements } = useApp();
   const [activeTab, setActiveTab] = useState('users'); 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -399,7 +452,8 @@ export const UserManagementView: React.FC = () => {
       password: '',
       role: '',
       region: '',
-      commune: ''
+      commune: '',
+      emplacement: ''
   });
 
   const regions = useMemo(() => CHILE_GEO_DATA.map(r => ({ label: r.region, value: r.region })), []);
@@ -410,6 +464,7 @@ export const UserManagementView: React.FC = () => {
   }, [formData.region]);
 
   const roleOptions = useMemo(() => roles.map(r => ({ label: r.name, value: r.id })), [roles]);
+  const emplacementOptions = useMemo(() => emplacements.map(e => ({ label: e, value: e })), [emplacements]);
 
   const filteredUsers = useMemo(() => {
     return users.filter(u => 
@@ -425,13 +480,14 @@ export const UserManagementView: React.FC = () => {
       }
       
       const fullRut = `${formData.rutBody}-${formData.rutDv}`;
+      const userLocation = formData.emplacement || formData.commune || 'General';
       
       if (editingUserId) {
           editUser(editingUserId, {
               name: formData.name,
               rut: fullRut,
               role: formData.role,
-              location: formData.commune || 'General',
+              location: userLocation,
               commune: formData.commune,
               ...(formData.password ? { password: formData.password } : {})
           });
@@ -447,20 +503,19 @@ export const UserManagementView: React.FC = () => {
 
               const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
               
-              const prompt = `...`; // (Prompt same as before)
+              const prompt = `...`; 
               
               const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash-preview',
-                contents: "Generate welcome email", // Simplified for brevity in diff
+                contents: "Generate welcome email",
               });
-              // ... (Logic same as before)
               
               addUser({
                   id: newUserId,
                   name: formData.name,
                   rut: fullRut,
                   role: formData.role,
-                  location: formData.commune || 'General',
+                  location: userLocation,
                   commune: formData.commune,
                   password: tempPass
               });
@@ -471,7 +526,7 @@ export const UserManagementView: React.FC = () => {
                   name: formData.name,
                   rut: fullRut,
                   role: formData.role,
-                  location: formData.commune || 'General',
+                  location: userLocation,
                   commune: formData.commune,
                   password: formData.password || '123456'
               });
@@ -484,7 +539,7 @@ export const UserManagementView: React.FC = () => {
   };
 
   const resetForm = () => {
-      setFormData({ name: '', rutBody: '', rutDv: '', username: '', email: '', password: '', role: '', region: '', commune: '' });
+      setFormData({ name: '', rutBody: '', rutDv: '', username: '', email: '', password: '', role: '', region: '', commune: '', emplacement: '' });
       setEditingUserId(null);
   };
 
@@ -505,7 +560,8 @@ export const UserManagementView: React.FC = () => {
           password: '', 
           role: user.role,
           region: foundRegion,
-          commune: user.commune || ''
+          commune: user.commune || '',
+          emplacement: user.location || ''
       });
       setEditingUserId(user.id);
       setIsModalOpen(true);
@@ -675,7 +731,6 @@ export const UserManagementView: React.FC = () => {
                               setFormData({...formData, name: formatted});
                           }} 
                       />
-                      {/* ... (Rest of Modal Fields) ... */}
                       <div className="grid grid-cols-2 gap-6">
                           <div className="space-y-1.5">
                               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">RUT</label>
@@ -700,8 +755,14 @@ export const UserManagementView: React.FC = () => {
                           <ModalSelect label="REGIÓN" placeholder="Seleccionar región" value={formData.region} onChange={(val: string) => setFormData({...formData, region: val, commune: ''})} options={regions} />
                           <ModalSelect label="COMUNA" placeholder="Seleccionar comuna" value={formData.commune} onChange={(val: string) => setFormData({...formData, commune: val})} options={communes} disabled={!formData.region} />
                       </div>
-                      <div className="space-y-1.5 opacity-50 pointer-events-none">
-                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">EMPLAZAMIENTOS (SUCURSALES)</label>
+                      <div className="space-y-1.5">
+                         <ModalSelect 
+                            label="EMPLAZAMIENTOS (SUCURSALES)" 
+                            placeholder="Seleccionar sucursal operativa" 
+                            value={formData.emplacement} 
+                            onChange={(val: string) => setFormData({...formData, emplacement: val})} 
+                            options={emplacementOptions}
+                         />
                       </div>
                   </div>
                   <div className="px-8 py-5 border-t border-slate-100 bg-white flex justify-end space-x-4">

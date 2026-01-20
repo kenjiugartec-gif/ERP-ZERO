@@ -4,7 +4,7 @@ import { useApp } from '../store/AppContext';
 import { 
   Plus, Upload, FileSpreadsheet, Box, 
   ChevronDown, CheckCircle2, FileText, 
-  Search, History, Trash2
+  Search, History, Trash2, Download, AlertCircle, FileUp
 } from 'lucide-react';
 import { ReceptionDocument } from '../types';
 
@@ -55,6 +55,9 @@ export const DocumentControlView: React.FC = () => {
   const [grossWeight, setGrossWeight] = useState('');
   const [condition, setCondition] = useState<'DIRECTO' | 'INDIRECTO'>('INDIRECTO');
 
+  // Bulk State
+  const [isUploading, setIsUploading] = useState(false);
+
   const localDocuments = useMemo(() => documents.filter(d => d.location === user?.location), [documents, user]);
 
   const handleSave = () => {
@@ -97,6 +100,69 @@ export const DocumentControlView: React.FC = () => {
     setCondition('INDIRECTO');
   };
 
+  const handleDownloadTemplate = () => {
+    // Generate CSV Content
+    const headers = ["GUIA_RECEPCION", "SIGLA_CONTENEDOR", "NUMERO_CONTENEDOR", "DIGITO_VERIFICADOR", "CLIENTE", "NAVE", "VIAJE", "BL", "NAVIERA", "PESO_BRUTO", "CONDICION"];
+    const row1 = ["GR-1001", "MSCU", "123456", "7", "IMPORTADORA ANDINA", "MSC ROSA", "V100", "BL-999001", "MSC", "25000", "INDIRECTO"];
+    const row2 = ["GR-1002", "HLCU", "987654", "3", "FRUTAS DEL SUR", "HAPAG LONDON", "V202", "BL-888002", "HAPAG", "22500", "DIRECTO"];
+    
+    const csvContent = "data:text/csv;charset=utf-8," + [headers, row1, row2].map(e => e.join(",")).join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "plantilla_carga_masiva_zero.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleBulkUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+        setIsUploading(true);
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        
+        reader.onload = (event) => {
+            const text = event.target?.result as string;
+            // Simple CSV parser logic (for demo purposes)
+            const rows = text.split('\n').slice(1); // Skip header
+            
+            let count = 0;
+            rows.forEach((row) => {
+                const cols = row.split(',');
+                if (cols.length >= 10) {
+                    const fullContainer = `${cols[1]}${cols[2]}-${cols[3]}`;
+                    const newDoc: ReceptionDocument = {
+                        id: Date.now().toString() + Math.random().toString(),
+                        guideNumber: cols[0]?.trim().toUpperCase(),
+                        container: fullContainer.toUpperCase(),
+                        client: cols[4]?.trim().toUpperCase(),
+                        ship: cols[5]?.trim().toUpperCase(),
+                        voyage: cols[6]?.trim().toUpperCase(),
+                        bl: cols[7]?.trim().toUpperCase(),
+                        shippingLine: cols[8]?.trim().toUpperCase(),
+                        grossWeight: cols[9]?.trim(),
+                        condition: (cols[10]?.trim().toUpperCase() === 'DIRECTO' ? 'DIRECTO' : 'INDIRECTO'),
+                        location: user?.location || 'Central',
+                        timestamp: new Date().toISOString()
+                    };
+                    if (newDoc.guideNumber) {
+                        addDocument(newDoc);
+                        count++;
+                    }
+                }
+            });
+
+            setTimeout(() => {
+                setIsUploading(false);
+                alert(`Proceso finalizado. Se han cargado ${count} documentos correctamente.`);
+            }, 1000);
+        };
+        
+        reader.readAsText(file);
+    }
+  };
+
   return (
     <div className="h-full overflow-y-auto p-6 bg-slate-50/50 font-sans overscroll-contain w-full">
        <div className="w-full space-y-6">
@@ -111,109 +177,176 @@ export const DocumentControlView: React.FC = () => {
              </button>
              <button 
                 onClick={() => setActiveTab('MASIVA')}
-                className={`flex items-center px-6 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all border ${activeTab === 'MASIVA' ? 'bg-white text-blue-600 border-blue-600 shadow-sm' : 'bg-white text-slate-400 border-slate-200 hover:bg-slate-50'}`}
+                className={`flex items-center px-6 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all border ${activeTab === 'MASIVA' ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm' : 'bg-white text-slate-400 border-slate-200 hover:bg-slate-50'}`}
              >
                 <FileSpreadsheet size={16} className="mr-2" />
                 CARGA MASIVA (EXCEL)
              </button>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden w-full">
-             <div className="bg-slate-900 px-6 py-4 flex items-center">
-                 <div className="p-1.5 bg-blue-600 rounded-md mr-3 text-white">
-                     <Plus size={16} />
-                 </div>
-                 <div>
-                     <h2 className="text-sm font-bold text-white uppercase tracking-wider">NUEVA PRECARGA DOCUMENTAL</h2>
-                     <p className="text-[10px] text-slate-400 font-medium">INGRESE LOS DATOS PARA REGISTRAR LA GUÍA DE ARRIBO</p>
-                 </div>
-             </div>
+          {activeTab === 'INDIVIDUAL' ? (
+            <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden w-full animate-in fade-in slide-in-from-left-4">
+               <div className="bg-slate-900 px-6 py-4 flex items-center">
+                   <div className="p-1.5 bg-blue-600 rounded-md mr-3 text-white">
+                       <Plus size={16} />
+                   </div>
+                   <div>
+                       <h2 className="text-sm font-bold text-white uppercase tracking-wider">NUEVA PRECARGA DOCUMENTAL</h2>
+                       <p className="text-[10px] text-slate-400 font-medium">INGRESE LOS DATOS PARA REGISTRAR LA GUÍA DE ARRIBO</p>
+                   </div>
+               </div>
 
-             <div className="p-8 grid grid-cols-1 lg:grid-cols-3 gap-12">
-                 
-                 <div className="space-y-6">
-                     <div className="flex items-center space-x-2 text-blue-600 border-b border-blue-100 pb-2 mb-4">
-                         <FileText size={16} />
-                         <span className="text-xs font-bold uppercase tracking-widest">IDENTIFICACIÓN</span>
-                     </div>
-                     
-                     <FormInput label="N° GUÍA DE RECEPCIÓN" placeholder="GR-0000" value={guideNumber} onChange={setGuideNumber} />
-                     
-                     <div className="flex flex-col space-y-1.5">
-                         <label className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">CONTENEDOR (SIGLA + N° + DV)</label>
-                         <div className="flex space-x-3">
-                             <input type="text" placeholder="ABCD" value={containerSigla} onChange={e => setContainerSigla(e.target.value.toUpperCase())} className="w-1/3 p-2.5 bg-slate-50 border border-slate-200 rounded-md text-xs text-center outline-none focus:border-blue-500 uppercase" />
-                             <input type="text" placeholder="123456" value={containerNum} onChange={e => setContainerNum(e.target.value)} className="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-md text-xs text-center outline-none focus:border-blue-500" />
-                             <input type="text" placeholder="0" value={containerDigit} onChange={e => setContainerDigit(e.target.value)} className="w-12 p-2.5 bg-slate-50 border border-blue-100 bg-blue-50 rounded-md text-xs text-center font-bold text-blue-700 outline-none" />
-                         </div>
-                     </div>
+               <div className="p-8 grid grid-cols-1 lg:grid-cols-3 gap-12">
+                   
+                   <div className="space-y-6">
+                       <div className="flex items-center space-x-2 text-blue-600 border-b border-blue-100 pb-2 mb-4">
+                           <FileText size={16} />
+                           <span className="text-xs font-bold uppercase tracking-widest">IDENTIFICACIÓN</span>
+                       </div>
+                       
+                       <FormInput label="N° GUÍA DE RECEPCIÓN" placeholder="GR-0000" value={guideNumber} onChange={setGuideNumber} />
+                       
+                       <div className="flex flex-col space-y-1.5">
+                           <label className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">CONTENEDOR (SIGLA + N° + DV)</label>
+                           <div className="flex space-x-3">
+                               <input type="text" placeholder="ABCD" value={containerSigla} onChange={e => setContainerSigla(e.target.value.toUpperCase())} className="w-1/3 p-2.5 bg-slate-50 border border-slate-200 rounded-md text-xs text-center outline-none focus:border-blue-500 uppercase" />
+                               <input type="text" placeholder="123456" value={containerNum} onChange={e => setContainerNum(e.target.value)} className="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-md text-xs text-center outline-none focus:border-blue-500" />
+                               <input type="text" placeholder="0" value={containerDigit} onChange={e => setContainerDigit(e.target.value)} className="w-12 p-2.5 bg-slate-50 border border-blue-100 bg-blue-50 rounded-md text-xs text-center font-bold text-blue-700 outline-none" />
+                           </div>
+                       </div>
 
-                     <FormInput label="CLIENTE / ARMADOR" placeholder="Nombre del Cliente" value={client} onChange={setClient} />
-                 </div>
+                       <FormInput label="CLIENTE / ARMADOR" placeholder="Nombre del Cliente" value={client} onChange={setClient} />
+                   </div>
 
-                 <div className="space-y-6">
-                     <div className="flex items-center space-x-2 text-blue-600 border-b border-blue-100 pb-2 mb-4">
-                         <Box size={16} />
-                         <span className="text-xs font-bold uppercase tracking-widest">LOGÍSTICA</span>
-                     </div>
-                     
-                     <div className="grid grid-cols-2 gap-4">
-                         <FormSelect label="NAVE" placeholder="Buscar Nave..." options={['MSC ROSA', 'HAPAG LLOYD', 'MAERSK SEALAND']} value={ship} onChange={setShip} />
-                         <FormInput label="VIAJE" placeholder="" value={voyage} onChange={setVoyage} />
-                     </div>
+                   <div className="space-y-6">
+                       <div className="flex items-center space-x-2 text-blue-600 border-b border-blue-100 pb-2 mb-4">
+                           <Box size={16} />
+                           <span className="text-xs font-bold uppercase tracking-widest">LOGÍSTICA</span>
+                       </div>
+                       
+                       <div className="grid grid-cols-2 gap-4">
+                           <FormSelect label="NAVE" placeholder="Buscar Nave..." options={['MSC ROSA', 'HAPAG LLOYD', 'MAERSK SEALAND']} value={ship} onChange={setShip} />
+                           <FormInput label="VIAJE" placeholder="" value={voyage} onChange={setVoyage} />
+                       </div>
 
-                     <div className="grid grid-cols-2 gap-4">
-                         <FormInput label="N° BL" placeholder="" value={bl} onChange={setBl} />
-                         <FormSelect label="LÍNEA NAVIERA" placeholder="Seleccionar..." options={['MSC', 'HAPAG', 'CMA CGM']} value={shippingLine} onChange={setShippingLine} />
-                     </div>
+                       <div className="grid grid-cols-2 gap-4">
+                           <FormInput label="N° BL" placeholder="" value={bl} onChange={setBl} />
+                           <FormSelect label="LÍNEA NAVIERA" placeholder="Seleccionar..." options={['MSC', 'HAPAG', 'CMA CGM']} value={shippingLine} onChange={setShippingLine} />
+                       </div>
 
-                     <div className="grid grid-cols-2 gap-4">
-                         <FormInput label="PESO BRUTO (KG)" placeholder="" value={grossWeight} onChange={setGrossWeight} />
-                         
-                         <div className="flex flex-col space-y-1.5">
-                            <label className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">CONDICIÓN</label>
-                            <div className="flex bg-slate-100 rounded-md p-1">
-                                <button 
-                                  onClick={() => setCondition('DIRECTO')}
-                                  className={`flex-1 py-1.5 rounded text-[10px] font-bold uppercase transition-all ${condition === 'DIRECTO' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                                >
-                                    DIRECTO
-                                </button>
-                                <button 
-                                  onClick={() => setCondition('INDIRECTO')}
-                                  className={`flex-1 py-1.5 rounded text-[10px] font-bold uppercase transition-all ${condition === 'INDIRECTO' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                                >
-                                    INDIRECTO
-                                </button>
+                       <div className="grid grid-cols-2 gap-4">
+                           <FormInput label="PESO BRUTO (KG)" placeholder="" value={grossWeight} onChange={setGrossWeight} />
+                           
+                           <div className="flex flex-col space-y-1.5">
+                              <label className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">CONDICIÓN</label>
+                              <div className="flex bg-slate-100 rounded-md p-1">
+                                  <button 
+                                    onClick={() => setCondition('DIRECTO')}
+                                    className={`flex-1 py-1.5 rounded text-[10px] font-bold uppercase transition-all ${condition === 'DIRECTO' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                  >
+                                      DIRECTO
+                                  </button>
+                                  <button 
+                                    onClick={() => setCondition('INDIRECTO')}
+                                    className={`flex-1 py-1.5 rounded text-[10px] font-bold uppercase transition-all ${condition === 'INDIRECTO' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                  >
+                                      INDIRECTO
+                                  </button>
+                              </div>
+                           </div>
+                       </div>
+                   </div>
+
+                   <div className="space-y-6">
+                       <div className="flex items-center space-x-2 text-blue-600 border-b border-blue-100 pb-2 mb-4">
+                           <FileText size={16} />
+                           <span className="text-xs font-bold uppercase tracking-widest">ADJUNTO DIGITAL</span>
+                       </div>
+                       
+                       <div className="border-2 border-dashed border-slate-200 rounded-lg bg-slate-50 h-32 flex flex-col items-center justify-center text-slate-400 hover:border-blue-400 hover:bg-blue-50 transition-all cursor-pointer group">
+                           <div className="p-3 bg-white rounded-full shadow-sm mb-2 group-hover:scale-110 transition-transform">
+                               <Upload size={20} className="text-blue-500" />
+                           </div>
+                           <span className="text-[10px] font-bold uppercase tracking-widest">SUBIR GUÍA DIGITAL</span>
+                       </div>
+
+                       <button 
+                          onClick={handleSave}
+                          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-lg font-bold text-xs uppercase tracking-widest shadow-lg shadow-blue-200 transition-all active:scale-95 flex items-center justify-center"
+                       >
+                           <CheckCircle2 size={18} className="mr-2" />
+                           CONFIRMAR REGISTRO
+                       </button>
+                   </div>
+
+               </div>
+            </div>
+          ) : (
+            <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden w-full animate-in fade-in slide-in-from-right-4">
+                <div className="bg-emerald-900 px-6 py-4 flex items-center">
+                   <div className="p-1.5 bg-emerald-500 rounded-md mr-3 text-white">
+                       <FileSpreadsheet size={16} />
+                   </div>
+                   <div>
+                       <h2 className="text-sm font-bold text-white uppercase tracking-wider">IMPORTACIÓN MASIVA DE DOCUMENTOS</h2>
+                       <p className="text-[10px] text-emerald-200 font-medium">UTILICE EL FORMATO ESTÁNDAR PARA CARGAR MÚLTIPLES GUÍAS</p>
+                   </div>
+               </div>
+
+               <div className="p-12 flex flex-col items-center justify-center space-y-8">
+                   
+                   <div className="w-full max-w-3xl grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {/* STEP 1 */}
+                        <div className="bg-slate-50 border border-slate-200 rounded-xl p-6 flex flex-col items-center text-center">
+                            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm mb-4 border border-slate-100">
+                                <span className="font-black text-slate-900">1</span>
                             </div>
-                         </div>
-                     </div>
-                 </div>
+                            <h3 className="font-bold text-slate-800 text-sm mb-2">Descargar Plantilla</h3>
+                            <p className="text-xs text-slate-500 mb-6 px-4">Obtenga el formato Excel/CSV compatible para llenar los datos requeridos.</p>
+                            <button 
+                                onClick={handleDownloadTemplate}
+                                className="flex items-center px-6 py-3 bg-emerald-600 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-200 active:scale-95"
+                            >
+                                <Download size={16} className="mr-2" />
+                                BAJAR FORMATO
+                            </button>
+                        </div>
 
-                 <div className="space-y-6">
-                     <div className="flex items-center space-x-2 text-blue-600 border-b border-blue-100 pb-2 mb-4">
-                         <FileText size={16} />
-                         <span className="text-xs font-bold uppercase tracking-widest">ADJUNTO DIGITAL</span>
-                     </div>
-                     
-                     <div className="border-2 border-dashed border-slate-200 rounded-lg bg-slate-50 h-32 flex flex-col items-center justify-center text-slate-400 hover:border-blue-400 hover:bg-blue-50 transition-all cursor-pointer group">
-                         <div className="p-3 bg-white rounded-full shadow-sm mb-2 group-hover:scale-110 transition-transform">
-                             <Upload size={20} className="text-blue-500" />
-                         </div>
-                         <span className="text-[10px] font-bold uppercase tracking-widest">SUBIR GUÍA DIGITAL</span>
-                     </div>
+                        {/* STEP 2 */}
+                        <div className={`bg-slate-50 border-2 border-dashed ${isUploading ? 'border-blue-500 bg-blue-50' : 'border-slate-300'} rounded-xl p-6 flex flex-col items-center text-center transition-all`}>
+                            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm mb-4 border border-slate-100">
+                                <span className="font-black text-slate-900">2</span>
+                            </div>
+                            <h3 className="font-bold text-slate-800 text-sm mb-2">Subir Archivo Completado</h3>
+                            <p className="text-xs text-slate-500 mb-6 px-4">Seleccione el archivo CSV con la información de las guías.</p>
+                            
+                            <label className={`flex items-center px-6 py-3 ${isUploading ? 'bg-blue-600 cursor-wait' : 'bg-slate-900 cursor-pointer hover:bg-slate-800'} text-white rounded-lg text-xs font-bold uppercase tracking-widest transition-colors shadow-lg active:scale-95`}>
+                                {isUploading ? (
+                                    <>
+                                        <AlertCircle size={16} className="mr-2 animate-spin" />
+                                        PROCESANDO...
+                                    </>
+                                ) : (
+                                    <>
+                                        <FileUp size={16} className="mr-2" />
+                                        SELECCIONAR ARCHIVO
+                                    </>
+                                )}
+                                <input type="file" accept=".csv" className="hidden" onChange={handleBulkUpload} disabled={isUploading} />
+                            </label>
+                        </div>
+                   </div>
 
-                     <button 
-                        onClick={handleSave}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-lg font-bold text-xs uppercase tracking-widest shadow-lg shadow-blue-200 transition-all active:scale-95 flex items-center justify-center"
-                     >
-                         <CheckCircle2 size={18} className="mr-2" />
-                         CONFIRMAR REGISTRO
-                     </button>
-                 </div>
+                   <div className="max-w-2xl text-center">
+                       <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider bg-slate-50 px-4 py-2 rounded-full border border-slate-200">
+                           <CheckCircle2 size={12} className="inline mr-1 text-emerald-500" />
+                           El sistema validará automáticamente duplicados por N° de Guía
+                       </p>
+                   </div>
 
-             </div>
-          </div>
+               </div>
+            </div>
+          )}
 
           <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden w-full">
              <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center">

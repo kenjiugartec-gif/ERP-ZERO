@@ -36,6 +36,7 @@ interface AppContextType {
   editUser: (id: string, data: Partial<User>) => void;
   deleteUser: (id: string) => void;
   addRole: (r: Role) => void;
+  updateRole: (id: string, r: Partial<Role>) => void;
   deleteRole: (id: string) => void;
   addStockItem: (item: StockItem) => void;
   updateStockLocation: (id: string, newLocation: string) => void;
@@ -52,7 +53,7 @@ interface AppContextType {
 }
 
 const DEFAULT_CONFIG: AppConfig = {
-  slogan: "Innovative solutions for technical logistics and industrial management.",
+  slogan: "Innovative Solutions, Comprehensive Logistics Solutions.",
   fontFamily: "'Inter', sans-serif",
   fontSize: 14, 
   lineHeight: 1.5,
@@ -141,8 +142,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const initialRoles: Role[] = [
     { id: 'ADMIN', name: 'Administrador', description: 'Acceso total al sistema', permissions: {}, isSystem: true },
-    { id: 'OPERATOR', name: 'Operador', description: 'Acceso a gestión diaria', permissions: {}, isSystem: true },
-    { id: 'SUPERVISOR', name: 'Supervisor', description: 'Supervisión de operaciones', permissions: {}, isSystem: true },
     { id: 'EMBASE_CONTROL', name: 'Control de Embase', description: 'Gestión específica de embase', permissions: {}, isSystem: true },
   ];
 
@@ -249,6 +248,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
   
   const addRole = (r: Role) => setRoles([...roles, r]);
+  const updateRole = (id: string, updated: Partial<Role>) => {
+    setRoles(prev => prev.map(r => r.id === id ? { ...r, ...updated } : r));
+  };
   const deleteRole = (id: string) => setRoles(roles.filter(r => r.id !== id));
 
   const addStockItem = (item: StockItem) => setStock(prev => [...prev, item]);
@@ -276,7 +278,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       configs, updateConfig, currentConfig,
       addVehicle, updateVehicle, createTransaction, updateTransaction, 
       addUser, editUser, deleteUser, 
-      addRole, deleteRole,
+      addRole, updateRole, deleteRole,
       addStockItem, updateStockLocation,
       markNotificationRead, clearNotifications,
       addGeoRecord, deleteGeoRecord, addEmplacement, addDocument,

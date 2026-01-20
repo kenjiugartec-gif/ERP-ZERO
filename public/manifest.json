@@ -1,17 +1,19 @@
 
 {
   "short_name": "ZERO WMS",
-  "name": "ZERO WMS Logistics System",
+  "name": "ZERO WMS Security Terminal",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/9630/9630249.png",
+      "src": "https://cdn-icons-png.flaticon.com/512/1067/1067568.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any maskable"
     },
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/9630/9630249.png",
+      "src": "https://cdn-icons-png.flaticon.com/512/1067/1067568.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any maskable"
     }
   ],
   "start_url": ".",
