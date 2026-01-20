@@ -5,12 +5,13 @@ import { CHILE_GEO_DATA } from '../constants';
 import { 
   MapPin, Building2, Layers, 
   Save, Trash2, ChevronDown, Plus, X, Globe,
-  CheckCircle2, Map
+  CheckCircle2, Map, Hash, User, Ruler, Activity, 
+  Navigation, LayoutGrid, Power
 } from 'lucide-react';
 
 interface CustomSelectProps {
   label: string;
-  step: string;
+  step?: string;
   icon: React.ReactNode;
   value: string;
   options: string[];
@@ -39,17 +40,17 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
     <div className={`relative ${disabled ? 'opacity-40 pointer-events-none' : ''}`} ref={containerRef}>
       <label className="flex items-center text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">
          <span className="text-blue-600 mr-1.5">{icon}</span>
-         <span className="mr-1 text-slate-500">{step}.</span> {label}
+         {step && <span className="mr-1 text-slate-500">{step}.</span>} {label}
       </label>
       
       <div 
         onClick={() => !disabled && setIsOpen(!isOpen)}
-        className={`w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 flex justify-between items-center cursor-pointer transition-all hover:bg-slate-100 ${isOpen ? 'ring-2 ring-blue-500/10 border-blue-400 bg-white' : ''}`}
+        className={`w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 flex justify-between items-center cursor-pointer transition-all hover:bg-slate-100 ${isOpen ? 'ring-2 ring-blue-500/10 border-blue-400 bg-white' : ''}`}
       >
-        <span className={value ? 'text-slate-800' : 'text-slate-400 font-normal'}>
+        <span className={value ? 'text-slate-800' : 'text-slate-400 font-normal truncate'}>
           {value || placeholder}
         </span>
-        <ChevronDown size={14} className={`text-slate-400 transition-transform ${isOpen ? 'rotate-180 text-blue-500' : ''}`} />
+        <ChevronDown size={14} className={`text-slate-400 transition-transform flex-shrink-0 ml-2 ${isOpen ? 'rotate-180 text-blue-500' : ''}`} />
       </div>
 
       {isOpen && (
@@ -73,17 +74,47 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
   );
 };
 
+const ModalInput = ({ label, icon: Icon, placeholder, value, onChange, type = "text" }: any) => (
+  <div className="space-y-2">
+    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center ml-1">
+        {Icon && <Icon size={12} className="mr-1.5 text-slate-400"/>}
+        {label}
+    </label>
+    <div className="relative group">
+      <input 
+        type={type}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-900 outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all shadow-sm placeholder:font-normal placeholder:text-slate-300"
+      />
+    </div>
+  </div>
+);
+
 export const GeographyView: React.FC = () => {
   const { geoRecords, addGeoRecord, deleteGeoRecord, emplacements, addEmplacement } = useApp();
   
+  // -- State for Linking Existing --
   const [selectedRegion, setSelectedRegion] = useState('');
   const [selectedCommune, setSelectedCommune] = useState('');
   const [selectedEmplacement, setSelectedEmplacement] = useState('');
   
+  // -- State for New Emplacement Modal --
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // Form Data
   const [newEmpName, setNewEmpName] = useState('');
+  const [newEmpCode, setNewEmpCode] = useState('');
+  const [newEmpType, setNewEmpType] = useState('');
+  
   const [newEmpRegion, setNewEmpRegion] = useState('');
   const [newEmpCommune, setNewEmpCommune] = useState('');
+  const [newEmpAddress, setNewEmpAddress] = useState('');
+  
+  const [newEmpManager, setNewEmpManager] = useState('');
+  const [newEmpCapacity, setNewEmpCapacity] = useState('');
+  const [newEmpStatus, setNewEmpStatus] = useState('ACTIVO');
 
   const regions = CHILE_GEO_DATA.map(r => r.region);
   const communesOfRegion = CHILE_GEO_DATA.find(r => r.region === selectedRegion)?.communes || [];
@@ -110,7 +141,10 @@ export const GeographyView: React.FC = () => {
 
   const handleCreateEmplacement = () => {
     if (newEmpName && newEmpRegion && newEmpCommune) {
+      // 1. Add to global list of strings (legacy support)
       addEmplacement(newEmpName);
+      
+      // 2. Create the Geo Record linkage
       addGeoRecord({
         id: Date.now().toString(),
         region: newEmpRegion,
@@ -118,17 +152,32 @@ export const GeographyView: React.FC = () => {
         emplacement: newEmpName,
         timestamp: new Date().toISOString()
       });
+
+      // Reset & Close
       setNewEmpName('');
+      setNewEmpCode('');
       setNewEmpRegion('');
       setNewEmpCommune('');
+      setNewEmpAddress('');
+      setNewEmpManager('');
+      setNewEmpCapacity('');
+      setNewEmpType('');
       setIsModalOpen(false);
     }
   };
+
+  const handleOpenModal = () => {
+      // Auto-generate a random code for professional feel
+      setNewEmpCode(`NOD-${Math.floor(Math.random() * 10000)}`);
+      setNewEmpType('');
+      setIsModalOpen(true);
+  }
 
   return (
     <div className="h-full overflow-y-auto p-6 bg-slate-50/50 font-sans overscroll-contain w-full">
       <div className="w-full space-y-6">
         
+        {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-2">
           <div className="flex items-center space-x-4">
             <div className="bg-slate-900 p-3 rounded-lg text-white shadow-lg flex-shrink-0">
@@ -140,7 +189,7 @@ export const GeographyView: React.FC = () => {
             </div>
           </div>
           <button 
-            onClick={() => setIsModalOpen(true)}
+            onClick={handleOpenModal}
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-bold text-[10px] uppercase tracking-widest flex items-center shadow-md shadow-blue-500/20 transition-all active:scale-95"
           >
             <Plus size={16} className="mr-2" />
@@ -148,6 +197,7 @@ export const GeographyView: React.FC = () => {
           </button>
         </div>
 
+        {/* Linker Card */}
         <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden w-full">
           <div className="p-8">
              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -205,6 +255,7 @@ export const GeographyView: React.FC = () => {
           </div>
         </div>
 
+        {/* Table List */}
         <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden w-full">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
@@ -241,50 +292,167 @@ export const GeographyView: React.FC = () => {
         </div>
       </div>
 
+      {/* --- LARGE MODAL FOR NEW EMPLACEMENT --- */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-white w-full max-w-md rounded-lg shadow-2xl overflow-hidden border border-slate-100 animate-in zoom-in-95">
-             {/* Modal Content */}
-             {/* ... */}
-             <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-              <h3 className="font-bold text-slate-800 text-sm uppercase tracking-wide flex items-center">
-                <Globe size={16} className="mr-2 text-blue-600" /> Nuevo Nodo
-              </h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-red-500 transition-colors p-1"><X size={18} /></button>
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white w-full max-w-5xl rounded-2xl shadow-2xl overflow-hidden border border-slate-200 animate-in zoom-in-95 flex flex-col max-h-[90vh]">
+             
+             {/* Modal Header */}
+             <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-10">
+                <div className="flex items-center space-x-4">
+                    <div className="bg-blue-50 p-2.5 rounded-lg text-blue-600">
+                        <Globe size={20} />
+                    </div>
+                    <div>
+                        <h3 className="font-bold text-slate-900 text-lg uppercase tracking-tight">Nuevo Nodo Operativo</h3>
+                        <p className="text-xs text-slate-500 font-medium">Complete la ficha técnica para registrar el emplazamiento</p>
+                    </div>
+                </div>
+                <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors p-1 bg-slate-50 rounded-full">
+                    <X size={20} />
+                </button>
             </div>
-            <div className="p-6 space-y-6">
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Nombre Descriptivo</label>
-                <input 
-                  type="text" autoFocus placeholder="Ej: Bodega Norte" value={newEmpName}
-                  onChange={(e) => setNewEmpName(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-900 outline-none focus:bg-white focus:border-blue-500 transition-all shadow-sm"
-                />
-              </div>
-              <CustomSelect 
-                step="A" label="Región Operativa" icon={<Map size={12}/>} value={newEmpRegion}
-                options={regions} placeholder="Seleccionar..."
-                onSelect={(val) => { setNewEmpRegion(val); setNewEmpCommune(''); }}
-              />
-              <CustomSelect 
-                step="B" label="Comuna Jurisdiccional" icon={<Layers size={12}/>} value={newEmpCommune}
-                options={communesOfModalRegion} placeholder="Seleccionar..."
-                disabled={!newEmpRegion} onSelect={setNewEmpCommune}
-              />
+
+            {/* Modal Content - Scrollable */}
+            <div className="p-8 overflow-y-auto flex-1 pb-32">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    
+                    {/* COL 1: IDENTIFICACIÓN */}
+                    <div className="space-y-6">
+                        <div className="flex items-center space-x-2 text-slate-800 border-b border-slate-100 pb-2 mb-4">
+                            <Building2 size={16} className="text-blue-600" />
+                            <span className="text-xs font-bold uppercase tracking-widest">1. Identificación</span>
+                        </div>
+                        
+                        <ModalInput 
+                            label="Nombre Descriptivo" 
+                            placeholder="Ej: Bodega Norte" 
+                            value={newEmpName}
+                            onChange={(e: any) => setNewEmpName(e.target.value)}
+                        />
+                        
+                        <ModalInput 
+                            label="Código Interno (Auto)" 
+                            icon={Hash}
+                            placeholder="NOD-0000" 
+                            value={newEmpCode}
+                            readOnly
+                            onChange={(e: any) => setNewEmpCode(e.target.value)}
+                        />
+
+                        <ModalInput 
+                            label="Tipo de Recinto" 
+                            icon={LayoutGrid}
+                            placeholder="Ej: Centro de Distribución" 
+                            value={newEmpType}
+                            onChange={(e: any) => setNewEmpType(e.target.value)}
+                        />
+                    </div>
+
+                    {/* COL 2: UBICACIÓN */}
+                    <div className="space-y-6">
+                        <div className="flex items-center space-x-2 text-slate-800 border-b border-slate-100 pb-2 mb-4">
+                            <MapPin size={16} className="text-blue-600" />
+                            <span className="text-xs font-bold uppercase tracking-widest">2. Ubicación Geográfica</span>
+                        </div>
+
+                        <CustomSelect 
+                            label="Región Operativa" 
+                            icon={<Map size={12}/>} 
+                            value={newEmpRegion}
+                            options={regions} 
+                            placeholder="Seleccionar..."
+                            onSelect={(val) => { setNewEmpRegion(val); setNewEmpCommune(''); }}
+                        />
+                        
+                        <CustomSelect 
+                            label="Comuna Jurisdiccional" 
+                            icon={<Layers size={12}/>} 
+                            value={newEmpCommune}
+                            options={communesOfModalRegion} 
+                            placeholder="Seleccionar..."
+                            disabled={!newEmpRegion} 
+                            onSelect={setNewEmpCommune}
+                        />
+
+                        <ModalInput 
+                            label="Dirección / Referencia" 
+                            icon={Navigation}
+                            placeholder="Av. Principal 1234..." 
+                            value={newEmpAddress}
+                            onChange={(e: any) => setNewEmpAddress(e.target.value)}
+                        />
+                    </div>
+
+                    {/* COL 3: DETALLES OPERATIVOS */}
+                    <div className="space-y-6">
+                        <div className="flex items-center space-x-2 text-slate-800 border-b border-slate-100 pb-2 mb-4">
+                            <Activity size={16} className="text-blue-600" />
+                            <span className="text-xs font-bold uppercase tracking-widest">3. Detalles Operativos</span>
+                        </div>
+
+                        <ModalInput 
+                            label="Jefe / Responsable" 
+                            icon={User}
+                            placeholder="Nombre Apellido" 
+                            value={newEmpManager}
+                            onChange={(e: any) => setNewEmpManager(e.target.value)}
+                        />
+
+                        <ModalInput 
+                            label="Capacidad Estimada (m²)" 
+                            icon={Ruler}
+                            type="number"
+                            placeholder="0" 
+                            value={newEmpCapacity}
+                            onChange={(e: any) => setNewEmpCapacity(e.target.value)}
+                        />
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center ml-1">
+                                <Power size={12} className="mr-1.5 text-slate-400"/>
+                                Estado Inicial
+                            </label>
+                            <div className="flex bg-slate-50 p-1 rounded-lg border border-slate-200">
+                                <button 
+                                    onClick={() => setNewEmpStatus('ACTIVO')}
+                                    className={`flex-1 py-2 rounded-md text-[10px] font-bold uppercase transition-all ${newEmpStatus === 'ACTIVO' ? 'bg-emerald-500 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                >
+                                    Activo
+                                </button>
+                                <button 
+                                    onClick={() => setNewEmpStatus('DESACTIVADO')}
+                                    className={`flex-1 py-2 rounded-md text-[10px] font-bold uppercase transition-all ${newEmpStatus === 'DESACTIVADO' ? 'bg-slate-500 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                >
+                                    Desactivado
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
             </div>
-            <div className="px-6 py-5 bg-slate-50 border-t border-slate-100">
-              <button 
-                onClick={handleCreateEmplacement}
-                disabled={!(newEmpName && newEmpRegion && newEmpCommune)}
-                className={`w-full py-3 rounded-lg font-bold text-[10px] uppercase tracking-widest transition-all active:scale-95 shadow-lg flex items-center justify-center space-x-2
-                  ${(newEmpName && newEmpRegion && newEmpCommune)
-                    ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-200' 
-                    : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'}
-                `}
-              >
-                <Save size={14} />
-                <span>Registrar Emplazamiento</span>
-              </button>
+
+            {/* Modal Footer */}
+            <div className="px-8 py-6 bg-slate-50 border-t border-slate-200 flex justify-end space-x-4 sticky bottom-0 z-10">
+                <button 
+                    onClick={() => setIsModalOpen(false)}
+                    className="px-6 py-3 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors uppercase tracking-wider"
+                >
+                    Cancelar Operación
+                </button>
+                <button 
+                    onClick={handleCreateEmplacement}
+                    disabled={!(newEmpName && newEmpRegion && newEmpCommune)}
+                    className={`px-8 py-3 rounded-lg font-bold text-xs uppercase tracking-widest transition-all active:scale-95 shadow-lg flex items-center justify-center space-x-2
+                    ${(newEmpName && newEmpRegion && newEmpCommune)
+                        ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-200' 
+                        : 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none'}
+                    `}
+                >
+                    <Save size={16} />
+                    <span>Registrar Emplazamiento</span>
+                </button>
             </div>
           </div>
         </div>
