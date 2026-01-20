@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { User, Vehicle, StockItem, GateTransaction, Notification, GeoLocationRecord, AppConfig, Role, ReceptionDocument } from '../types';
 import { EMPLACEMENTS as INITIAL_EMPLACEMENTS, MODULES } from '../constants';
 
@@ -20,7 +20,7 @@ interface AppContextType {
   notifications: Notification[];
   geoRecords: GeoLocationRecord[];
   emplacements: string[];
-  documents: ReceptionDocument[]; // Added documents store
+  documents: ReceptionDocument[]; 
   
   // App Config per Emplacement
   configs: Record<string, AppConfig>;
@@ -44,7 +44,7 @@ interface AppContextType {
   addGeoRecord: (record: GeoLocationRecord) => void;
   deleteGeoRecord: (id: string) => void;
   addEmplacement: (name: string) => void;
-  addDocument: (doc: ReceptionDocument) => void; // Added action
+  addDocument: (doc: ReceptionDocument) => void; 
   
   // UI Settings
   appName: string;
@@ -54,7 +54,7 @@ interface AppContextType {
 const DEFAULT_CONFIG: AppConfig = {
   slogan: "Innovative solutions for technical logistics and industrial management.",
   fontFamily: "'Inter', sans-serif",
-  fontSize: 14, // STRICTLY SET TO 14PX AS REQUESTED
+  fontSize: 14, 
   lineHeight: 1.5,
   primaryColor: "#2563eb",
   logo: undefined,
@@ -66,7 +66,7 @@ const DEFAULT_CONFIG: AppConfig = {
   disableBold: false
 };
 
-// --- PERSISTENCE HOOK ---
+// --- PERSISTENCE HOOK (Local Storage - Persists after close) ---
 function useLocalStorage<T>(key: string, initialValue: T) {
   const [storedValue, setStoredValue] = useState<T>(() => {
     if (typeof window === "undefined") {
@@ -95,17 +95,50 @@ function useLocalStorage<T>(key: string, initialValue: T) {
   return [storedValue, setValue] as const;
 }
 
+// --- SESSION HOOK (Session Storage - Clears on tab close) ---
+function useSessionStorage<T>(key: string, initialValue: T) {
+  const [storedValue, setStoredValue] = useState<T>(() => {
+    if (typeof window === "undefined") {
+      return initialValue;
+    }
+    try {
+      const item = window.sessionStorage.getItem(key);
+      return item ? JSON.parse(item) : initialValue;
+    } catch (error) {
+      console.log(error);
+      return initialValue;
+    }
+  });
+
+  const setValue = useCallback((value: T | ((val: T) => T)) => {
+    try {
+      // Allow value to be a function so we have same API as useState
+      setStoredValue(prev => {
+        const valueToStore = value instanceof Function ? value(prev) : value;
+        if (typeof window !== "undefined") {
+          window.sessionStorage.setItem(key, JSON.stringify(valueToStore));
+        }
+        return valueToStore;
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  }, [key]);
+
+  return [storedValue, setValue] as const;
+}
+
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useLocalStorage<User | null>("zero_wms_current_user", null);
+  // CRITICAL: User is stored in SessionStorage. Closing tab = Logout.
+  const [user, setUser] = useSessionStorage<User | null>("zero_wms_current_user", null);
   const [welcomeMessageShown, setWelcomeMessageShown] = useState(false);
   
-  // Persisted Settings & Data
+  // Persisted Settings & Data (These remain across sessions)
   const [appName, setAppName] = useLocalStorage("zero_wms_appname", "ZERO WMS");
   const [configs, setConfigs] = useLocalStorage<Record<string, AppConfig>>("zero_wms_configs", {});
 
-  // Initial Roles Data (Updated with "Control de Embase")
   const initialRoles: Role[] = [
     { id: 'ADMIN', name: 'Administrador', description: 'Acceso total al sistema', permissions: {}, isSystem: true },
     { id: 'OPERATOR', name: 'Operador', description: 'Acceso a gestión diaria', permissions: {}, isSystem: true },
@@ -129,8 +162,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     { id: 1, title: 'Sistema Iniciado', message: 'Plataforma lista para operar.', type: 'INFO', timestamp: new Date(), read: false }
   ]);
 
-  // Timers for auto-logout
-  const inactivityTimer = useRef<number | null>(null);
+  // Timers
   const visibilityTimer = useRef<number | null>(null);
 
   const login = (u: User) => {
@@ -138,12 +170,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setWelcomeMessageShown(false);
   };
 
-  const logout = () => {
+  const logout = useCallback(() => {
     setUser(null);
     setWelcomeMessageShown(false);
-    if (inactivityTimer.current) window.clearTimeout(inactivityTimer.current);
-    if (visibilityTimer.current) window.clearTimeout(visibilityTimer.current);
-  };
+    if (visibilityTimer.current) {
+        window.clearTimeout(visibilityTimer.current);
+        visibilityTimer.current = null;
+    }
+  }, [setUser]);
 
   const updateCurrentUser = (data: Partial<User>) => {
     if (user) {
@@ -153,28 +187,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  // Logic for Auto-Logout
+  // --- SECURITY LOGIC: 4 MINUTE TIMEOUT ON MINIMIZE/BACKGROUND ---
   useEffect(() => {
-    if (!user) return;
-
-    const INACTIVITY_LIMIT = 30 * 60 * 1000; 
-    const resetInactivityTimer = () => {
-      if (inactivityTimer.current) window.clearTimeout(inactivityTimer.current);
-      inactivityTimer.current = window.setTimeout(() => {
-        // logout(); 
-      }, INACTIVITY_LIMIT);
+    const handleVisibilityChange = () => {
+        if (document.hidden) {
+            // User minimized window or switched tabs. Start 4 minute timer.
+            // 4 minutes * 60 seconds * 1000 ms
+            const TIMEOUT_DURATION = 4 * 60 * 1000; 
+            
+            visibilityTimer.current = window.setTimeout(() => {
+                console.log("Sesión cerrada por inactividad en segundo plano (4 min).");
+                logout();
+            }, TIMEOUT_DURATION);
+        } else {
+            // User returned to the tab. Clear the timer if it hasn't fired yet.
+            if (visibilityTimer.current) {
+                window.clearTimeout(visibilityTimer.current);
+                visibilityTimer.current = null;
+            }
+        }
     };
 
-    window.addEventListener('mousedown', resetInactivityTimer);
-    window.addEventListener('keydown', resetInactivityTimer);
-    resetInactivityTimer();
-
+    document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => {
-      window.removeEventListener('mousedown', resetInactivityTimer);
-      window.removeEventListener('keydown', resetInactivityTimer);
-      if (inactivityTimer.current) window.clearTimeout(inactivityTimer.current);
+        document.removeEventListener("visibilitychange", handleVisibilityChange);
+        if (visibilityTimer.current) window.clearTimeout(visibilityTimer.current);
     };
-  }, [user]);
+  }, [logout]);
+
 
   const updateConfig = (emplacement: string, partial: Partial<AppConfig>) => {
     setConfigs(prev => ({

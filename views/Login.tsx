@@ -25,10 +25,11 @@ export const Login: React.FC = () => {
   }, []);
 
   const activeConfig = useMemo(() => {
+    // Fallback config if no specific config for emplacement exists
     return configs[selectedEmplacement] || {
       slogan: "Innovative solutions for technical logistics and industrial management.",
       logo: undefined,
-      loginImage: "https://images.unsplash.com/photo-1553413077-190dd305871c?q=80&w=2070&auto=format&fit=crop"
+      loginImage: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=2070&auto=format&fit=crop"
     };
   }, [selectedEmplacement, configs]);
 
@@ -61,21 +62,26 @@ export const Login: React.FC = () => {
   return (
     <div className="min-h-screen flex bg-white font-sans">
       
-      {/* SECCIÓN IMAGEN IZQUIERDA */}
-      <div className="relative w-1/2 hidden lg:block overflow-hidden bg-slate-900">
+      {/* SECCIÓN IZQUIERDA - IMAGEN Y BRANDING */}
+      <div className="relative w-1/2 hidden lg:flex flex-col justify-end overflow-hidden bg-slate-900">
         <img 
           src={activeConfig.loginImage} 
           alt="Login Cover" 
-          className="absolute inset-0 w-full h-full object-cover opacity-60"
+          className="absolute inset-0 w-full h-full object-cover opacity-50"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-900/80 to-transparent"></div>
-        <div className="relative z-10 flex flex-col justify-end p-20 h-full text-white">
-           <h1 className="text-5xl font-bold mb-4">{appName}</h1>
-           <p className="text-xl text-slate-300 font-light">{activeConfig.slogan}</p>
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/20 to-transparent"></div>
+        
+        <div className="relative z-10 px-16 py-16">
+           <h1 className="text-5xl font-black text-white tracking-tighter uppercase mb-4">
+             {appName}
+           </h1>
+           <p className="text-slate-300 text-lg font-medium leading-relaxed max-w-lg">
+             {activeConfig.slogan}
+           </p>
         </div>
       </div>
 
-      {/* SECCIÓN FORMULARIO DERECHA - REDISEÑADO SEGÚN IMAGEN */}
+      {/* SECCIÓN DERECHA - FORMULARIO */}
       <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-8 bg-white">
         <div className="w-full max-w-[420px] space-y-8">
           

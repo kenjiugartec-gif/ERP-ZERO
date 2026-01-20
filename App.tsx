@@ -51,7 +51,7 @@ const DynamicStyles: React.FC = () => {
 
 const AppContent: React.FC = () => {
   const { user, currentConfig } = useApp();
-  const [activeModule, setActiveModule] = useState('dashboard'); // Default to dashboard
+  const [activeModule, setActiveModule] = useState(''); // Default to empty (background view)
 
   if (!user) {
     return <Login />;
@@ -87,6 +87,15 @@ const AppContent: React.FC = () => {
         {/* Render module or background based on activeModule */}
         {activeModule ? (
            <div className="w-full h-full bg-slate-50/50 relative animate-in fade-in duration-300">
+               {/* Global Close Button for Windows */}
+               <button 
+                 onClick={() => setActiveModule('')}
+                 className="absolute top-4 right-6 z-50 p-2 bg-white/80 backdrop-blur-sm text-slate-400 hover:text-red-500 rounded-full shadow-sm border border-slate-200 transition-all hover:scale-110 hover:shadow-md"
+                 title="Cerrar Ventana"
+               >
+                 <X size={20} />
+               </button>
+               
                {getModuleComponent(activeModule)}
            </div>
         ) : (
