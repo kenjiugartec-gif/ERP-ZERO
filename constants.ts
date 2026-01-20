@@ -1,4 +1,11 @@
 
+import { 
+  LayoutDashboard, Package, Truck, 
+  DoorOpen, ArrowLeftRight, History, 
+  ClipboardCheck, MapPin, Car, 
+  Users, Settings, FileText, Container, FileCheck, ArrowDownToLine
+} from 'lucide-react';
+
 export const CHILE_GEO_DATA = [
   {
     region: "Arica y Parinacota",
@@ -107,5 +114,22 @@ export const CAR_MODELS: Record<string, string[]> = {
   "DFSK": ["C31", "C32", "C35", "500", "580"]
 };
 
-// Generar array de marcas ordenado alfabéticamente basado en las llaves del objeto
 export const CAR_BRANDS = Object.keys(CAR_MODELS).sort();
+
+export const MODULES = [
+  { id: 'dashboard', label: 'Informe General', icon: LayoutDashboard },
+  { id: 'gate_in', label: 'Gate In', icon: ArrowDownToLine },
+  { id: 'documents', label: 'Control Documental', icon: FileCheck },
+  { id: 'baroti', label: 'Baroti', icon: Container },
+  { id: 'stock', label: 'Almacenamiento', icon: Package }, // Changed from Gestión Almacenaje
+  { id: 'reception', label: 'Recepción', icon: ClipboardCheck },
+  { id: 'dispatch', label: 'Despacho', icon: Truck },
+  { id: 'gate', label: 'Control Puerta', icon: DoorOpen },
+  { id: 'io', label: 'Control E/S', icon: ArrowLeftRight },
+  { id: 'history', label: 'Historial', icon: History },
+  { id: 'sales', label: 'Control VTA', icon: FileText },
+  { id: 'communes', label: 'Geografía', icon: MapPin },
+  { id: 'fleet', label: 'Flota', icon: Car },
+  { id: 'users', label: 'Usuarios y Roles', icon: Users },
+  { id: 'settings', label: 'Configuración', icon: Settings },
+];

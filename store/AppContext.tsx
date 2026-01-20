@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { User, Vehicle, StockItem, GateTransaction, Notification, GeoLocationRecord, AppConfig } from '../types';
-import { EMPLACEMENTS as INITIAL_EMPLACEMENTS } from '../constants';
+import { User, Vehicle, StockItem, GateTransaction, Notification, GeoLocationRecord, AppConfig, Role, ReceptionDocument } from '../types';
+import { EMPLACEMENTS as INITIAL_EMPLACEMENTS, MODULES } from '../constants';
 
 interface AppContextType {
   user: User | null;
@@ -13,12 +13,14 @@ interface AppContextType {
   
   // Data Stores
   users: User[];
+  roles: Role[];
   vehicles: Vehicle[];
   stock: StockItem[];
   transactions: GateTransaction[];
   notifications: Notification[];
   geoRecords: GeoLocationRecord[];
   emplacements: string[];
+  documents: ReceptionDocument[]; // Added documents store
   
   // App Config per Emplacement
   configs: Record<string, AppConfig>;
@@ -31,6 +33,10 @@ interface AppContextType {
   createTransaction: (t: GateTransaction) => void;
   updateTransaction: (id: string, t: Partial<GateTransaction>) => void;
   addUser: (u: User) => void;
+  editUser: (id: string, data: Partial<User>) => void;
+  deleteUser: (id: string) => void;
+  addRole: (r: Role) => void;
+  deleteRole: (id: string) => void;
   addStockItem: (item: StockItem) => void;
   updateStockLocation: (id: string, newLocation: string) => void;
   markNotificationRead: (id: number) => void;
@@ -38,6 +44,7 @@ interface AppContextType {
   addGeoRecord: (record: GeoLocationRecord) => void;
   deleteGeoRecord: (id: string) => void;
   addEmplacement: (name: string) => void;
+  addDocument: (doc: ReceptionDocument) => void; // Added action
   
   // UI Settings
   appName: string;
@@ -47,7 +54,7 @@ interface AppContextType {
 const DEFAULT_CONFIG: AppConfig = {
   slogan: "Innovative solutions for technical logistics and industrial management.",
   fontFamily: "'Inter', sans-serif",
-  fontSize: 14,
+  fontSize: 14, // STRICTLY SET TO 14PX AS REQUESTED
   lineHeight: 1.5,
   primaryColor: "#2563eb",
   logo: undefined,
@@ -98,14 +105,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [appName, setAppName] = useLocalStorage("zero_wms_appname", "ZERO WMS");
   const [configs, setConfigs] = useLocalStorage<Record<string, AppConfig>>("zero_wms_configs", {});
 
+  // Initial Roles Data (Updated with "Control de Embase")
+  const initialRoles: Role[] = [
+    { id: 'ADMIN', name: 'Administrador', description: 'Acceso total al sistema', permissions: {}, isSystem: true },
+    { id: 'OPERATOR', name: 'Operador', description: 'Acceso a gestión diaria', permissions: {}, isSystem: true },
+    { id: 'SUPERVISOR', name: 'Supervisor', description: 'Supervisión de operaciones', permissions: {}, isSystem: true },
+    { id: 'EMBASE_CONTROL', name: 'Control de Embase', description: 'Gestión específica de embase', permissions: {}, isSystem: true },
+  ];
+
   const [users, setUsers] = useLocalStorage<User[]>("zero_wms_users", [
     { id: '1', name: 'Admin', rut: '1-9', password: '174545219', role: 'ADMIN', location: 'Central' }
   ]);
+  const [roles, setRoles] = useLocalStorage<Role[]>("zero_wms_roles", initialRoles);
+
   const [vehicles, setVehicles] = useLocalStorage<Vehicle[]>("zero_wms_vehicles", []); 
   const [stock, setStock] = useLocalStorage<StockItem[]>("zero_wms_stock", []); 
   const [transactions, setTransactions] = useLocalStorage<GateTransaction[]>("zero_wms_transactions", []);
   const [geoRecords, setGeoRecords] = useLocalStorage<GeoLocationRecord[]>("zero_wms_georecords", []);
   const [emplacements, setEmplacements] = useLocalStorage<string[]>("zero_wms_emplacements", INITIAL_EMPLACEMENTS);
+  const [documents, setDocuments] = useLocalStorage<ReceptionDocument[]>("zero_wms_documents", []);
 
   const [notifications, setNotifications] = useState<Notification[]>([
     { id: 1, title: 'Sistema Iniciado', message: 'Plataforma lista para operar.', type: 'INFO', timestamp: new Date(), read: false }
@@ -131,7 +149,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (user) {
       const updatedUser = { ...user, ...data };
       setUser(updatedUser);
-      // También actualizamos la lista global de usuarios
       setUsers(prev => prev.map(u => u.id === user.id ? { ...u, ...data } : u));
     }
   };
@@ -140,37 +157,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     if (!user) return;
 
-    const INACTIVITY_LIMIT = 30 * 60 * 1000; // 30 minutes extended for dev
-    const MOBILE_VISIBILITY_LIMIT = 5 * 60 * 1000; 
-
+    const INACTIVITY_LIMIT = 30 * 60 * 1000; 
     const resetInactivityTimer = () => {
       if (inactivityTimer.current) window.clearTimeout(inactivityTimer.current);
       inactivityTimer.current = window.setTimeout(() => {
-        // console.warn("Cierre de sesión por inactividad");
-        // logout(); // Disabled for ease of testing
+        // logout(); 
       }, INACTIVITY_LIMIT);
     };
 
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
-         // Logic paused
-      }
-    };
-
-    const activityEvents = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart'];
-    activityEvents.forEach(event => {
-      window.addEventListener(event, resetInactivityTimer);
-    });
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('mousedown', resetInactivityTimer);
+    window.addEventListener('keydown', resetInactivityTimer);
     resetInactivityTimer();
 
     return () => {
-      activityEvents.forEach(event => {
-        window.removeEventListener(event, resetInactivityTimer);
-      });
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('mousedown', resetInactivityTimer);
+      window.removeEventListener('keydown', resetInactivityTimer);
       if (inactivityTimer.current) window.clearTimeout(inactivityTimer.current);
-      if (visibilityTimer.current) window.clearTimeout(visibilityTimer.current);
     };
   }, [user]);
 
@@ -194,40 +196,50 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
   
   const addUser = (u: User) => setUsers([...users, u]);
-
-  const addStockItem = (item: StockItem) => {
-    setStock(prev => [...prev, item]);
+  
+  const editUser = (id: string, data: Partial<User>) => {
+    setUsers(prev => prev.map(u => u.id === id ? { ...u, ...data } : u));
+    if (user && user.id === id) {
+        updateCurrentUser(data);
+    }
   };
 
+  const deleteUser = (id: string) => {
+    setUsers(prev => prev.filter(u => u.id !== id));
+  };
+  
+  const addRole = (r: Role) => setRoles([...roles, r]);
+  const deleteRole = (id: string) => setRoles(roles.filter(r => r.id !== id));
+
+  const addStockItem = (item: StockItem) => setStock(prev => [...prev, item]);
   const updateStockLocation = (id: string, newLocation: string) => {
     setStock(prev => prev.map(item => item.id === id ? { ...item, location: newLocation, lastUpdated: new Date().toISOString() } : item));
   };
 
-  const markNotificationRead = (id: number) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-  };
-
+  const markNotificationRead = (id: number) => setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
   const clearNotifications = () => setNotifications([]);
 
   const addGeoRecord = (record: GeoLocationRecord) => setGeoRecords([record, ...geoRecords]);
   const deleteGeoRecord = (id: string) => setGeoRecords(geoRecords.filter(r => r.id !== id));
   
   const addEmplacement = (name: string) => {
-    if (!emplacements.includes(name)) {
-      setEmplacements([...emplacements, name]);
-    }
+    if (!emplacements.includes(name)) setEmplacements([...emplacements, name]);
   };
+
+  const addDocument = (doc: ReceptionDocument) => setDocuments([doc, ...documents]);
 
   return (
     <AppContext.Provider value={{
       user, login, logout, updateCurrentUser,
       welcomeMessageShown, setWelcomeMessageShown,
-      users, vehicles, stock, transactions, notifications, geoRecords, emplacements,
+      users, roles, vehicles, stock, transactions, notifications, geoRecords, emplacements, documents,
       configs, updateConfig, currentConfig,
-      addVehicle, updateVehicle, createTransaction, updateTransaction, addUser,
+      addVehicle, updateVehicle, createTransaction, updateTransaction, 
+      addUser, editUser, deleteUser, 
+      addRole, deleteRole,
       addStockItem, updateStockLocation,
       markNotificationRead, clearNotifications,
-      addGeoRecord, deleteGeoRecord, addEmplacement,
+      addGeoRecord, deleteGeoRecord, addEmplacement, addDocument,
       appName, setAppName
     }}>
       {children}

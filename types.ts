@@ -1,5 +1,13 @@
 
-export type UserRole = 'ADMIN' | 'OPERATOR' | 'DRIVER';
+export type UserRole = string; // Changed to string to support dynamic roles
+
+export interface Role {
+  id: string;
+  name: string;
+  description: string;
+  permissions: Record<string, string[]>; // ModuleID -> [Actions]
+  isSystem?: boolean; // To protect ADMIN, etc.
+}
 
 export interface AppConfig {
   logo?: string;
@@ -79,6 +87,7 @@ export interface GateTransaction {
   id: string;
   plate: string;
   driver: string;
+  location: string; // Added to track which emplacement owns this transaction
   status: 'PENDING_EXIT' | 'EXIT_AUTHORIZED' | 'IN_ROUTE' | 'PENDING_ENTRY' | 'ENTRY_AUTHORIZED' | 'COMPLETED';
   exitTime?: string;
   entryTime?: string;
@@ -90,6 +99,22 @@ export interface GateTransaction {
   user_Gate_Out?: string;
   user_Gate_In?: string;
   user_ES_In?: string;
+}
+
+// New Interface for Document Control
+export interface ReceptionDocument {
+  id: string;
+  guideNumber: string;
+  container: string;
+  client: string;
+  ship: string;
+  voyage: string;
+  bl: string;
+  shippingLine: string;
+  grossWeight: string;
+  condition: 'DIRECTO' | 'INDIRECTO';
+  location: string;
+  timestamp: string;
 }
 
 export const ASSET_TYPES = [

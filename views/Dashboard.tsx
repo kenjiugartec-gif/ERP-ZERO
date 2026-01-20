@@ -8,6 +8,10 @@ export const Dashboard: React.FC = () => {
   const { transactions, stock, vehicles, user } = useApp();
 
   const localTransactions = useMemo(() => transactions.filter(t => {
+    // Prioritize explicit transaction location, fallback to vehicle matching if strictly necessary (legacy support)
+    if (t.location) return t.location === user?.location;
+    
+    // Fallback: Check if vehicle belongs to location
     const v = vehicles.find(veh => veh.plate === t.plate);
     return v?.location === user?.location;
   }), [transactions, vehicles, user]);
@@ -29,7 +33,7 @@ export const Dashboard: React.FC = () => {
   ].filter(d => d.value > 0);
 
   const StatCard = ({ title, value, subtext, icon: Icon, colorClass, borderClass }: any) => (
-    <div className={`bg-white p-8 rounded-3xl shadow-sm border border-slate-100 relative overflow-hidden group hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300`}>
+    <div className={`bg-white p-6 rounded-3xl shadow-sm border border-slate-100 relative overflow-hidden group hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 w-full`}>
        <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${borderClass}`}></div>
        <div className="flex justify-between items-start">
           <div>
@@ -45,7 +49,7 @@ export const Dashboard: React.FC = () => {
   );
 
   return (
-    <div className="h-full overflow-y-auto p-8 space-y-10 bg-slate-50/30">
+    <div className="h-full overflow-y-auto p-6 space-y-8 bg-slate-50/30 w-full">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
          <div className="flex items-center space-x-4">
             <div className="bg-slate-900 p-3 rounded-2xl text-white shadow-lg flex-shrink-0">
@@ -62,7 +66,7 @@ export const Dashboard: React.FC = () => {
          </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
         <StatCard 
            title="Móviles Activos" 
            value={activeRoutes} 
@@ -89,8 +93,8 @@ export const Dashboard: React.FC = () => {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-         <div className="bg-white p-10 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col h-[450px]">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
+         <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col h-[450px]">
             <h3 className="font-bold text-slate-800 mb-8 text-xs uppercase tracking-[0.2em] flex items-center">
                <span className="w-1.5 h-6 bg-blue-600 rounded-full mr-3"></span>
                Niveles de Stock Crítico
@@ -111,7 +115,7 @@ export const Dashboard: React.FC = () => {
             </div>
          </div>
 
-         <div className="bg-white p-10 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col h-[450px]">
+         <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col h-[450px]">
             <h3 className="font-bold text-slate-800 mb-8 text-xs uppercase tracking-[0.2em] flex items-center">
                <span className="w-1.5 h-6 bg-teal-600 rounded-full mr-3"></span>
                Estado Logístico de Flota

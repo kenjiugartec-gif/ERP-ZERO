@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useApp } from '../store/AppContext';
+import { MODULES } from '../constants';
 import { 
   LogOut, Menu, X, 
   LayoutDashboard, Package, Truck, 
@@ -27,21 +28,6 @@ interface LayoutProps {
   activeModule: string;
   setActiveModule: (m: string) => void;
 }
-
-const MODULES = [
-  { id: 'dashboard', label: 'Informe General', icon: LayoutDashboard },
-  { id: 'stock', label: 'Gestión Almacenaje', icon: Package },
-  { id: 'reception', label: 'Recepción', icon: ClipboardCheck },
-  { id: 'dispatch', label: 'Despacho', icon: Truck },
-  { id: 'gate', label: 'Control Puerta', icon: DoorOpen },
-  { id: 'io', label: 'Control E/S', icon: ArrowLeftRight },
-  { id: 'history', label: 'Historial', icon: History },
-  { id: 'sales', label: 'Control VTA', icon: FileText },
-  { id: 'communes', label: 'Geografía', icon: MapPin },
-  { id: 'fleet', label: 'Flota', icon: Car },
-  { id: 'users', label: 'Usuarios y Roles', icon: Users },
-  { id: 'settings', label: 'Configuración', icon: Settings },
-];
 
 const ProfileEditModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const { user, updateCurrentUser } = useApp();
@@ -325,7 +311,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
 
   const SidebarContent = () => (
     <>
-      <div className={`h-20 flex items-center bg-slate-950/50 border-b border-slate-800/50 ${isSidebarOpen ? 'justify-between px-6' : 'justify-center px-0'}`}>
+      <div className={`h-20 flex items-center bg-slate-950/50 border-b border-slate-800/50 flex-shrink-0 ${isSidebarOpen ? 'justify-between px-6' : 'justify-center px-0'}`}>
         {isSidebarOpen && (
           <div className="flex items-center animate-in fade-in slide-in-from-left-2 duration-500">
              <span className="text-sm font-black text-white tracking-[0.3em] uppercase italic opacity-90 truncate">
@@ -348,7 +334,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
         )}
       </div>
       
-      <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-2 custom-scrollbar flex flex-col items-center">
+      <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-2 flex flex-col items-center min-h-0 overscroll-contain pb-32">
         {isSidebarOpen && (
           <p className="w-full px-4 text-[0.7rem] font-black text-slate-600 uppercase tracking-[0.3em] mb-6 animate-in fade-in duration-300">
             Panel Operativo
@@ -360,7 +346,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
             key={module.id}
             onClick={() => { setActiveModule(module.id); if(isMobile) setIsSidebarOpen(false); }}
             title={!isSidebarOpen ? module.label : undefined}
-            className={`w-full flex items-center rounded-2xl transition-all duration-300 group relative
+            className={`w-full flex items-center rounded-2xl transition-all duration-300 group relative flex-shrink-0
               ${isSidebarOpen ? 'p-3.5' : 'p-3 justify-center'}
               ${activeModule === module.id 
                 ? 'bg-blue-600 text-white shadow-xl shadow-blue-900/40' 
@@ -380,7 +366,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
         ))}
       </nav>
 
-      <div className={`p-4 bg-slate-950/40 border-t border-slate-800/50 flex flex-col items-center space-y-2`}>
+      <div className={`p-4 bg-slate-950/40 border-t border-slate-800/50 flex flex-col items-center space-y-2 flex-shrink-0`}>
         {deferredPrompt && isSidebarOpen && (
            <button 
              onClick={handleInstallClick}
@@ -403,7 +389,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
   );
 
   return (
-    <div className="h-screen flex overflow-hidden bg-slate-50 font-sans relative">
+    <div className="h-screen flex overflow-hidden bg-slate-50 font-sans relative supports-[height:100dvh]:h-[100dvh]">
       
       {/* BACKGROUND WATERMARK LOGO */}
       {currentConfig.logo && (
@@ -422,8 +408,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
         className={`
            transition-all duration-300 flex flex-col z-50 shadow-2xl flex-shrink-0 bg-slate-900 text-slate-300
            ${isMobile 
-              ? `fixed inset-y-0 left-0 w-72 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}` 
-              : `relative ${isSidebarOpen ? 'w-64' : 'w-20'}`
+              ? `fixed top-0 left-0 w-72 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} h-screen supports-[height:100dvh]:h-[100dvh]` 
+              : `relative ${isSidebarOpen ? 'w-64' : 'w-20'} h-full`
            }
         `}
       >
@@ -629,7 +615,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-0 bg-transparent relative z-10">
+        {/* Change: overflow-hidden on main to ensure views fit exactly within boundaries */}
+        <main className="flex-1 overflow-hidden bg-transparent relative z-10">
           <div className="w-full h-full relative">
              {children}
           </div>

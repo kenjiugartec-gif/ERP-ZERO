@@ -50,7 +50,7 @@ export const StockControl: React.FC = () => {
   };
 
   return (
-    <div className="h-full flex flex-col bg-white report-container">
+    <div className="h-full flex flex-col bg-white report-container w-full">
       {/* Print-Only Header */}
       <div className="print-only">
         <div className="print-header">
@@ -68,7 +68,7 @@ export const StockControl: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-white border-b border-slate-100 p-8 flex-shrink-0 z-10 no-print">
+      <div className="bg-white border-b border-slate-100 p-6 flex-shrink-0 z-10 no-print w-full">
          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="flex items-center space-x-4">
                <div className="bg-slate-900 p-3 rounded-2xl text-white shadow-lg flex-shrink-0">
@@ -109,7 +109,7 @@ export const StockControl: React.FC = () => {
          </div>
       </div>
 
-      <div className="flex-1 overflow-auto bg-white relative print:overflow-visible">
+      <div className="flex-1 overflow-auto bg-white relative print:overflow-visible w-full">
         {isSimulating && (
             <div className="absolute inset-0 z-20 bg-white/60 backdrop-blur-[2px] flex items-center justify-center no-print">
                 <div className="flex flex-col items-center">

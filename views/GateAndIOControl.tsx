@@ -1,10 +1,10 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useApp } from '../store/AppContext';
 import { GateTransaction, TransactionItem } from '../types';
 import { ChevronDown, ChevronRight, Save, Lock, Unlock, LogIn, LogOut, Truck, AlertTriangle, XCircle, CheckSquare, ShieldCheck, User, Box, Activity, CheckCircle2 } from 'lucide-react';
 
-// --- CONSTANTS SPECIFIC TO PROMPT ---
+// ... (Constants and Helper Components remain same: ASSETS_LIST, REGULATOR_VARIANTS, GateSelect, InventoryAccordion) ...
 const ASSETS_LIST = [
   "Cilindro 10m3", "Cilindro 1m3", "Liberator", "Mochila", "Concentrador", "Regulador"
 ];
@@ -17,7 +17,6 @@ const SUPPLIES_LIST = [
   "Mangueras Cortas", "Vasos Humidificadores"
 ];
 
-// --- CUSTOM GATE SELECT COMPONENT ---
 interface GateSelectProps {
   value: string;
   options: { label: string; value: string }[];
@@ -77,14 +76,6 @@ const GateSelect: React.FC<GateSelectProps> = ({ value, options, placeholder = "
   );
 };
 
-
-// --- HELPER COMPONENTS ---
-
-/**
- * InventoryAccordion
- * Handles the specific logic for Assets (with Regulator variants) and Supplies.
- * Supports 'QUANTITY' mode (counters) and 'CHECKLIST' mode (checkboxes).
- */
 interface InventoryAccordionProps {
   mode: 'CHECKLIST' | 'QUANTITY'; 
   selectedItems: TransactionItem[];
@@ -101,7 +92,6 @@ const InventoryAccordion: React.FC<InventoryAccordionProps> = ({ mode, selectedI
 
   const getQuantity = (name: string, variant?: string) => {
     if (!variant) {
-        // Sum generic items or all variants if no variant specified
         return selectedItems.filter(i => i.name === name).reduce((acc, curr) => acc + curr.quantity, 0);
     }
     const item = selectedItems.find(i => i.name === name && i.details === variant);
@@ -115,14 +105,12 @@ const InventoryAccordion: React.FC<InventoryAccordionProps> = ({ mode, selectedI
     const existsIndex = newItems.findIndex(i => i.name === name && i.details === variant);
 
     if (mode === 'CHECKLIST') {
-        // Checkbox Logic
         if (value === true) {
              if (existsIndex === -1) newItems.push({ name, type, quantity: 1, details: variant });
         } else {
              if (existsIndex > -1) newItems.splice(existsIndex, 1);
         }
     } else {
-        // Quantity Logic
         const qty = value as number;
         if (qty <= 0) {
             if (existsIndex > -1) newItems.splice(existsIndex, 1);
@@ -141,7 +129,7 @@ const InventoryAccordion: React.FC<InventoryAccordionProps> = ({ mode, selectedI
       const qty = getQuantity(item, variant);
       
       if (readOnly) {
-          if (qty === 0) return null; // Don't show empty items in read-only
+          if (qty === 0) return null; 
           return (
              <div className="flex items-center space-x-2">
                  <span className="font-mono font-bold text-slate-700 bg-slate-100 px-2 py-1 rounded">{qty}</span>
@@ -170,11 +158,8 @@ const InventoryAccordion: React.FC<InventoryAccordionProps> = ({ mode, selectedI
   };
 
   const renderRow = (item: string, type: 'ACTIVO' | 'INSUMO') => {
-     // Special Case: Regulador in Quantity Mode
      if (item === 'Regulador' && mode === 'QUANTITY') {
          const totalRegulators = REGULATOR_VARIANTS.reduce((acc, v) => acc + getQuantity('Regulador', v), 0);
-         
-         // In ReadOnly, only show if there are regulators
          if (readOnly && totalRegulators === 0) return null;
 
          return (
@@ -199,7 +184,6 @@ const InventoryAccordion: React.FC<InventoryAccordionProps> = ({ mode, selectedI
          );
      }
 
-     // Standard Row
      const qty = getQuantity(item);
      const isChecked = qty > 0;
      
@@ -225,7 +209,6 @@ const InventoryAccordion: React.FC<InventoryAccordionProps> = ({ mode, selectedI
 
   return (
     <div className="space-y-4">
-      {/* SECTION: ACTIVOS */}
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
          <button 
            onClick={() => handleToggleSection('ACTIVOS')}
@@ -245,7 +228,6 @@ const InventoryAccordion: React.FC<InventoryAccordionProps> = ({ mode, selectedI
          )}
       </div>
 
-      {/* SECTION: INSUMOS */}
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
          <button 
            onClick={() => handleToggleSection('INSUMOS')}
@@ -268,22 +250,22 @@ const InventoryAccordion: React.FC<InventoryAccordionProps> = ({ mode, selectedI
   );
 };
 
-// --- GATE CONTROL VIEW ---
 export const GateControl: React.FC = () => {
   const { transactions, updateTransaction, user } = useApp();
   
-  // State for Exit Logic
   const [selectedExitPlate, setSelectedExitPlate] = useState('');
-  
-  // State for Entry Logic
   const [selectedEntry, setSelectedEntry] = useState<GateTransaction | null>(null);
   const [checklistItems, setChecklistItems] = useState<TransactionItem[]>([]);
 
-  // Filter Transactions
-  const pendingExit = transactions.filter(t => t.status === 'PENDING_EXIT');
-  const inRoute = transactions.filter(t => t.status === 'IN_ROUTE' || t.status === 'PENDING_ENTRY');
+  // Filter transactions by current user location
+  const localTransactions = useMemo(() => {
+    return transactions.filter(t => t.location === user?.location);
+  }, [transactions, user]);
+
+  const pendingExit = localTransactions.filter(t => t.status === 'PENDING_EXIT');
+  const inRoute = localTransactions.filter(t => t.status === 'IN_ROUTE' || t.status === 'PENDING_ENTRY');
   
-  const selectedExitTrans = transactions.find(t => t.plate === selectedExitPlate && t.status === 'PENDING_EXIT');
+  const selectedExitTrans = localTransactions.find(t => t.plate === selectedExitPlate && t.status === 'PENDING_EXIT');
 
   const handleAuthorizeExit = () => {
     if (selectedExitTrans) {
@@ -313,24 +295,24 @@ export const GateControl: React.FC = () => {
   };
 
   return (
-    <div className="h-full overflow-y-auto p-6 bg-white">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="h-full overflow-y-auto p-6 bg-white w-full">
+      <div className="w-full space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center pb-4 border-b border-slate-200">
            <div>
               <h2 className="text-xl font-bold text-slate-800">Control Puerta</h2>
-              <p className="text-sm text-slate-500">Validación de seguridad y flujos</p>
+              <p className="text-sm text-slate-500">Validación de seguridad y flujos ({user?.location})</p>
            </div>
            <div className="bg-slate-100 px-3 py-1 rounded text-xs font-mono text-slate-600">
                {user?.name || 'Operador'}
            </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid md:grid-cols-2 gap-8 w-full">
             
             {/* --- COLUMNA SALIDA (Red Design) --- */}
             <div className="flex flex-col">
-                <div className="bg-white rounded-xl shadow-lg border-l-4 border-red-500 overflow-hidden min-h-[500px] flex flex-col relative">
+                <div className="bg-white rounded-xl shadow-lg border-l-4 border-red-500 overflow-hidden min-h-[500px] flex flex-col relative w-full">
                     <div className="p-6 border-b border-slate-100">
                         <div className="flex items-center text-red-600 mb-1">
                             <LogOut size={20} className="mr-2" />
@@ -367,7 +349,7 @@ export const GateControl: React.FC = () => {
                                          <Lock size={20} />
                                      </div>
                                      <h4 className="font-bold text-slate-800">Acceso Bloqueado</h4>
-                                     <p className="text-xs text-slate-500 mt-1">Seleccione un vehículo con salida pendiente.</p>
+                                     <p className="text-xs text-slate-500 mt-1">Seleccione un vehículo con salida pendiente en {user?.location}.</p>
                                  </div>
                              )}
                              <div className={!selectedExitTrans ? 'filter blur-sm opacity-50' : ''}>
@@ -398,7 +380,7 @@ export const GateControl: React.FC = () => {
 
             {/* --- COLUMNA INGRESO (Teal Design) --- */}
             <div className="flex flex-col">
-                <div className="bg-white rounded-xl shadow-lg border-l-4 border-teal-500 overflow-hidden min-h-[500px] flex flex-col relative">
+                <div className="bg-white rounded-xl shadow-lg border-l-4 border-teal-500 overflow-hidden min-h-[500px] flex flex-col relative w-full">
                     <div className="p-6 border-b border-slate-100">
                         <div className="flex items-center text-teal-600 mb-1">
                             <LogIn size={20} className="mr-2" />
@@ -463,21 +445,27 @@ export const GateControl: React.FC = () => {
   );
 };
 
-// --- IO CONTROL VIEW ---
 export const IOControl: React.FC = () => {
   const { vehicles, createTransaction, transactions, updateTransaction, user } = useApp();
   const [mode, setMode] = useState<'EXIT' | 'ENTRY'>('EXIT');
   const [selectedPlate, setSelectedPlate] = useState('');
   const [items, setItems] = useState<TransactionItem[]>([]);
 
-  // Filtros
-  // Para Salida: Vehículos que NO están en una transacción activa
-  const availableForExit = vehicles.filter(v => 
-    !transactions.find(t => t.plate === v.plate && t.status !== 'COMPLETED')
-  );
+  // Filter available vehicles for exit based on current location and status
+  const availableForExit = useMemo(() => {
+    return vehicles.filter(v => 
+        v.location === user?.location && // Must be at current location
+        !transactions.find(t => t.plate === v.plate && t.status !== 'COMPLETED') // Must not have active transaction
+    );
+  }, [vehicles, transactions, user]);
 
-  // Para Entrada: Vehículos que YA fueron autorizados por Control Puerta (ENTRY_AUTHORIZED)
-  const availableForEntry = transactions.filter(t => t.status === 'ENTRY_AUTHORIZED');
+  // Filter available transactions for entry based on current location and status
+  const availableForEntry = useMemo(() => {
+    return transactions.filter(t => 
+        t.status === 'ENTRY_AUTHORIZED' && 
+        t.location === user?.location // Transaction belongs to this location
+    );
+  }, [transactions, user]);
 
   const handleSaveExit = () => {
       if(!selectedPlate) return;
@@ -487,7 +475,8 @@ export const IOControl: React.FC = () => {
           id: Date.now().toString(),
           plate: selectedPlate,
           driver: vehicle?.driver || 'Desconocido',
-          status: 'PENDING_EXIT', // Esto bloqueará la salida en Puerta hasta que E/S termine, pero aquí ya terminó, así que estado PENDING_EXIT habilita a Puerta para revisar.
+          location: user?.location || 'Central', // Bind transaction to current location
+          status: 'PENDING_EXIT',
           exitItems_ES: items,
           exitItems_Gate: [],
           entryItems_ES: [],
@@ -521,31 +510,28 @@ export const IOControl: React.FC = () => {
   };
 
   return (
-    <div className="h-full overflow-y-auto p-6 bg-white">
-      <div className="max-w-4xl mx-auto">
+    <div className="h-full overflow-y-auto p-6 bg-white w-full">
+      <div className="w-full max-w-none">
          
-         {/* Navigation Tabs */}
-         <div className="flex bg-slate-100 p-1 rounded-xl mb-6 shadow-inner">
+         <div className="flex bg-slate-100 p-1 rounded-xl mb-6 shadow-inner w-full">
              <button 
                 onClick={() => { setMode('EXIT'); resetForm(); }}
                 className={`flex-1 py-3 rounded-lg font-bold text-sm transition-all flex items-center justify-center ${mode === 'EXIT' ? 'bg-white text-amber-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
              >
                  <LogOut size={16} className="mr-2" />
-                 CONTROL SALIDA
+                 CONTROL SALIDA ({user?.location})
              </button>
              <button 
                 onClick={() => { setMode('ENTRY'); resetForm(); }}
                 className={`flex-1 py-3 rounded-lg font-bold text-sm transition-all flex items-center justify-center ${mode === 'ENTRY' ? 'bg-white text-teal-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
              >
                  <LogIn size={16} className="mr-2" />
-                 CONTROL INGRESO
+                 CONTROL INGRESO ({user?.location})
              </button>
          </div>
 
-         {/* Main Card */}
-         <div className={`bg-white rounded-xl shadow-lg border-l-4 overflow-hidden min-h-[500px] flex flex-col relative ${mode === 'EXIT' ? 'border-amber-500' : 'border-teal-500'}`}>
+         <div className={`bg-white rounded-xl shadow-lg border-l-4 overflow-hidden min-h-[500px] flex flex-col relative w-full ${mode === 'EXIT' ? 'border-amber-500' : 'border-teal-500'}`}>
              
-             {/* Header */}
              <div className="p-6 border-b border-slate-100">
                  <h3 className={`font-bold text-lg flex items-center ${mode === 'EXIT' ? 'text-amber-600' : 'text-teal-600'}`}>
                      {mode === 'EXIT' ? <LogOut size={20} className="mr-2"/> : <LogIn size={20} className="mr-2"/>}
@@ -558,7 +544,6 @@ export const IOControl: React.FC = () => {
 
              <div className="p-6 flex-1 flex flex-col space-y-6">
                  
-                 {/* Selectors */}
                  <div className="grid grid-cols-2 gap-4">
                      <div>
                          <label className="text-xs font-bold text-slate-700 mb-1 block">
@@ -585,7 +570,6 @@ export const IOControl: React.FC = () => {
                      </div>
                  </div>
 
-                 {/* Locked State for ENTRY if list is empty */}
                  {mode === 'ENTRY' && availableForEntry.length === 0 && !selectedPlate && (
                      <div className="flex-1 flex flex-col items-center justify-center text-center p-8 bg-slate-50 rounded-xl border border-dashed border-slate-300">
                          <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
@@ -598,7 +582,6 @@ export const IOControl: React.FC = () => {
                      </div>
                  )}
 
-                 {/* Accordion Form */}
                  {(mode === 'EXIT' || (mode === 'ENTRY' && selectedPlate)) && (
                      <div className="flex-1 relative animate-in slide-in-from-bottom-2">
                          {!selectedPlate && mode === 'EXIT' && (
@@ -616,7 +599,6 @@ export const IOControl: React.FC = () => {
                      </div>
                  )}
 
-                 {/* Action Button */}
                  {(mode === 'EXIT' || (mode === 'ENTRY' && selectedPlate)) && (
                      <button 
                         onClick={mode === 'EXIT' ? handleSaveExit : handleSaveEntry}
