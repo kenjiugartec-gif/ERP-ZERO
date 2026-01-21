@@ -4,13 +4,13 @@
   "name": "ZERO WMS Security Terminal",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/1067/1067568.png",
+      "src": "/logo_circle.png",
       "type": "image/png",
       "sizes": "192x192",
       "purpose": "any maskable"
     },
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/1067/1067568.png",
+      "src": "/logo_circle.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any maskable"
@@ -19,6 +19,6 @@
   "start_url": ".",
   "display": "standalone",
   "theme_color": "#0f172a",
-  "background_color": "#f8fafc",
+  "background_color": "#ffffff",
   "orientation": "any"
 }
