@@ -15,6 +15,7 @@ import { SettingsView } from './views/SettingsView';
 import { BarotiView } from './views/BarotiView';
 import { DocumentControlView } from './views/DocumentControlView';
 import { GateInView } from './views/GateInView';
+import { BehaviorView } from './views/BehaviorView'; // Import new view
 import { X } from 'lucide-react';
 
 const DynamicStyles: React.FC = () => {
@@ -60,6 +61,7 @@ const AppContent: React.FC = () => {
   const getModuleComponent = (moduleName: string) => {
     switch (moduleName) {
       case 'dashboard': return <Dashboard />;
+      case 'behavior': return <BehaviorView />; // Register new module
       case 'gate_in': return <GateInView />;
       case 'documents': return <DocumentControlView />;
       case 'baroti': return <BarotiView />;

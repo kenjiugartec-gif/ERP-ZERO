@@ -3,7 +3,8 @@ import {
   LayoutDashboard, Package, Truck, 
   DoorOpen, ArrowLeftRight, History, 
   ClipboardCheck, MapPin, Car, 
-  Users, Settings, FileText, Container, FileCheck, ArrowDownToLine
+  Users, Settings, FileText, Container, FileCheck, ArrowDownToLine,
+  Activity, BarChart3
 } from 'lucide-react';
 
 export const CHILE_GEO_DATA = [
@@ -119,9 +120,10 @@ export const CAR_BRANDS = Object.keys(CAR_MODELS).sort();
 export const MODULES = [
   { id: 'dashboard', label: 'Informe General', icon: LayoutDashboard },
   { id: 'gate_in', label: 'Gate In', icon: ArrowDownToLine },
+  { id: 'behavior', label: 'Comportamiento', icon: BarChart3 }, // New Module
   { id: 'documents', label: 'Control Documental', icon: FileCheck },
   { id: 'baroti', label: 'Baroti', icon: Container },
-  { id: 'stock', label: 'Almacenamiento', icon: Package }, // Changed from Gestión Almacenaje
+  { id: 'stock', label: 'Almacenamiento', icon: Package }, 
   { id: 'reception', label: 'Recepción', icon: ClipboardCheck },
   { id: 'dispatch', label: 'Despacho', icon: Truck },
   { id: 'gate', label: 'Control Puerta', icon: DoorOpen },

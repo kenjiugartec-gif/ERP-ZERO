@@ -180,6 +180,7 @@ export const ReceptionView: React.FC = () => {
     if (editingId) {
         setReceptions(prev => prev.map(r => r.id === editingId ? record : r));
         setEditingId(null);
+        alert("Registro actualizado correctamente.");
     } else {
         setReceptions(prev => [record, ...prev]);
     }
@@ -207,17 +208,27 @@ export const ReceptionView: React.FC = () => {
         qtyUm: record.qtyUm,
         unitValue: record.unitValue,
     });
+    
+    // Scroll to form to show user that editing is active
+    const formElement = document.getElementById('reception-form');
+    if (formElement) {
+        formElement.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('¿Está seguro de eliminar este registro?')) {
+    if (window.confirm('¿Está seguro de eliminar este registro permanentemente?')) {
         setReceptions(prev => prev.filter(r => r.id !== id));
         if (editingId === id) handleReset();
     }
   };
 
   const handleReset = () => {
-    setFormData(initialFormState);
+    setFormData({
+        ...initialFormState,
+        date: new Date().toISOString().split('T')[0],
+        time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+    });
     setEditingId(null);
   };
 
@@ -228,7 +239,7 @@ export const ReceptionView: React.FC = () => {
       <div className="w-full space-y-6">
         
         {/* Main Form Card */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <div id="reception-form" className={`bg-white rounded-xl shadow-sm border p-6 transition-colors duration-300 ${editingId ? 'border-amber-400 ring-1 ring-amber-100' : 'border-slate-200'}`}>
            
            {/* Header */}
            <div className="flex justify-between items-start mb-8">
@@ -248,7 +259,7 @@ export const ReceptionView: React.FC = () => {
                 className="flex items-center px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-50 transition-colors"
               >
                   <Eraser size={14} className="mr-2" />
-                  Limpiar / Nuevo
+                  {editingId ? 'Cancelar Edición' : 'Limpiar / Nuevo'}
               </button>
            </div>
 
@@ -434,7 +445,7 @@ export const ReceptionView: React.FC = () => {
                <div className="pt-6 flex justify-end">
                    <button 
                     onClick={handleSave}
-                    className={`${editingId ? 'bg-amber-500 hover:bg-amber-600' : 'bg-slate-900 hover:bg-slate-800'} text-white px-8 py-3 rounded-lg font-bold text-xs flex items-center shadow-lg transition-all active:scale-[0.98]`}
+                    className={`${editingId ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/20' : 'bg-slate-900 hover:bg-slate-800 shadow-slate-900/20'} text-white px-8 py-3 rounded-lg font-bold text-xs flex items-center shadow-lg transition-all active:scale-[0.98]`}
                    >
                        <Save size={16} className="mr-2" />
                        {editingId ? 'Actualizar Registro' : 'Agregar y Guardar'}
@@ -464,7 +475,7 @@ export const ReceptionView: React.FC = () => {
                    </thead>
                    <tbody className="text-xs text-slate-600 font-medium divide-y divide-slate-50">
                        {localReceptions.map((item) => (
-                           <tr key={item.id} className={`hover:bg-slate-50 transition-colors ${editingId === item.id ? 'bg-blue-50/50' : ''}`}>
+                           <tr key={item.id} className={`hover:bg-slate-50 transition-colors ${editingId === item.id ? 'bg-amber-50/50' : ''}`}>
                                <td className="py-3 pl-2">{item.date}</td>
                                <td className="py-3 font-mono text-slate-400">REC-{item.id.slice(-3)}</td>
                                <td className="py-3 text-slate-500">{item.docType.substring(0,3)}. {item.docNumber}</td>
@@ -477,7 +488,7 @@ export const ReceptionView: React.FC = () => {
                                   <div className="flex items-center justify-end space-x-2">
                                      <button 
                                         onClick={() => handleEdit(item)}
-                                        className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-md transition-colors"
+                                        className={`p-1.5 rounded-md transition-colors ${editingId === item.id ? 'bg-amber-100 text-amber-600' : 'text-blue-500 hover:bg-blue-50'}`}
                                         title="Editar"
                                      >
                                         <Edit size={14} />

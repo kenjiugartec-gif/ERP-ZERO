@@ -49,12 +49,11 @@ const ModalSelect = ({ label, placeholder, options, value, onChange, disabled = 
     const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
 
     useEffect(() => {
-        const handleScroll = () => { if(isOpen) setIsOpen(false); };
-        window.addEventListener('scroll', handleScroll, true);
-        window.addEventListener('resize', handleScroll);
+        // Fix: Removed 'scroll' listener to allow scrolling inside the dropdown
+        const handleResize = () => { if(isOpen) setIsOpen(false); };
+        window.addEventListener('resize', handleResize);
         return () => {
-             window.removeEventListener('scroll', handleScroll, true);
-             window.removeEventListener('resize', handleScroll);
+             window.removeEventListener('resize', handleResize);
         }
     }, [isOpen]);
 

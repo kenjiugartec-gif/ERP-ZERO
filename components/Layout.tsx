@@ -309,85 +309,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
       }
   };
 
-  const SidebarContent = () => (
-    <>
-      <div className={`h-20 flex items-center bg-slate-950/50 border-b border-slate-800/50 flex-shrink-0 ${isSidebarOpen ? 'justify-between px-6' : 'justify-center px-0'}`}>
-        {isSidebarOpen && (
-          <div className="flex items-center animate-in fade-in slide-in-from-left-2 duration-500">
-             <span className="text-sm font-black text-white tracking-[0.3em] uppercase italic opacity-90 truncate">
-               {appName}
-             </span>
-          </div>
-        )}
-        {!isMobile && (
-          <button 
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)} 
-            className={`p-2.5 rounded-xl transition-all duration-200 ${isSidebarOpen ? 'hover:bg-slate-800 text-slate-500 hover:text-white' : 'bg-slate-800/80 text-white hover:bg-blue-600'}`}
-          >
-            {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
-        )}
-        {isMobile && (
-           <button onClick={() => setIsSidebarOpen(false)} className="text-white">
-             <X size={24} />
-           </button>
-        )}
-      </div>
-      
-      <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-2 flex flex-col items-center min-h-0 overscroll-contain pb-32">
-        {isSidebarOpen && (
-          <p className="w-full px-4 text-[0.7rem] font-black text-slate-600 uppercase tracking-[0.3em] mb-6 animate-in fade-in duration-300">
-            Panel Operativo
-          </p>
-        )}
-        
-        {MODULES.map((module) => (
-          <button
-            key={module.id}
-            onClick={() => { setActiveModule(module.id); if(isMobile) setIsSidebarOpen(false); }}
-            title={!isSidebarOpen ? module.label : undefined}
-            className={`w-full flex items-center rounded-2xl transition-all duration-300 group relative flex-shrink-0
-              ${isSidebarOpen ? 'p-3.5' : 'p-3 justify-center'}
-              ${activeModule === module.id 
-                ? 'bg-blue-600 text-white shadow-xl shadow-blue-900/40' 
-                : 'text-slate-500 hover:bg-slate-800 hover:text-white'
-              }`}
-          >
-            <module.icon size={18} className={`${activeModule === module.id ? 'text-white' : 'text-slate-500 group-hover:text-white'} transition-colors flex-shrink-0`} />
-            {isSidebarOpen && (
-              <span className="ml-4 font-bold text-xs uppercase tracking-wider truncate animate-in fade-in duration-300">
-                {module.label}
-              </span>
-            )}
-            {!isSidebarOpen && activeModule === module.id && (
-              <div className="absolute left-0 top-2 bottom-2 w-1 bg-white rounded-r-full shadow-[0_0_10px_rgba(255,255,255,0.5)]"></div>
-            )}
-          </button>
-        ))}
-      </nav>
-
-      <div className={`p-4 bg-slate-950/40 border-t border-slate-800/50 flex flex-col items-center space-y-2 flex-shrink-0`}>
-        {deferredPrompt && isSidebarOpen && (
-           <button 
-             onClick={handleInstallClick}
-             className="w-full flex items-center justify-center p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl transition-all shadow-lg animate-pulse border border-blue-400/30"
-           >
-             <ShieldCheck size={16} className="mr-2"/>
-             <span className="font-bold text-[0.7rem] uppercase tracking-wider text-center">Protocolo de Seguridad <br/> (Descargar Terminal)</span>
-           </button>
-        )}
-        <button 
-          onClick={logout}
-          className={`w-full flex items-center text-slate-500 hover:bg-red-950/30 hover:text-red-400 rounded-2xl transition-all duration-300 ${isSidebarOpen ? 'p-3.5' : 'p-3 justify-center'}`}
-          title={!isSidebarOpen ? "Cerrar Sesión" : undefined}
-        >
-          <LogOut size={18} className="flex-shrink-0" />
-          {isSidebarOpen && <span className="ml-4 font-bold text-[0.7rem] uppercase tracking-[0.2em] truncate">Cerrar Sesión</span>}
-        </button>
-      </div>
-    </>
-  );
-
   return (
     <div className="h-screen flex overflow-hidden bg-slate-50 font-sans relative supports-[height:100dvh]:h-[100dvh]">
       
@@ -413,7 +334,80 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
            }
         `}
       >
-        <SidebarContent />
+        <div className={`h-20 flex items-center bg-slate-950/50 border-b border-slate-800/50 flex-shrink-0 ${isSidebarOpen ? 'justify-between px-6' : 'justify-center px-0'}`}>
+          {isSidebarOpen && (
+            <div className="flex items-center animate-in fade-in slide-in-from-left-2 duration-500">
+               <span className="text-sm font-black text-white tracking-[0.3em] uppercase italic opacity-90 truncate">
+                 {appName}
+               </span>
+            </div>
+          )}
+          {!isMobile && (
+            <button 
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)} 
+              className={`p-2.5 rounded-xl transition-all duration-200 ${isSidebarOpen ? 'hover:bg-slate-800 text-slate-500 hover:text-white' : 'bg-slate-800/80 text-white hover:bg-blue-600'}`}
+            >
+              {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+          )}
+          {isMobile && (
+             <button onClick={() => setIsSidebarOpen(false)} className="text-white">
+               <X size={24} />
+             </button>
+          )}
+        </div>
+        
+        <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-2 flex flex-col items-center min-h-0 pb-32 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
+          {isSidebarOpen && (
+            <p className="w-full px-4 text-[0.7rem] font-black text-slate-600 uppercase tracking-[0.3em] mb-6 animate-in fade-in duration-300">
+              Panel Operativo
+            </p>
+          )}
+          
+          {MODULES.map((module) => (
+            <button
+              key={module.id}
+              onClick={() => { setActiveModule(module.id); if(isMobile) setIsSidebarOpen(false); }}
+              title={!isSidebarOpen ? module.label : undefined}
+              className={`w-full flex items-center rounded-2xl transition-all duration-300 group relative flex-shrink-0
+                ${isSidebarOpen ? 'p-3.5' : 'p-3 justify-center'}
+                ${activeModule === module.id 
+                  ? 'bg-blue-600 text-white shadow-xl shadow-blue-900/40' 
+                  : 'text-slate-500 hover:bg-slate-800 hover:text-white'
+                }`}
+            >
+              <module.icon size={18} className={`${activeModule === module.id ? 'text-white' : 'text-slate-500 group-hover:text-white'} transition-colors flex-shrink-0`} />
+              {isSidebarOpen && (
+                <span className="ml-4 font-bold text-xs uppercase tracking-wider truncate animate-in fade-in duration-300">
+                  {module.label}
+                </span>
+              )}
+              {!isSidebarOpen && activeModule === module.id && (
+                <div className="absolute left-0 top-2 bottom-2 w-1 bg-white rounded-r-full shadow-[0_0_10px_rgba(255,255,255,0.5)]"></div>
+              )}
+            </button>
+          ))}
+        </nav>
+
+        <div className={`p-4 bg-slate-950/40 border-t border-slate-800/50 flex flex-col items-center space-y-2 flex-shrink-0`}>
+          {deferredPrompt && isSidebarOpen && (
+             <button 
+               onClick={handleInstallClick}
+               className="w-full flex items-center justify-center p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl transition-all shadow-lg animate-pulse border border-blue-400/30"
+             >
+               <ShieldCheck size={16} className="mr-2"/>
+               <span className="font-bold text-[0.7rem] uppercase tracking-wider text-center">Protocolo de Seguridad <br/> (Descargar Terminal)</span>
+             </button>
+          )}
+          <button 
+            onClick={logout}
+            className={`w-full flex items-center text-slate-500 hover:bg-red-950/30 hover:text-red-400 rounded-2xl transition-all duration-300 ${isSidebarOpen ? 'p-3.5' : 'p-3 justify-center'}`}
+            title={!isSidebarOpen ? "Cerrar Sesión" : undefined}
+          >
+            <LogOut size={18} className="flex-shrink-0" />
+            {isSidebarOpen && <span className="ml-4 font-bold text-[0.7rem] uppercase tracking-[0.2em] truncate">Cerrar Sesión</span>}
+          </button>
+        </div>
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10">
