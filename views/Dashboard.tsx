@@ -50,25 +50,25 @@ export const Dashboard: React.FC = () => {
   );
 
   return (
-    <div className="h-full overflow-y-auto p-6 space-y-8 bg-slate-50/30 w-full">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <div className="h-full overflow-y-auto p-4 md:p-6 space-y-6 md:space-y-8 bg-slate-50/30 w-full">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6">
          <div className="flex items-center space-x-4">
             <div className="bg-slate-900 p-3 rounded-2xl text-white shadow-lg flex-shrink-0">
                <LayoutDashboard size={24} />
             </div>
             <div>
-               <h2 className="text-2xl font-bold text-slate-900 tracking-tight uppercase leading-none">Escritorio Operacional</h2>
-               <p className="text-sm text-slate-500 font-medium mt-1">Supervisión en tiempo real del nodo {user?.location || 'General'}</p>
+               <h2 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight uppercase leading-none">Escritorio Operacional</h2>
+               <p className="text-xs md:text-sm text-slate-500 font-medium mt-1">Supervisión en tiempo real del nodo {user?.location || 'General'}</p>
             </div>
          </div>
-         <div className="bg-white px-5 py-2.5 rounded-2xl border border-slate-200 text-xs font-bold text-slate-400 flex items-center shadow-sm">
+         <div className="bg-white px-5 py-2.5 rounded-2xl border border-slate-200 text-xs font-bold text-slate-400 flex items-center shadow-sm w-full md:w-auto">
             <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
             DATOS ACTUALIZADOS: {new Date().toLocaleTimeString()}
          </div>
       </div>
 
       {/* DIDACTIC INDUSTRIAL PROMPT PANEL */}
-      <div className="bg-slate-950 rounded-[2rem] p-8 border-l-8 border-orange-500 shadow-2xl relative overflow-hidden">
+      <div className="bg-slate-950 rounded-[2rem] p-6 md:p-8 border-l-8 border-orange-500 shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 right-0 p-8 opacity-10 text-white pointer-events-none">
               <ShieldCheck size={120} />
           </div>
@@ -104,7 +104,7 @@ export const Dashboard: React.FC = () => {
           </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-full">
         <StatCard 
            title="Móviles Activos" 
            value={activeRoutes} 
@@ -132,7 +132,7 @@ export const Dashboard: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
-         <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col h-[450px]">
+         <div className="bg-white p-6 md:p-8 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col h-[400px] md:h-[450px]">
             <h3 className="font-bold text-slate-800 mb-8 text-xs uppercase tracking-[0.2em] flex items-center">
                <span className="w-1.5 h-6 bg-blue-600 rounded-full mr-3"></span>
                Niveles de Stock Crítico
@@ -153,7 +153,7 @@ export const Dashboard: React.FC = () => {
             </div>
          </div>
 
-         <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col h-[450px]">
+         <div className="bg-white p-6 md:p-8 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col h-[400px] md:h-[450px]">
             <h3 className="font-bold text-slate-800 mb-8 text-xs uppercase tracking-[0.2em] flex items-center">
                <span className="w-1.5 h-6 bg-teal-600 rounded-full mr-3"></span>
                Estado Logístico de Flota
@@ -181,7 +181,7 @@ export const Dashboard: React.FC = () => {
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Eventos</span>
                </div>
             </div>
-            <div className="flex justify-center space-x-6 mt-4">
+            <div className="flex flex-wrap justify-center gap-4 mt-4">
                 {statusData.map((d, i) => (
                    <div key={d.name} className="flex items-center text-[10px] font-black text-slate-500 uppercase tracking-tighter">
                       <span className="w-2.5 h-2.5 rounded-full mr-2 shadow-sm" style={{backgroundColor: COLORS[i % COLORS.length]}}></span>

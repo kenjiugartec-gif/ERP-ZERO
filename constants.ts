@@ -4,7 +4,7 @@ import {
   DoorOpen, ArrowLeftRight, History, 
   ClipboardCheck, MapPin, Car, 
   Users, Settings, FileText, Container, FileCheck, ArrowDownToLine,
-  Activity, BarChart3
+  Activity, BarChart3, Smartphone, FileClock
 } from 'lucide-react';
 
 export const CHILE_GEO_DATA = [
@@ -120,7 +120,8 @@ export const CAR_BRANDS = Object.keys(CAR_MODELS).sort();
 export const MODULES = [
   { id: 'dashboard', label: 'Informe General', icon: LayoutDashboard },
   { id: 'gate_in', label: 'Gate In', icon: ArrowDownToLine },
-  { id: 'behavior', label: 'Comportamiento', icon: BarChart3 }, // New Module
+  { id: 'behavior', label: 'Comportamiento', icon: BarChart3 }, 
+  { id: 'mobile_control', label: 'Control Móvil', icon: Smartphone },
   { id: 'documents', label: 'Control Documental', icon: FileCheck },
   { id: 'baroti', label: 'Baroti', icon: Container },
   { id: 'stock', label: 'Almacenamiento', icon: Package }, 
@@ -128,6 +129,7 @@ export const MODULES = [
   { id: 'dispatch', label: 'Despacho', icon: Truck },
   { id: 'gate', label: 'Control Puerta', icon: DoorOpen },
   { id: 'io', label: 'Control E/S', icon: ArrowLeftRight },
+  { id: 'mobile_history', label: 'Histórico Móvil', icon: FileClock },
   { id: 'history', label: 'Historial', icon: History },
   { id: 'sales', label: 'Control VTA', icon: FileText },
   { id: 'communes', label: 'Geografía', icon: MapPin },

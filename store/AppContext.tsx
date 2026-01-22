@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
-import { User, Vehicle, StockItem, GateTransaction, Notification, GeoLocationRecord, AppConfig, Role, ReceptionDocument } from '../types';
+import { User, Vehicle, StockItem, GateTransaction, Notification, GeoLocationRecord, AppConfig, Role, ReceptionDocument, MobileInspection } from '../types';
 import { EMPLACEMENTS as INITIAL_EMPLACEMENTS, MODULES } from '../constants';
 
 interface AppContextType {
@@ -21,6 +21,7 @@ interface AppContextType {
   geoRecords: GeoLocationRecord[];
   emplacements: string[];
   documents: ReceptionDocument[]; 
+  mobileInspections: MobileInspection[];
   
   // App Config per Emplacement
   configs: Record<string, AppConfig>;
@@ -46,6 +47,7 @@ interface AppContextType {
   deleteGeoRecord: (id: string) => void;
   addEmplacement: (name: string) => void;
   addDocument: (doc: ReceptionDocument) => void; 
+  addMobileInspection: (insp: MobileInspection) => void;
   
   // UI Settings
   appName: string;
@@ -156,6 +158,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [geoRecords, setGeoRecords] = useLocalStorage<GeoLocationRecord[]>("zero_wms_georecords", []);
   const [emplacements, setEmplacements] = useLocalStorage<string[]>("zero_wms_emplacements", INITIAL_EMPLACEMENTS);
   const [documents, setDocuments] = useLocalStorage<ReceptionDocument[]>("zero_wms_documents", []);
+  const [mobileInspections, setMobileInspections] = useLocalStorage<MobileInspection[]>("zero_wms_mobile_inspections", []);
 
   const [notifications, setNotifications] = useState<Notification[]>([
     { id: 1, title: 'Sistema Iniciado', message: 'Plataforma lista para operar.', type: 'INFO', timestamp: new Date(), read: false }
@@ -269,19 +272,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addDocument = (doc: ReceptionDocument) => setDocuments([doc, ...documents]);
+  const addMobileInspection = (insp: MobileInspection) => setMobileInspections([insp, ...mobileInspections]);
 
   return (
     <AppContext.Provider value={{
       user, login, logout, updateCurrentUser,
       welcomeMessageShown, setWelcomeMessageShown,
-      users, roles, vehicles, stock, transactions, notifications, geoRecords, emplacements, documents,
+      users, roles, vehicles, stock, transactions, notifications, geoRecords, emplacements, documents, mobileInspections,
       configs, updateConfig, currentConfig,
       addVehicle, updateVehicle, createTransaction, updateTransaction, 
       addUser, editUser, deleteUser, 
       addRole, updateRole, deleteRole,
       addStockItem, updateStockLocation,
       markNotificationRead, clearNotifications,
-      addGeoRecord, deleteGeoRecord, addEmplacement, addDocument,
+      addGeoRecord, deleteGeoRecord, addEmplacement, addDocument, addMobileInspection,
       appName, setAppName
     }}>
       {children}

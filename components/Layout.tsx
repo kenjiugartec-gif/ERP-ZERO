@@ -252,9 +252,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
        }
      });
 
-     // 3. Search Transactions (Only by ID or Plate for simplicity)
+     // 3. Search Transactions
      transactions.forEach(t => {
-        // Simple logic for transactions visibility
         if (t.plate.toLowerCase().includes(query) || t.id.includes(query)) {
            results.push({
               id: t.id,
@@ -266,7 +265,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
         }
      });
 
-     // 4. Search Users (Admin Only)
+     // 4. Search Users
      if (isAdmin) {
        users.forEach(u => {
          if (u.name.toLowerCase().includes(query) || u.rut.includes(query)) {
@@ -310,7 +309,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
   };
 
   return (
-    <div className="h-screen flex overflow-hidden bg-slate-50 font-sans relative supports-[height:100dvh]:h-[100dvh]">
+    // Updated: h-screen to h-[100dvh] for mobile browsers
+    <div className="h-[100dvh] flex overflow-hidden bg-slate-50 font-sans relative">
       
       {/* BACKGROUND WATERMARK LOGO */}
       {currentConfig.logo && (
@@ -329,12 +329,12 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
         className={`
            transition-all duration-300 flex flex-col z-50 shadow-2xl flex-shrink-0 bg-slate-900 text-slate-300
            ${isMobile 
-              ? `fixed top-0 left-0 w-72 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} h-screen supports-[height:100dvh]:h-[100dvh]` 
+              ? `fixed top-0 left-0 w-72 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} h-[100dvh]` 
               : `relative ${isSidebarOpen ? 'w-64' : 'w-20'} h-full`
            }
         `}
       >
-        <div className={`h-20 flex items-center bg-slate-950/50 border-b border-slate-800/50 flex-shrink-0 ${isSidebarOpen ? 'justify-between px-6' : 'justify-center px-0'}`}>
+        <div className={`h-16 md:h-20 flex items-center bg-slate-950/50 border-b border-slate-800/50 flex-shrink-0 ${isSidebarOpen ? 'justify-between px-6' : 'justify-center px-0'}`}>
           {isSidebarOpen && (
             <div className="flex items-center animate-in fade-in slide-in-from-left-2 duration-500">
                <span className="text-sm font-black text-white tracking-[0.3em] uppercase italic opacity-90 truncate">
@@ -351,7 +351,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
             </button>
           )}
           {isMobile && (
-             <button onClick={() => setIsSidebarOpen(false)} className="text-white">
+             <button onClick={() => setIsSidebarOpen(false)} className="text-white p-2">
                <X size={24} />
              </button>
           )}
@@ -359,7 +359,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
         
         <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-2 flex flex-col items-center min-h-0 pb-32 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
           {isSidebarOpen && (
-            <p className="w-full px-4 text-[0.7rem] font-black text-slate-600 uppercase tracking-[0.3em] mb-6 animate-in fade-in duration-300">
+            <p className="w-full px-4 text-[0.7rem] font-black text-slate-600 uppercase tracking-[0.3em] mb-6 animate-in fade-in duration-300 hidden md:block">
               Panel Operativo
             </p>
           )}
@@ -411,24 +411,24 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10">
-        <header className="h-20 bg-white border-b border-slate-200 flex justify-between items-center px-4 md:px-8 z-20 shadow-sm flex-shrink-0">
+        <header className="h-16 md:h-20 bg-white border-b border-slate-200 flex justify-between items-center px-4 md:px-8 z-20 shadow-sm flex-shrink-0">
           
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3 md:space-x-4">
              {/* Mobile Menu Button */}
              {isMobile && (
-                <button onClick={() => setIsSidebarOpen(true)} className="p-2 -ml-2 text-slate-600">
+                <button onClick={() => setIsSidebarOpen(true)} className="p-2 -ml-2 text-slate-600 active:scale-95 transition-transform">
                    <Menu size={24} />
                 </button>
              )}
 
              {/* Left Side: Greeting & Location */}
              <div className="flex flex-col">
-               <h2 className="text-base md:text-lg font-bold text-slate-900 leading-tight">
+               <h2 className="text-sm md:text-lg font-bold text-slate-900 leading-tight">
                  {getGreeting()}, {user?.name.split(' ')[0]}
                </h2>
-               <div className="flex items-center mt-1 text-slate-500">
+               <div className="flex items-center mt-0.5 md:mt-1 text-slate-500">
                   <MapPin size={12} className="mr-1.5 text-blue-500" />
-                  <span className="text-[10px] md:text-xs font-medium uppercase tracking-wide truncate max-w-[150px] md:max-w-none">
+                  <span className="text-[10px] md:text-xs font-medium uppercase tracking-wide truncate max-w-[120px] md:max-w-none">
                       {user?.role === 'ADMIN' ? 'Comando Central' : (user?.location || 'Ubicación General')}
                   </span>
                </div>
@@ -470,6 +470,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
                  {/* Search Results Dropdown */}
                  {showSearchResults && (
                     <div className="absolute top-[120%] left-0 right-0 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-50 animate-in zoom-in-95 duration-200">
+                        {/* ... (Search results logic remains same) ... */}
                         <div className="px-4 py-2 bg-slate-50 border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-widest flex justify-between">
                             <span>Resultados</span>
                             <span>{searchResults.length} encontrados</span>
@@ -516,7 +517,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
                          </div>
                          <div className="max-h-80 overflow-y-auto">
                              {notifications.length === 0 ? (
-                                 <div className="p-12 text-center text-slate-400 text-[0.65rem] font-bold uppercase tracking-widest leading-relaxed">Sin alertas pendientes en el sistema central.</div>
+                                 <div className="p-12 text-center text-slate-400 text-[0.65rem] font-bold uppercase tracking-widest leading-relaxed">Sin alertas pendientes.</div>
                              ) : (
                                  notifications.map(n => (
                                      <div key={n.id} onClick={() => markNotificationRead(n.id)} className={`p-5 border-b border-slate-50 hover:bg-slate-50 cursor-pointer transition-colors ${!n.read ? 'bg-blue-50/30' : ''}`}>
@@ -544,7 +545,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
                     onClick={() => setShowProfileMenu(!showProfileMenu)}
                     className="flex items-center cursor-pointer group p-1 rounded-xl hover:bg-slate-50 transition-colors"
                 >
-                    <div className="h-9 w-9 md:h-10 md:w-10 bg-slate-200 rounded-full overflow-hidden border-2 border-white shadow-sm mr-2 md:mr-3 relative">
+                    <div className="h-8 w-8 md:h-10 md:w-10 bg-slate-200 rounded-full overflow-hidden border-2 border-white shadow-sm mr-2 md:mr-3 relative flex-shrink-0">
                        {user?.photo ? (
                            <img src={user.photo} alt="Profile" className="w-full h-full object-cover" />
                        ) : (
@@ -563,6 +564,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
                 {/* Profile Dropdown Menu */}
                 {showProfileMenu && (
                     <div className="absolute right-0 top-[120%] w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-50 animate-in slide-in-from-top-2 fade-in duration-200">
+                        {/* ... Dropdown content same as before ... */}
                         <div className="p-4 border-b border-slate-50 bg-slate-50/50">
                             <p className="text-xs font-bold text-slate-800">{user?.name}</p>
                             <p className="text-[10px] text-slate-400 truncate">{user?.location}</p>
@@ -574,7 +576,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
                                  className="w-full flex items-center px-3 py-2 text-xs font-bold text-blue-600 hover:bg-blue-50 rounded-lg transition-colors mb-1"
                                >
                                  <ShieldCheck size={14} className="mr-2" />
-                                 Instalar Terminal Seguro
+                                 Instalar App
                                </button>
                             )}
                             <button 

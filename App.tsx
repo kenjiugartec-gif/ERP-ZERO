@@ -15,7 +15,9 @@ import { SettingsView } from './views/SettingsView';
 import { BarotiView } from './views/BarotiView';
 import { DocumentControlView } from './views/DocumentControlView';
 import { GateInView } from './views/GateInView';
-import { BehaviorView } from './views/BehaviorView'; // Import new view
+import { BehaviorView } from './views/BehaviorView'; 
+import { MobileControlView } from './views/MobileControlView'; // New
+import { MobileHistoryView } from './views/MobileHistoryView'; // New
 import { X } from 'lucide-react';
 
 const DynamicStyles: React.FC = () => {
@@ -61,8 +63,9 @@ const AppContent: React.FC = () => {
   const getModuleComponent = (moduleName: string) => {
     switch (moduleName) {
       case 'dashboard': return <Dashboard />;
-      case 'behavior': return <BehaviorView />; // Register new module
+      case 'behavior': return <BehaviorView />; 
       case 'gate_in': return <GateInView />;
+      case 'mobile_control': return <MobileControlView />; // New
       case 'documents': return <DocumentControlView />;
       case 'baroti': return <BarotiView />;
       case 'stock': return <StockControl />;
@@ -71,6 +74,7 @@ const AppContent: React.FC = () => {
       case 'fleet': return <FleetView />;
       case 'reception': return <ReceptionView />;
       case 'dispatch': return <DispatchView />;
+      case 'mobile_history': return <MobileHistoryView />; // New
       case 'history': return <HistoryView />;
       case 'sales': return <SalesControlView />;
       case 'communes': return <GeographyView />;

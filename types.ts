@@ -117,6 +117,27 @@ export interface ReceptionDocument {
   timestamp: string;
 }
 
+// New Interface for Mobile Control
+export interface MobileInspection {
+  id: string;
+  plate: string;
+  driver: string;
+  status: 'LIMPIO' | 'PRESENTABLE' | 'SUCIO';
+  photos: {
+    frontal: string;
+    trasera: string;
+    latIzq: string;
+    latDer: string;
+    interiorDelantero: string; // Updated: Split interior
+    interiorTrasero: string;   // Updated: Split interior
+    pickup: string;
+  };
+  details: string;
+  timestamp: string;
+  location: string;
+  user: string;
+}
+
 export const ASSET_TYPES = [
   "Cilindro 10m3",
   "Cilindro 1m3",
