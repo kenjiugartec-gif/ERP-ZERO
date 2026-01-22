@@ -131,6 +131,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
   
+  // Refs for click outside
+  const sidebarRef = useRef<HTMLElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
@@ -203,13 +205,25 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
   // --- CLICK OUTSIDE HANDLERS ---
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      // Existing dropdowns
       if (notifRef.current && !notifRef.current.contains(event.target as Node)) setShowNotifications(false);
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) setShowProfileMenu(false);
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) setShowSearchResults(false);
+
+      // Auto-collapse Sidebar on Desktop (if not mobile overlay)
+      // If click is outside sidebarRef AND sidebar is open
+      if (
+        sidebarRef.current && 
+        !sidebarRef.current.contains(event.target as Node) && 
+        isSidebarOpen && 
+        !isMobile
+      ) {
+        setIsSidebarOpen(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [isSidebarOpen, isMobile]);
 
   // --- SEARCH LOGIC ---
   useEffect(() => {
@@ -327,6 +341,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
 
       {/* SIDEBAR */}
       <aside 
+        ref={sidebarRef}
         className={`
            transition-all duration-300 ease-out flex flex-col z-50 flex-shrink-0 bg-[#0B1120] text-slate-300 border-r border-slate-800/50
            ${isMobile 
@@ -337,15 +352,13 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
       >
         {/* HEADER SIDEBAR */}
         <div className={`h-24 flex items-center flex-shrink-0 relative ${isSidebarOpen ? 'px-6' : 'justify-center'}`}>
-          <div className="flex items-center space-x-3 overflow-hidden">
-             <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20 flex-shrink-0">
-                <ShieldCheck size={22} strokeWidth={2} />
-             </div>
-             {isSidebarOpen && (
-                <div className="flex flex-col animate-in fade-in slide-in-from-left-4 duration-300">
-                   <h1 className="text-lg font-black text-white italic tracking-tighter leading-none">ZERO<span className="text-blue-500">WMS</span></h1>
-                   <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">Terminal Seguro</p>
+          <div className={`flex items-center w-full overflow-hidden transition-all duration-300 ${isSidebarOpen ? 'justify-start' : 'justify-center'}`}>
+             {isSidebarOpen ? (
+                <div className="flex flex-col animate-in fade-in slide-in-from-left-2 duration-300">
+                   <h1 className="text-2xl font-black text-white italic tracking-tighter leading-none">ZERO <span className="text-blue-600">WMS</span></h1>
                 </div>
+             ) : (
+                <h1 className="text-xl font-black text-white italic tracking-tighter leading-none">Z<span className="text-blue-600">W</span></h1>
              )}
           </div>
           
@@ -388,7 +401,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
                     ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/40' 
                     : 'text-slate-400 hover:bg-white/5 hover:text-slate-100'}
                 `}
-                title={!isSidebarOpen ? module.label : undefined}
+                // Removed standard title to use custom tooltip
               >
                 <div className={`relative flex items-center justify-center transition-transform duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`}>
                    <module.icon size={20} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'text-white' : 'text-slate-400 group-hover:text-white'} />
@@ -401,6 +414,14 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
                   <span className={`ml-4 text-sm font-medium tracking-wide truncate transition-all ${isActive ? 'font-bold' : ''}`}>
                     {module.label}
                   </span>
+                )}
+                
+                {/* Custom Tooltip for Collapsed State */}
+                {!isSidebarOpen && (
+                    <div className="absolute left-full top-1/2 ml-4 -translate-y-1/2 px-3 py-2 bg-[#0F1623] text-white text-xs font-bold rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none whitespace-nowrap shadow-xl border border-slate-700/50 z-[100] translate-x-2 group-hover:translate-x-0">
+                        {module.label}
+                        <div className="absolute left-0 top-1/2 -translate-x-1 -translate-y-1/2 w-2 h-2 bg-[#0F1623] border-l border-b border-slate-700/50 rotate-45"></div>
+                    </div>
                 )}
                 
                 {/* Active Indicator Line (Left) - Only when open */}
