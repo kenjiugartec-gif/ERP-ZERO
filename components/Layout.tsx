@@ -393,7 +393,15 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
             return (
               <button
                 key={module.id}
-                onClick={() => { setActiveModule(module.id); if(isMobile) setIsSidebarOpen(false); }}
+                onClick={() => { 
+                    setActiveModule(module.id); 
+                    // If mobile, close sidebar. If desktop, expand it to show context.
+                    if(isMobile) {
+                        setIsSidebarOpen(false); 
+                    } else {
+                        setIsSidebarOpen(true);
+                    }
+                }}
                 // IMPORTANT: Removed native title to allow custom tooltip
                 className={`
                   group relative flex items-center w-full rounded-xl transition-all duration-300 ease-out

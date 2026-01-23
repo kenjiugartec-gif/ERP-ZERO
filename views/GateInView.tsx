@@ -52,6 +52,12 @@ export const GateInView: React.FC = () => {
   const [cargoType, setCargoType] = useState<'FCL' | 'LCL'>('FCL');
   const [currentDate] = useState(new Date().toLocaleString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' }));
 
+  // Transport State (Initialized Empty)
+  const [patente, setPatente] = useState('');
+  const [rut, setRut] = useState('');
+  const [driver, setDriver] = useState('');
+  const [transport, setTransport] = useState('');
+
   // Form State
   const [guideNumber, setGuideNumber] = useState('');
   const [client, setClient] = useState('');
@@ -126,7 +132,8 @@ export const GateInView: React.FC = () => {
                             <FormInput 
                                 label="PATENTE CAMIÓN (XXXX-XX)" 
                                 placeholder="PPPT-56" 
-                                value="PPPT-56" 
+                                value={patente}
+                                onChange={setPatente}
                             />
                          </div>
 
@@ -142,7 +149,8 @@ export const GateInView: React.FC = () => {
                                 label="RUT (XXXXXXXX-X)" 
                                 placeholder="12.345.678-9" 
                                 icon={Hash}
-                                value="17454521-9"
+                                value={rut}
+                                onChange={setRut}
                              />
                          </div>
 
@@ -151,7 +159,9 @@ export const GateInView: React.FC = () => {
                              <div className="relative">
                                  <input 
                                     type="text" 
-                                    value="Kenji Ugarte" 
+                                    value={driver}
+                                    onChange={(e) => setDriver(e.target.value)}
+                                    placeholder="Nombre Apellido"
                                     className="w-full pl-4 pr-32 py-3 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500"
                                  />
                                  <button className="absolute right-2 top-1.5 bottom-1.5 bg-amber-50 hover:bg-amber-100 text-amber-600 px-3 rounded-md text-[9px] font-bold uppercase flex items-center transition-colors">
@@ -163,7 +173,8 @@ export const GateInView: React.FC = () => {
                          <FormInput 
                             label="EMPRESA TRANSPORTISTA" 
                             placeholder="Nombre Empresa" 
-                            value="Los Tito Ltda"
+                            value={transport}
+                            onChange={setTransport}
                          />
                      </div>
                  </div>
