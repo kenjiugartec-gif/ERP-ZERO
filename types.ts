@@ -32,6 +32,8 @@ export interface User {
   role: string;
   location: string;
   commune?: string;
+  email?: string;     // Added for persistence
+  username?: string;  // Added for persistence
 }
 
 export interface Notification {

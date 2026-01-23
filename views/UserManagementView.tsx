@@ -13,7 +13,8 @@ import {
   ClipboardList, Box, CheckSquare, CheckCircle2,
   Settings, LayoutGrid, Truck, HelpCircle, DoorOpen,
   ArrowLeftRight, FileCheck, History, Download, Minus,
-  LayoutDashboard, Package, ClipboardCheck, Car, Users, FileText, Trash2, Send, Save, Loader2, Building2
+  LayoutDashboard, Package, ClipboardCheck, Car, Users, FileText, Trash2, Send, Save, Loader2, Building2,
+  Eye, EyeOff, Square, Minimize2
 } from 'lucide-react';
 
 const TabButton = ({ label, active, onClick }: { label: string, active: boolean, onClick: () => void }) => (
@@ -25,7 +26,7 @@ const TabButton = ({ label, active, onClick }: { label: string, active: boolean,
   </button>
 );
 
-const ModalInput = ({ label, icon: Icon, placeholder, value, onChange, type = "text", className = "" }: any) => (
+const ModalInput = ({ label, icon: Icon, placeholder, value, onChange, type = "text", className = "", rightElement }: any) => (
   <div className={`space-y-2 ${className}`}>
     <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide flex items-center">
         {Icon && <Icon size={12} className="mr-1.5 text-slate-400"/>}
@@ -37,8 +38,13 @@ const ModalInput = ({ label, icon: Icon, placeholder, value, onChange, type = "t
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className={`w-full pl-4 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium text-slate-800 placeholder:text-slate-400 outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all shadow-sm`}
+        className={`w-full pl-4 ${rightElement ? 'pr-12' : 'pr-4'} py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium text-slate-800 placeholder:text-slate-400 outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all shadow-sm`}
       />
+      {rightElement && (
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+              {rightElement}
+          </div>
+      )}
     </div>
   </div>
 );
@@ -49,7 +55,6 @@ const ModalSelect = ({ label, placeholder, options, value, onChange, disabled = 
     const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
 
     useEffect(() => {
-        // Fix: Removed 'scroll' listener to allow scrolling inside the dropdown
         const handleResize = () => { if(isOpen) setIsOpen(false); };
         window.addEventListener('resize', handleResize);
         return () => {
@@ -229,7 +234,6 @@ const RolesView = () => {
 
     return (
         <div className="flex flex-col h-full space-y-6 animate-in fade-in duration-300 w-full">
-            {/* ... (Roles View JSX remains largely the same for brevity, focus is on User Modal) ... */}
             <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
                 <div className="flex items-start space-x-4">
                      <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
@@ -487,6 +491,13 @@ export const UserManagementView: React.FC = () => {
   
   const [isGenerating, setIsGenerating] = useState(false);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  
+  // Password Visibility Toggle
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Window Controls State
+  const [isMaximized, setIsMaximized] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
 
   const [formData, setFormData] = useState({
       name: '',
@@ -534,6 +545,9 @@ export const UserManagementView: React.FC = () => {
               role: formData.role,
               location: userLocation,
               commune: formData.commune,
+              email: formData.email,
+              username: formData.username,
+              // Only update password if not empty
               ...(formData.password ? { password: formData.password } : {})
           });
           setIsModalOpen(false);
@@ -542,18 +556,7 @@ export const UserManagementView: React.FC = () => {
           setIsGenerating(true);
           try {
               const newUserId = Date.now().toString();
-              const roleName = roles.find(r => r.id === formData.role)?.name || formData.role;
               const tempPass = formData.password || '123456';
-              const userEmail = formData.email;
-
-              const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-              
-              const prompt = `...`; 
-              
-              const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash-preview',
-                contents: "Generate welcome email",
-              });
               
               addUser({
                   id: newUserId,
@@ -562,10 +565,13 @@ export const UserManagementView: React.FC = () => {
                   role: formData.role,
                   location: userLocation,
                   commune: formData.commune,
+                  email: formData.email,
+                  username: formData.username,
                   password: tempPass
               });
 
           } catch (error) {
+              // Fallback
               addUser({
                   id: Date.now().toString(),
                   name: formData.name,
@@ -573,6 +579,8 @@ export const UserManagementView: React.FC = () => {
                   role: formData.role,
                   location: userLocation,
                   commune: formData.commune,
+                  email: formData.email,
+                  username: formData.username,
                   password: formData.password || '123456'
               });
           } finally {
@@ -586,6 +594,9 @@ export const UserManagementView: React.FC = () => {
   const resetForm = () => {
       setFormData({ name: '', rutBody: '', rutDv: '', username: '', email: '', password: '', role: '', region: '', commune: '', emplacement: '' });
       setEditingUserId(null);
+      setShowPassword(false);
+      setIsMaximized(false);
+      setIsMinimized(false);
   };
 
   const handleEditUser = (user: User) => {
@@ -600,15 +611,17 @@ export const UserManagementView: React.FC = () => {
           name: user.name,
           rutBody: rutBody || '',
           rutDv: rutDv || '',
-          username: '', 
-          email: '', 
-          password: '', 
+          username: user.username || '', 
+          email: user.email || '', 
+          password: '', // Password not pre-filled for security, only update if changed
           role: user.role,
           region: foundRegion,
           commune: user.commune || '',
           emplacement: user.location || ''
       });
       setEditingUserId(user.id);
+      setIsMaximized(false);
+      setIsMinimized(false);
       setIsModalOpen(true);
   };
 
@@ -636,7 +649,10 @@ export const UserManagementView: React.FC = () => {
   };
 
   const getInitials = (name: string) => name.substring(0,2).toUpperCase();
-  const getHandle = (name: string) => `@${name.split(' ')[0].toLowerCase()}${name.split(' ')[1] ? name.split(' ')[1].substring(0,1).toLowerCase() : ''}`;
+  const getHandle = (name: string, username?: string) => {
+      if (username) return `@${username}`;
+      return `@${name.split(' ')[0].toLowerCase()}`;
+  };
 
   return (
     <div className="h-full flex flex-col bg-slate-50/50 w-full">
@@ -697,7 +713,7 @@ export const UserManagementView: React.FC = () => {
                                           </div>
                                           <div>
                                               <div className="text-sm font-bold text-slate-800">{u.name}</div>
-                                              <div className="text-xs text-slate-400">{getHandle(u.name)}</div>
+                                              <div className="text-xs text-slate-400">{getHandle(u.name, u.username)}</div>
                                           </div>
                                       </div>
                                   </td>
@@ -752,89 +768,133 @@ export const UserManagementView: React.FC = () => {
       </div>
 
       {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-                  <div className="px-10 py-8 border-b border-slate-100 flex justify-between items-start bg-white sticky top-0 z-10">
+          <div className={`fixed inset-0 z-50 flex items-center justify-center transition-all duration-300 ${isMinimized ? 'items-end justify-end pointer-events-none' : 'bg-slate-900/40 backdrop-blur-sm'}`}>
+              <div className={`bg-white shadow-2xl flex flex-col transition-all duration-300 overflow-hidden
+                  ${isMaximized ? 'w-full h-full rounded-none' : 'w-full max-w-5xl rounded-2xl'}
+                  ${isMinimized ? 'w-72 h-auto m-4 rounded-xl border border-slate-200 pointer-events-auto shadow-lg' : 'max-h-[90vh] animate-in zoom-in-95'}
+              `}>
+                  <div 
+                    className={`px-6 py-3 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-10 ${isMinimized ? 'cursor-pointer hover:bg-slate-50' : ''}`}
+                    onClick={isMinimized ? () => setIsMinimized(false) : undefined}
+                  >
                       <div>
-                          <h3 className="text-xl font-bold text-slate-900">{editingUserId ? 'Editar Usuario' : 'Crear Nuevo Usuario'}</h3>
-                          <p className="text-sm text-slate-500 mt-1">Complete los datos requeridos para gestionar el perfil de acceso.</p>
+                          <h3 className="text-sm font-bold text-slate-900 uppercase tracking-tight">{editingUserId ? 'Editar Usuario' : 'Crear Usuario'}</h3>
+                          {!isMinimized && <p className="text-[10px] text-slate-500">Gestión de perfil de acceso y seguridad.</p>}
                       </div>
-                      <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
-                          <X size={24} />
-                      </button>
-                  </div>
-
-                  <div className="p-10 space-y-8 bg-white overflow-y-auto flex-1 pb-48">
-                      <ModalInput 
-                          label="NOMBRE COMPLETO" 
-                          icon={UserIcon} 
-                          placeholder="Nombre Apellido" 
-                          value={formData.name} 
-                          onChange={(e: any) => {
-                              const val = e.target.value;
-                              const formatted = val.replace(/\b\w/g, (c: string) => c.toUpperCase());
-                              setFormData({...formData, name: formatted});
-                          }} 
-                      />
-                      
-                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                          <div className="space-y-2">
-                              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide flex items-center">
-                                  <CreditCard size={12} className="mr-1.5 text-slate-400"/> RUT
-                              </label>
-                              <div className="flex gap-3">
-                                  <div className="relative flex-1 group">
-                                      <input type="text" placeholder="12345678" value={formData.rutBody} onChange={(e) => setFormData({...formData, rutBody: e.target.value})} className="w-full pl-4 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all shadow-sm" />
-                                  </div>
-                                  <span className="self-center text-slate-300">-</span>
-                                  <input type="text" placeholder="K" value={formData.rutDv} onChange={(e) => setFormData({...formData, rutDv: e.target.value})} className="w-16 text-center py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all shadow-sm" />
-                              </div>
-                              <p className="text-[10px] text-slate-400">Sin puntos ni guión</p>
-                          </div>
-                          
-                          <ModalInput label="USUARIO" icon={UserIcon} placeholder="" value={formData.username} onChange={(e: any) => setFormData({...formData, username: e.target.value})} />
-                          <ModalInput label="CORREO ELECTRÓNICO" icon={Mail} placeholder="usuario@empresa.com" value={formData.email} onChange={(e: any) => setFormData({...formData, email: e.target.value})} />
-                      </div>
-
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                          <ModalInput label="CONTRASEÑA" icon={Lock} type="password" placeholder={editingUserId ? "•••• (Sin Cambios)" : "••••"} value={formData.password} onChange={(e: any) => setFormData({...formData, password: e.target.value})} />
-                          <ModalSelect label="ROL DE ACCESO" icon={Shield} placeholder="Seleccionar rol" value={formData.role} onChange={(val: string) => setFormData({...formData, role: val})} options={roleOptions} />
-                      </div>
-
-                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-                          <ModalSelect label="REGIÓN" icon={MapPin} placeholder="Seleccionar región" value={formData.region} onChange={(val: string) => setFormData({...formData, region: val, commune: ''})} options={regions} />
-                          <ModalSelect label="COMUNA" icon={MapPin} placeholder="Seleccionar comuna" value={formData.commune} onChange={(val: string) => setFormData({...formData, commune: val})} options={communes} disabled={!formData.region} />
-                          <ModalSelect 
-                            label="EMPLAZAMIENTOS (SUCURSALES)" 
-                            icon={Building2}
-                            placeholder="Seleccionar sucursal operativa" 
-                            value={formData.emplacement} 
-                            onChange={(val: string) => setFormData({...formData, emplacement: val})} 
-                            options={emplacementOptions}
-                         />
-                      </div>
-                  </div>
-
-                  <div className="px-10 py-6 border-t border-slate-100 bg-white flex justify-end space-x-4 sticky bottom-0 z-10">
-                      <button onClick={() => setIsModalOpen(false)} className="px-8 py-3 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">Cancelar</button>
-                      <button 
-                        onClick={handleSave} 
-                        disabled={isGenerating}
-                        className={`px-8 py-3 rounded-xl text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition-all active:scale-95 flex items-center ${isGenerating ? 'bg-blue-400 cursor-wait' : 'bg-blue-600 hover:bg-blue-700'}`}
-                      >
-                          {isGenerating ? (
-                              <>
-                                <Loader2 size={18} className="mr-2 animate-spin" />
-                                Generando...
-                              </>
-                          ) : (
-                              <>
-                                {editingUserId ? <Save size={18} className="mr-2"/> : <Send size={18} className="mr-2"/>}
-                                {editingUserId ? 'Guardar Cambios' : 'Crear y Enviar'}
-                              </>
+                      <div className="flex items-center space-x-1" onClick={e => e.stopPropagation()}>
+                          <button onClick={() => setIsMinimized(!isMinimized)} className="p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 rounded transition-colors" title="Minimizar">
+                              <Minus size={14} />
+                          </button>
+                          {!isMinimized && (
+                              <button onClick={() => setIsMaximized(!isMaximized)} className="p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 rounded transition-colors" title={isMaximized ? "Restaurar" : "Maximizar"}>
+                                  {isMaximized ? <Minimize2 size={14} /> : <Square size={12} />}
+                              </button>
                           )}
-                      </button>
+                          <button onClick={() => setIsModalOpen(false)} className="p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-500 rounded transition-colors" title="Cerrar">
+                              <X size={18} />
+                          </button>
+                      </div>
                   </div>
+
+                  {!isMinimized && (
+                    <>
+                      <div className="p-10 space-y-8 bg-white overflow-y-auto flex-1 pb-48">
+                          <ModalInput 
+                              label="NOMBRE COMPLETO" 
+                              icon={UserIcon} 
+                              placeholder="Nombre Apellido" 
+                              value={formData.name} 
+                              onChange={(e: any) => {
+                                  const val = e.target.value;
+                                  const formatted = val.replace(/\b\w/g, (c: string) => c.toUpperCase());
+                                  setFormData({...formData, name: formatted});
+                              }} 
+                          />
+                          
+                          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                              <div className="space-y-2">
+                                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide flex items-center">
+                                      <CreditCard size={12} className="mr-1.5 text-slate-400"/> RUT
+                                  </label>
+                                  <div className="flex gap-3">
+                                      <div className="relative flex-1 group">
+                                          <input type="text" placeholder="12345678" value={formData.rutBody} onChange={(e) => setFormData({...formData, rutBody: e.target.value})} className="w-full pl-4 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all shadow-sm" />
+                                      </div>
+                                      <span className="self-center text-slate-300">-</span>
+                                      <input type="text" placeholder="K" value={formData.rutDv} onChange={(e) => setFormData({...formData, rutDv: e.target.value})} className="w-16 text-center py-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all shadow-sm" />
+                                  </div>
+                                  <p className="text-[10px] text-slate-400">Sin puntos ni guión</p>
+                              </div>
+                              
+                              <ModalInput 
+                                label="USUARIO" 
+                                icon={UserIcon} 
+                                placeholder="nombre.usuario" 
+                                value={formData.username} 
+                                onChange={(e: any) => setFormData({...formData, username: e.target.value})} 
+                              />
+                              <ModalInput 
+                                label="CORREO ELECTRÓNICO" 
+                                icon={Mail} 
+                                placeholder="usuario@empresa.com" 
+                                value={formData.email} 
+                                onChange={(e: any) => setFormData({...formData, email: e.target.value})} 
+                              />
+                          </div>
+
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                              <ModalInput 
+                                label="CONTRASEÑA" 
+                                icon={Lock} 
+                                type={showPassword ? "text" : "password"}
+                                placeholder={editingUserId ? "•••• (Dejar en blanco para mantener)" : "••••"} 
+                                value={formData.password} 
+                                onChange={(e: any) => setFormData({...formData, password: e.target.value})}
+                                rightElement={
+                                    <button onClick={() => setShowPassword(!showPassword)} className="hover:text-blue-500 transition-colors">
+                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    </button>
+                                }
+                              />
+                              <ModalSelect label="ROL DE ACCESO" icon={Shield} placeholder="Seleccionar rol" value={formData.role} onChange={(val: string) => setFormData({...formData, role: val})} options={roleOptions} />
+                          </div>
+
+                          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                              <ModalSelect label="REGIÓN" icon={MapPin} placeholder="Seleccionar región" value={formData.region} onChange={(val: string) => setFormData({...formData, region: val, commune: ''})} options={regions} />
+                              <ModalSelect label="COMUNA" icon={MapPin} placeholder="Seleccionar comuna" value={formData.commune} onChange={(val: string) => setFormData({...formData, commune: val})} options={communes} disabled={!formData.region} />
+                              <ModalSelect 
+                                label="EMPLAZAMIENTOS (SUCURSALES)" 
+                                icon={Building2}
+                                placeholder="Seleccionar sucursal operativa" 
+                                value={formData.emplacement} 
+                                onChange={(val: string) => setFormData({...formData, emplacement: val})} 
+                                options={emplacementOptions}
+                            />
+                          </div>
+                      </div>
+
+                      <div className="px-10 py-6 border-t border-slate-100 bg-white flex justify-end space-x-4 sticky bottom-0 z-10">
+                          <button onClick={() => setIsModalOpen(false)} className="px-8 py-3 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors">Cancelar</button>
+                          <button 
+                            onClick={handleSave} 
+                            disabled={isGenerating}
+                            className={`px-8 py-3 rounded-xl text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition-all active:scale-95 flex items-center ${isGenerating ? 'bg-blue-400 cursor-wait' : 'bg-blue-600 hover:bg-blue-700'}`}
+                          >
+                              {isGenerating ? (
+                                  <>
+                                    <Loader2 size={18} className="mr-2 animate-spin" />
+                                    Generando...
+                                  </>
+                              ) : (
+                                  <>
+                                    {editingUserId ? <Save size={18} className="mr-2"/> : <Send size={18} className="mr-2"/>}
+                                    {editingUserId ? 'Guardar Cambios' : 'Crear y Enviar'}
+                                  </>
+                              )}
+                          </button>
+                      </div>
+                    </>
+                  )}
               </div>
           </div>
       )}
