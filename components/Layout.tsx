@@ -394,6 +394,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
               <button
                 key={module.id}
                 onClick={() => { setActiveModule(module.id); if(isMobile) setIsSidebarOpen(false); }}
+                // IMPORTANT: Removed native title to allow custom tooltip
                 className={`
                   group relative flex items-center w-full rounded-xl transition-all duration-300 ease-out
                   ${isSidebarOpen ? 'px-3.5 py-3' : 'justify-center py-3.5 px-2'}
@@ -401,7 +402,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
                     ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/40' 
                     : 'text-slate-400 hover:bg-white/5 hover:text-slate-100'}
                 `}
-                // Removed standard title to use custom tooltip
               >
                 <div className={`relative flex items-center justify-center transition-transform duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`}>
                    <module.icon size={20} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'text-white' : 'text-slate-400 group-hover:text-white'} />
@@ -416,11 +416,14 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
                   </span>
                 )}
                 
-                {/* Custom Tooltip for Collapsed State */}
+                {/* Custom Industrial Tooltip for Collapsed State */}
                 {!isSidebarOpen && (
-                    <div className="absolute left-full top-1/2 ml-4 -translate-y-1/2 px-3 py-2 bg-[#0F1623] text-white text-xs font-bold rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none whitespace-nowrap shadow-xl border border-slate-700/50 z-[100] translate-x-2 group-hover:translate-x-0">
-                        {module.label}
-                        <div className="absolute left-0 top-1/2 -translate-x-1 -translate-y-1/2 w-2 h-2 bg-[#0F1623] border-l border-b border-slate-700/50 rotate-45"></div>
+                    <div className="absolute left-full top-1/2 ml-3 -translate-y-1/2 z-[60] pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-300 ease-out transform translate-x-2 group-hover:translate-x-0">
+                        <div className="relative bg-slate-800 text-white text-[10px] font-bold uppercase tracking-widest py-1.5 px-3 rounded shadow-xl border border-slate-700 whitespace-nowrap flex items-center">
+                            {module.label}
+                            {/* Arrow */}
+                            <div className="absolute top-1/2 right-full -translate-y-1/2 border-[5px] border-transparent border-r-slate-800"></div>
+                        </div>
                     </div>
                 )}
                 
@@ -447,17 +450,26 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
           
           <button 
             onClick={logout}
+            title={!isSidebarOpen ? undefined : ""} // Disable native tooltip on footer too if needed, though usually standard for logout
             className={`
                w-full flex items-center rounded-xl transition-all duration-200 group border border-transparent
-               ${isSidebarOpen ? 'px-3 py-3 hover:bg-red-500/10 hover:border-red-500/20' : 'justify-center py-3 hover:bg-red-500/10'}
+               ${isSidebarOpen ? 'px-3 py-3 hover:bg-red-500/10 hover:border-red-500/20' : 'justify-center py-3 hover:bg-red-500/10 relative'}
             `}
-            title={!isSidebarOpen ? "Cerrar Sesión" : undefined}
           >
             <LogOut size={20} className="text-slate-500 group-hover:text-red-400 transition-colors" />
-            {isSidebarOpen && (
+            {isSidebarOpen ? (
                 <div className="ml-3 text-left">
                     <p className="text-xs font-bold text-slate-300 group-hover:text-red-400 transition-colors">Cerrar Sesión</p>
                     <p className="text-[9px] text-slate-600">Finalizar turno seguro</p>
+                </div>
+            ) : (
+                // Tooltip for Logout
+                <div className="absolute left-full top-1/2 ml-3 -translate-y-1/2 z-[60] pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-300 ease-out transform translate-x-2 group-hover:translate-x-0">
+                    <div className="relative bg-slate-800 text-red-100 text-[10px] font-bold uppercase tracking-widest py-1.5 px-3 rounded shadow-xl border border-red-900/50 whitespace-nowrap flex items-center">
+                        Cerrar Sesión
+                        {/* Arrow */}
+                        <div className="absolute top-1/2 right-full -translate-y-1/2 border-[5px] border-transparent border-r-slate-800"></div>
+                    </div>
                 </div>
             )}
           </button>
