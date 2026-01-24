@@ -235,8 +235,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
           <button onClick={logout} className={`w-full flex items-center rounded-xl transition-all duration-200 group border border-transparent ${isSidebarOpen ? 'px-4 py-3 hover:bg-red-500/10' : 'justify-center py-3'}`}>
             {isSidebarOpen ? (
                 <div className="text-left w-full">
-                    <p className="text-[10px] font-black text-slate-500 group-hover:text-red-400 transition-colors uppercase tracking-widest">Logout System</p>
-                    <p className="text-[8px] text-slate-700 uppercase mt-0.5">End Active Session</p>
+                    <p className="text-[10px] font-black text-slate-500 group-hover:text-red-400 transition-colors uppercase tracking-widest">Cerrar Sesión</p>
+                    <p className="text-[8px] text-slate-700 uppercase mt-0.5">Finalizar Sesión Activa</p>
                 </div>
             ) : (
                 <LogOut size={18} className="text-slate-600 group-hover:text-red-500" />

@@ -1,12 +1,23 @@
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="512" height="512" rx="256" fill="white"/>
-  <circle cx="256" cy="256" r="200" stroke="#808080" stroke-width="12" fill="none"/>
-  <g transform="translate(110, 210) scale(0.9)">
-    <path d="M10 10H100L10 90H100" stroke="#0B1120" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-    <path d="M120 10H200V35H135V45H190V65H135V75H205V90H120V10Z" fill="#0B1120"/>
-    <path d="M220 10H280C295 10 305 18 305 32C305 45 295 52 285 55L310 90H285L265 60H238V90H220V10ZM238 28V45H275C282 45 288 42 288 36C288 30 282 28 275 28H238Z" fill="#0B1120"/>
-    <circle cx="360" cy="50" r="38" stroke="#00AEEF" stroke-width="12" fill="none"/>
-    <circle cx="360" cy="50" r="12" fill="#00AEEF"/>
-    <path d="M330 50H390" stroke="#00AEEF" stroke-width="4"/>
+  <!-- Fondo circular blanco para visibilidad en temas oscuros -->
+  <circle cx="256" cy="256" r="250" fill="white"/>
+  <!-- Anillo exterior gris -->
+  <circle cx="256" cy="256" r="180" stroke="#94A3B8" stroke-width="12" fill="none"/>
+  
+  <!-- Grupo de texto central -->
+  <g transform="translate(105, 235)">
+    <!-- ZERO en estilo Bold Industrial -->
+    <text x="0" y="30" fill="#0F172A" font-family="Montserrat, Arial, sans-serif" font-weight="900" font-size="95" letter-spacing="-5" font-style="italic">ZE</text>
+    <text x="135" y="30" fill="#0F172A" font-family="Montserrat, Arial, sans-serif" font-weight="900" font-size="95" letter-spacing="-5" font-style="italic">R</text>
+    
+    <!-- La O circular con el detalle de la mira/innovación -->
+    <g transform="translate(225, -45)">
+      <circle cx="45" cy="45" r="35" stroke="#00AEEF" stroke-width="12"/>
+      <circle cx="45" cy="45" r="10" fill="#00AEEF"/>
+      <rect x="15" y="42" width="60" height="6" fill="#00AEEF" rx="2"/>
+    </g>
+
+    <!-- Subtítulo inferior -->
+    <text x="15" y="85" fill="#0F172A" font-family="Inter, sans-serif" font-weight="700" font-size="16" letter-spacing="4" text-transform="uppercase">INNOVATIVE SOLUTIONS</text>
   </g>
 </svg>

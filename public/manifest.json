@@ -1,4 +1,3 @@
-
 {
   "short_name": "ZERO WMS",
   "name": "ZERO WMS Security Terminal",
@@ -7,18 +6,18 @@
       "src": "/shield_logo.svg",
       "type": "image/svg+xml",
       "sizes": "192x192 512x512",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/shield_logo.svg",
       "type": "image/svg+xml",
-      "sizes": "192x192 512x512",
-      "purpose": "favicon"
+      "sizes": "512x512",
+      "purpose": "maskable"
     }
   ],
   "start_url": ".",
   "display": "standalone",
   "theme_color": "#0f172a",
-  "background_color": "#0f172a",
+  "background_color": "#ffffff",
   "orientation": "any"
 }
