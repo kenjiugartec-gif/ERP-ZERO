@@ -8,6 +8,12 @@
       "type": "image/svg+xml",
       "sizes": "192x192 512x512",
       "purpose": "any maskable"
+    },
+    {
+      "src": "/shield_logo.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192 512x512",
+      "purpose": "favicon"
     }
   ],
   "start_url": ".",

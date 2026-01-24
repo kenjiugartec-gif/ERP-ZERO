@@ -4,7 +4,8 @@ import { useApp } from '../store/AppContext';
 import { 
   Camera, CheckCircle2, ChevronDown, Save, 
   RefreshCcw, Info, Terminal, ShieldCheck, 
-  Smartphone, AlertCircle, Loader2
+  Smartphone, AlertCircle, Loader2, X, Trash2,
+  FileText
 } from 'lucide-react';
 import { MobileInspection } from '../types';
 
@@ -15,7 +16,6 @@ export const MobileControlView: React.FC = () => {
   const [status, setStatus] = useState<'LIMPIO' | 'PRESENTABLE' | 'SUCIO' | ''>('');
   const [details, setDetails] = useState('');
   const [isSending, setIsSending] = useState(false);
-  const [currentInspection, setCurrentInspection] = useState<MobileInspection | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
 
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -39,7 +39,7 @@ export const MobileControlView: React.FC = () => {
   }, [vehicles, user]);
 
   const completionPercentage = useMemo(() => {
-      let totalFields = 2 + PHOTO_SLOTS.length;
+      let totalFields = 2 + PHOTO_SLOTS.length; // Plate + Status + 7 Photos
       let filledFields = 0;
       if (selectedPlate) filledFields++;
       if (status) filledFields++;
@@ -61,13 +61,20 @@ export const MobileControlView: React.FC = () => {
     }
   };
 
+  const removePhoto = (key: string, e: React.MouseEvent) => {
+    e.stopPropagation(); 
+    if (confirm(`¿Confirmar eliminación de registro visual: ${key.toUpperCase()}?`)) {
+        setPhotos(prev => ({ ...prev, [key]: '' }));
+    }
+  };
+
   const triggerCamera = (key: string) => {
     fileInputRefs.current[key]?.click();
   };
 
   const handleSave = () => {
     if (completionPercentage < 100) {
-      alert("Protocolo incompleto. Debe completar todos los registros fotográficos.");
+      alert("PROTOCOL_ERROR: Todos los registros fotográficos y la selección de unidad son obligatorios.");
       return;
     }
 
@@ -86,18 +93,20 @@ export const MobileControlView: React.FC = () => {
       user: user?.name || 'Usuario'
     };
 
+    // Simulate transmission to technical node
     setTimeout(() => {
       addMobileInspection(newInspection);
-      alert("Inspección certificada y cargada al sistema.");
+      alert("SISTEMA: Certificación de integridad finalizada. Datos transmitidos.");
       setPhotos({ frontal: '', trasera: '', latIzq: '', latDer: '', interiorDelantero: '', interiorTrasero: '', pickup: '' });
       setSelectedPlate('');
       setStatus('');
+      setDetails('');
       setIsSending(false);
     }, 1500);
   };
 
   return (
-    <div className="h-full overflow-y-auto bg-[#F8FAFC] font-sans w-full">
+    <div className="h-full overflow-y-auto bg-[#F8FAFC] font-sans w-full pb-32">
       <div className="w-full max-w-7xl mx-auto p-4 md:p-8 space-y-8">
         
         {/* PANEL DIDÁCTICO INDUSTRIAL */}
@@ -112,9 +121,9 @@ export const MobileControlView: React.FC = () => {
                 </div>
                 <h2 className="text-xl font-black uppercase tracking-tight mb-3">Manual de Integridad Operativa</h2>
                 <p className="text-slate-400 text-xs leading-relaxed font-mono max-w-4xl">
-                    <span className="text-white font-bold">[INSTRUCCIÓN]</span> Realice el registro fotográfico siguiendo el orden de la cuadrícula. 
-                    Asegure una <span className="text-[#00AEEF]">iluminación óptima</span> y que la patente sea visible en las tomas frontal y trasera. 
-                    Este proceso es mandatorio para la liberación de ruta del activo.
+                    <span className="text-white font-bold">[INSTRUCCIÓN]</span> El sistema requiere el 100% de la evidencia visual para liberar la unidad. 
+                    Las notas de campo son <span className="text-emerald-400">opcionales</span> y no bloquean el despacho.
+                    Utilice la cámara trasera para capturar detalles técnicos.
                 </p>
             </div>
         </div>
@@ -157,7 +166,7 @@ export const MobileControlView: React.FC = () => {
             </div>
         </div>
 
-        {/* CUADRÍCULA DE REGISTRO FOTOGRÁFICO (REPLICA DEL DISEÑO SOLICITADO) */}
+        {/* CUADRÍCULA DE REGISTRO FOTOGRÁFICO */}
         <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
             <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-50">
                 <div className="flex items-center space-x-3">
@@ -166,7 +175,7 @@ export const MobileControlView: React.FC = () => {
                     </div>
                     <div>
                         <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">Evidencia Certificada</h3>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase mt-1 tracking-wider">Cámara Nativa Activa: capture 7 puntos de control</p>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase mt-1 tracking-wider">Captura obligatoria de 7 puntos de control técnico</p>
                     </div>
                 </div>
                 <div className="flex items-center space-x-3">
@@ -199,12 +208,25 @@ export const MobileControlView: React.FC = () => {
                                 {isFilled ? (
                                     <>
                                         <img src={photos[slot.key]} className="w-full h-full object-cover" alt={slot.label} />
-                                        <div className="absolute inset-0 bg-blue-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center backdrop-blur-sm">
-                                            <RefreshCcw size={24} className="text-white mb-2" />
-                                            <span className="text-[10px] text-white font-black uppercase tracking-widest">Recapturar</span>
+                                        <div className="absolute inset-0 bg-blue-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center backdrop-blur-sm space-y-3">
+                                            <button 
+                                                onClick={(e) => { e.stopPropagation(); triggerCamera(slot.key); }}
+                                                className="bg-white text-blue-600 px-5 py-2 rounded-full text-[10px] font-black uppercase flex items-center shadow-lg active:scale-95"
+                                            >
+                                                <RefreshCcw size={14} className="mr-2" /> Recapturar
+                                            </button>
+                                            <button 
+                                                onClick={(e) => removePhoto(slot.key, e)}
+                                                className="bg-red-500 text-white px-5 py-2 rounded-full text-[10px] font-black uppercase flex items-center shadow-lg active:scale-95"
+                                            >
+                                                <Trash2 size={14} className="mr-2" /> Eliminar
+                                            </button>
                                         </div>
-                                        <div className="absolute top-4 right-4 bg-emerald-500 text-white p-1.5 rounded-full shadow-lg">
+                                        <div className="absolute top-4 right-4 bg-emerald-500 text-white p-1.5 rounded-full shadow-lg z-20">
                                             <CheckCircle2 size={16} />
+                                        </div>
+                                        <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full border border-slate-200 z-20 shadow-sm">
+                                            <span className="text-[9px] font-black text-slate-800 uppercase tracking-widest">{slot.label}</span>
                                         </div>
                                     </>
                                 ) : (
@@ -224,8 +246,25 @@ export const MobileControlView: React.FC = () => {
             </div>
         </div>
 
+        {/* NOTAS DE CAMPO - OPCIONAL */}
+        <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 space-y-4">
+            <div className="flex items-center space-x-3 text-slate-800 border-b border-slate-50 pb-4">
+                <FileText size={18} className="text-blue-600" />
+                <div>
+                    <h3 className="text-sm font-black uppercase tracking-widest">Notas de Campo</h3>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase mt-1 tracking-wider">Observaciones técnicas adicionales <span className="text-emerald-500">(Opcional)</span></p>
+                </div>
+            </div>
+            <textarea 
+                value={details}
+                onChange={e => setDetails(e.target.value)}
+                placeholder="REGISTRE CUALQUIER ANOMALÍA O COMENTARIO TÉCNICO AQUÍ..."
+                className="w-full p-6 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 outline-none focus:bg-white focus:border-blue-500 h-32 resize-none uppercase transition-all shadow-inner"
+            />
+        </div>
+
         {/* ACCIÓN FINAL */}
-        <div className="flex justify-end pb-12">
+        <div className="flex justify-end pb-20">
             <button 
                 onClick={handleSave}
                 disabled={isSending || completionPercentage < 100}
@@ -240,11 +279,11 @@ export const MobileControlView: React.FC = () => {
             >
                 {isSending ? (
                     <>
-                        <Loader2 size={18} className="mr-3 animate-spin" /> PROCESANDO...
+                        <Loader2 size={18} className="mr-3 animate-spin" /> TRANSMITIENDO...
                     </>
                 ) : (
                     <>
-                        <Save size={20} className="mr-3" /> CERTIFICAR INSPECCIÓN
+                        <Save size={20} className="mr-3" /> CERTIFICAR PROTOCOLO
                     </>
                 )}
             </button>
