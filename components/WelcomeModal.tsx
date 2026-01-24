@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useApp } from '../store/AppContext';
 
@@ -56,7 +57,7 @@ export const WelcomeModal: React.FC = () => {
           </p>
           
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-light text-white tracking-tight leading-tight">
-            <span className="font-semibold">{greeting}</span>, <br className="md:hidden" /> 
+            <span className="force-bold">{greeting}</span>, <br className="md:hidden" /> 
             Bienvenido {user.name} <span className="inline-block animate-bounce-subtle">😉</span>
           </h1>
           
