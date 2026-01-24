@@ -1,8 +1,9 @@
 
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { useApp } from '../store/AppContext';
+// Fix: ASSET_TYPES and SUPPLY_TYPES are exported from types.ts, not constants.ts
 import { CAR_BRANDS, CAR_MODELS, CHILE_GEO_DATA } from '../constants';
-import { Vehicle } from '../types';
+import { Vehicle, ASSET_TYPES, SUPPLY_TYPES } from '../types';
 import { 
   Plus, Trash2, AlertCircle, FileText, Send, 
   Eraser, Save, Calendar, Clock, 
@@ -10,10 +11,11 @@ import {
   Camera, X, Image as ImageIcon, CheckCircle2, ClipboardList, 
   Car, Info, Globe, ChevronDown, UserCheck, Map, ClipboardCheck, Box,
   Edit, Pencil, List, Eye, Download, Printer, ArrowLeft,
-  Search, Filter, Wrench, Activity, Fuel, Gauge, Layers, Terminal
+  Search, Filter, Wrench, Activity, Fuel, Gauge, Layers, Terminal,
+  UserPlus, Navigation, RefreshCcw
 } from 'lucide-react';
 
-const inputBaseClass = "w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 font-normal focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none transition-all shadow-sm placeholder:text-slate-300";
+const inputBaseClass = "w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 font-bold focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none transition-all shadow-sm placeholder:text-slate-300 placeholder:font-normal";
 const labelClass = "flex items-center text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] ml-1 mb-2.5";
 
 // --- CUSTOM SELECT COMPONENT ---
@@ -24,7 +26,7 @@ interface FormSelectProps {
   onChange: (value: string) => void;
   disabled?: boolean;
   icon?: React.ReactNode;
-  className?: string; // Permitir personalización de clases
+  className?: string;
 }
 
 const FormSelect: React.FC<FormSelectProps> = ({ value, options, placeholder = "Seleccionar...", onChange, disabled = false, icon, className }) => {
@@ -42,17 +44,15 @@ const FormSelect: React.FC<FormSelectProps> = ({ value, options, placeholder = "
   }, []);
 
   const selectedLabel = options.find(o => o.value === value)?.label || value;
-
-  // Clases por defecto si no se pasa className (estilo FleetView), de lo contrario usa className (estilo Dispatch/Reception)
-  const baseClasses = className || "w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-sm text-slate-700";
+  const baseClasses = className || "w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 font-bold";
 
   return (
     <div className={`relative ${disabled ? 'opacity-60' : ''}`} ref={containerRef}>
       <div 
         onClick={() => !disabled && setIsOpen(!isOpen)}
-        className={`${baseClasses} flex justify-between items-center cursor-pointer transition-all ${isOpen ? 'ring-2 ring-blue-500/20 border-blue-500 shadow-sm' : ''} ${disabled ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : ''}`}
+        className={`${baseClasses} flex justify-between items-center cursor-pointer transition-all ${isOpen ? 'bg-white ring-4 ring-blue-500/5 border-blue-500 shadow-sm' : ''} ${disabled ? 'bg-slate-100 text-slate-500 cursor-not-allowed' : ''}`}
       >
-        <span className={`${!value ? 'text-slate-400 font-normal' : 'font-medium truncate'}`}>
+        <span className={`${!value ? 'text-slate-400 font-normal' : 'font-bold truncate'}`}>
           {value ? selectedLabel : placeholder}
         </span>
         <div className="flex items-center">
@@ -67,14 +67,14 @@ const FormSelect: React.FC<FormSelectProps> = ({ value, options, placeholder = "
             <div
               key={option.value}
               onClick={() => { onChange(option.value); setIsOpen(false); }}
-              className={`px-4 py-3 text-xs font-medium cursor-pointer hover:bg-slate-50 flex items-center justify-between transition-colors ${value === option.value ? 'bg-blue-50 text-blue-600' : 'text-slate-600'}`}
+              className={`px-4 py-3 text-xs font-bold cursor-pointer hover:bg-slate-50 flex items-center justify-between transition-colors ${value === option.value ? 'bg-blue-50 text-blue-600 font-black' : 'text-slate-600 hover:text-slate-900'}`}
             >
               <span className="truncate">{option.label}</span>
               {value === option.value && <CheckCircle2 size={14} className="text-blue-500 flex-shrink-0"/>}
             </div>
           ))}
           {options.length === 0 && (
-              <div className="px-4 py-3 text-xs text-slate-400 italic">No hay opciones disponibles</div>
+              <div className="px-4 py-3 text-xs text-slate-400 italic font-medium">Sin opciones disponibles</div>
           )}
         </div>
       )}
@@ -82,56 +82,312 @@ const FormSelect: React.FC<FormSelectProps> = ({ value, options, placeholder = "
   );
 };
 
-// Interface local para los registros de recepción
-interface ReceptionRecord {
-  id: string;
-  date: string;
-  time: string;
-  location: string;
-  provider: string;
-  docType: string;
-  docNumber: string;
-  material: string;
-  quantity: number;
-  um: string;
-  qtyUm: number;
-  unitValue: number;
-  total: number;
-}
-
-// Interface para registro de despacho
-interface DispatchRecord {
-  id: string;
-  date: string;
-  emplacement: string;
-  origin: string;
-  destination: string;
-  material: string;
-  quantity: number;
-  reason: string;
-  responsible: string;
-  receiverName: string;
-  plate: string;
-  receiverRut: string;
-  photos: string[];
-}
-
 export const ReceptionView: React.FC = () => {
-  // ... (Code omitted for brevity as it is unchanged) ...
-  const { user, emplacements } = useApp();
-  // ...
   return (
-    <div className="h-full overflow-y-auto p-6 bg-slate-50/50 font-sans w-full">
-      <div className="w-full space-y-6">
-        <div className="text-center p-12 text-slate-400">Reception View Loaded</div>
+    <div className="h-full overflow-y-auto p-6 bg-slate-50/50 font-sans w-full flex items-center justify-center">
+      <div className="text-center space-y-4 opacity-40">
+        <ClipboardCheck size={64} className="mx-auto text-slate-300" />
+        <p className="text-xs font-black uppercase tracking-[0.3em]">Modulo de Recepción en Mantenimiento</p>
       </div>
     </div>
   );
 };
 
 export const DispatchView: React.FC = () => {
-    // ... (Code omitted for brevity as it is unchanged) ...
-    return <div className="p-6">Dispatch View Placeholder</div>;
+  const { user, vehicles, emplacements } = useApp();
+  
+  // Form State
+  const [formData, setFormData] = useState({
+    date: new Date().toISOString().split('T')[0],
+    emplacement: user?.location || '',
+    origin: '',
+    destination: '',
+    material: '',
+    quantity: '',
+    reason: '',
+    responsible: user?.name || '',
+    receiverName: '',
+    plate: '',
+    receiverRut: ''
+  });
+
+  const [photos, setPhotos] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const localVehicles = useMemo(() => {
+    return vehicles.filter(v => v.location === user?.location);
+  }, [vehicles, user]);
+
+  const handlePhotoCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setPhotos([...photos, event.target.result as string]);
+        }
+      };
+      reader.readAsDataURL(e.target.files[0]);
+    }
+  };
+
+  const removePhoto = (index: number) => {
+    setPhotos(photos.filter((_, i) => i !== index));
+  };
+
+  const handleSave = () => {
+    alert("Protocolo de Despacho Certificado. Generando Guía de Salida...");
+    // Logic to persist dispatch record would go here
+  };
+
+  return (
+    <div className="h-full overflow-y-auto p-6 bg-slate-50/50 font-sans w-full">
+      <div className="w-full max-w-7xl mx-auto space-y-8">
+        
+        {/* HEADER TÉCNICO */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-8">
+           <div className="flex items-center space-x-5">
+               <div className="bg-slate-900 p-4 rounded-2xl text-white shadow-xl">
+                  <Truck size={28} />
+               </div>
+               <div>
+                  <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tighter leading-none">Despacho de Activos</h2>
+                  <p className="text-[10px] text-slate-400 font-bold tracking-[0.3em] mt-2 flex items-center">
+                    <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                    SISTEMA DE SALIDA AUTORIZADA
+                  </p>
+               </div>
+           </div>
+           <div className="flex items-center space-x-3 bg-white px-6 py-3 rounded-2xl border border-slate-200 shadow-sm">
+               <div className="text-right">
+                   <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Responsable de Nodo</p>
+                   <p className="text-xs font-black text-slate-800 uppercase">{user?.name}</p>
+               </div>
+               <div className="h-8 w-[1px] bg-slate-100 mx-2"></div>
+               <Calendar size={18} className="text-blue-500" />
+           </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            {/* COL 1: FLUJO LOGÍSTICO */}
+            <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-200 space-y-8">
+                <div className="flex items-center space-x-3 text-slate-800 border-b border-slate-100 pb-5">
+                    <Navigation size={18} className="text-blue-600" />
+                    <h3 className="text-xs font-black uppercase tracking-widest">01. Ruta Logística</h3>
+                </div>
+
+                <div className="space-y-6">
+                    <div>
+                        <label className={labelClass}>Nodo Operativo (Emplazamiento)</label>
+                        <FormSelect 
+                            value={formData.emplacement}
+                            onChange={v => setFormData({...formData, emplacement: v})}
+                            options={emplacements.map(e => ({ label: e, value: e }))}
+                            disabled={user?.role !== 'ADMIN'}
+                        />
+                    </div>
+
+                    <div>
+                        <label className={labelClass}>Punto de Origen</label>
+                        <input 
+                            className={inputBaseClass}
+                            value={formData.origin}
+                            onChange={e => setFormData({...formData, origin: e.target.value})}
+                            placeholder="EJ: BODEGA CENTRAL SECTOR A"
+                        />
+                    </div>
+
+                    <div>
+                        <label className={labelClass}>Destino Final / Cliente</label>
+                        <input 
+                            className={inputBaseClass}
+                            value={formData.destination}
+                            onChange={e => setFormData({...formData, destination: e.target.value})}
+                            placeholder="EJ: CLIENTE SANTIAGO ORIENTE"
+                        />
+                    </div>
+
+                    <div>
+                        <label className={labelClass}>Motivo del Movimiento</label>
+                        <FormSelect 
+                            value={formData.reason}
+                            onChange={v => setFormData({...formData, reason: v})}
+                            options={[
+                                { label: 'ENTREGA A CLIENTE', value: 'CLIENTE' },
+                                { label: 'TRASLADO ENTRE SUCURSALES', value: 'SUCURSAL' },
+                                { label: 'RETIRO POR MANTENIMIENTO', value: 'MANTENCION' },
+                                { label: 'OTRO MOTIVO', value: 'OTRO' }
+                            ]}
+                            placeholder="SELECCIONAR CAUSA..."
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* COL 2: DETALLE DE CARGA */}
+            <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-200 space-y-8">
+                <div className="flex items-center space-x-3 text-slate-800 border-b border-slate-100 pb-5">
+                    <Box size={18} className="text-blue-600" />
+                    <h3 className="text-xs font-black uppercase tracking-widest">02. Especificación de Carga</h3>
+                </div>
+
+                <div className="space-y-6">
+                    <div>
+                        <label className={labelClass}>Material / Equipo</label>
+                        <FormSelect 
+                            value={formData.material}
+                            onChange={v => setFormData({...formData, material: v})}
+                            options={[
+                                ...ASSET_TYPES.map(a => ({ label: `ACTIVO: ${a}`, value: a })),
+                                ...SUPPLY_TYPES.map(s => ({ label: `INSUMO: ${s}`, value: s }))
+                            ]}
+                            placeholder="BUSCAR ITEM EN CATÁLOGO..."
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className={labelClass}>Cantidad</label>
+                            <input 
+                                type="number"
+                                className={inputBaseClass}
+                                value={formData.quantity}
+                                onChange={e => setFormData({...formData, quantity: e.target.value})}
+                                placeholder="0"
+                            />
+                        </div>
+                        <div>
+                            <label className={labelClass}>Unidad de Medida</label>
+                            <div className="p-4 bg-slate-100 rounded-xl text-xs font-black text-slate-400 text-center uppercase tracking-widest">
+                                UNIDADES
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-slate-900 rounded-2xl p-6 text-white border-l-4 border-blue-500 shadow-lg">
+                        <div className="flex items-center space-x-3 mb-4">
+                            <Terminal size={14} className="text-blue-400" />
+                            <span className="text-[10px] font-bold uppercase tracking-widest">Protocolo de Integridad</span>
+                        </div>
+                        <p className="text-[10px] text-slate-400 leading-relaxed font-mono">
+                            Verifique que la cantidad física coincida con el despacho digital antes de autorizar la salida del recinto.
+                        </p>
+                    </div>
+
+                    <div className="pt-4">
+                        <label className={labelClass}>Observaciones Técnicas</label>
+                        <textarea 
+                            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:bg-white focus:border-blue-500 h-24 resize-none uppercase"
+                            placeholder="NOTAS ADICIONALES DE DESPACHO..."
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* COL 3: RECEPTOR Y EVIDENCIA */}
+            <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-200 space-y-8">
+                <div className="flex items-center space-x-3 text-slate-800 border-b border-slate-100 pb-5">
+                    <UserCheck size={18} className="text-blue-600" />
+                    <h3 className="text-xs font-black uppercase tracking-widest">03. Certificación de Recepción</h3>
+                </div>
+
+                <div className="space-y-6">
+                    <div>
+                        <label className={labelClass}>Patente del Vehículo (PPU)</label>
+                        <FormSelect 
+                            value={formData.plate}
+                            onChange={v => setFormData({...formData, plate: v})}
+                            options={localVehicles.map(veh => ({ label: veh.plate, value: veh.plate }))}
+                            placeholder="SELECCIONAR MÓVIL..."
+                        />
+                    </div>
+
+                    <div>
+                        <label className={labelClass}>Nombre del Receptor / Chofer</label>
+                        <input 
+                            className={inputBaseClass}
+                            value={formData.receiverName}
+                            onChange={e => setFormData({...formData, receiverName: e.target.value})}
+                            placeholder="EJ: JUAN PEREZ"
+                        />
+                    </div>
+
+                    <div>
+                        <label className={labelClass}>RUT del Receptor</label>
+                        <input 
+                            className={inputBaseClass}
+                            value={formData.receiverRut}
+                            onChange={e => setFormData({...formData, receiverRut: e.target.value})}
+                            placeholder="12.345.678-9"
+                        />
+                    </div>
+
+                    <div className="pt-2">
+                        <label className={labelClass}>Evidencia Fotográfica de Carga</label>
+                        <div className="grid grid-cols-2 gap-3">
+                            {photos.map((p, idx) => (
+                                <div key={idx} className="relative aspect-video rounded-xl overflow-hidden group shadow-md border border-slate-200">
+                                    <img src={p} className="w-full h-full object-cover" />
+                                    <button onClick={() => removePhoto(idx)} className="absolute top-1.5 right-1.5 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <X size={12} />
+                                    </button>
+                                </div>
+                            ))}
+                            {photos.length < 4 && (
+                                <button 
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="aspect-video bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center text-slate-400 hover:border-blue-400 hover:bg-blue-50 transition-all group"
+                                >
+                                    <Camera size={20} className="mb-1 group-hover:scale-110 transition-transform" />
+                                    <span className="text-[8px] font-black uppercase tracking-widest">Capturar</span>
+                                    <input type="file" ref={fileInputRef} onChange={handlePhotoCapture} accept="image/*" capture="environment" className="hidden" />
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="pt-6 border-t border-slate-100">
+                    <button 
+                        onClick={handleSave}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-5 rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl shadow-blue-500/30 transition-all active:scale-95 flex items-center justify-center"
+                    >
+                        <Send size={18} className="mr-3" />
+                        Certificar Despacho
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        {/* TOOLBAR INFERIOR */}
+        <div className="bg-slate-900 rounded-3xl p-6 flex flex-col md:flex-row items-center justify-between gap-4 text-white shadow-2xl">
+            <div className="flex items-center space-x-6">
+                <div className="flex flex-col">
+                    <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Estado del Protocolo</span>
+                    <div className="flex items-center mt-1">
+                        <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
+                        <span className="text-xs font-black uppercase tracking-tighter">Terminal Ready</span>
+                    </div>
+                </div>
+                <div className="h-8 w-[1px] bg-white/10 hidden md:block"></div>
+                <div className="flex flex-col">
+                    <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Nivel de Seguridad</span>
+                    <span className="text-xs font-black uppercase tracking-tighter text-blue-400">Encriptación AES-256</span>
+                </div>
+            </div>
+            <div className="flex space-x-4 w-full md:w-auto">
+                <button className="flex-1 md:flex-none px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
+                    Reiniciar Formulario
+                </button>
+                <button className="flex-1 md:flex-none px-6 py-3 bg-white text-slate-900 hover:bg-blue-50 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center">
+                    <Printer size={16} className="mr-2" /> Imprimir Ticket
+                </button>
+            </div>
+        </div>
+
+      </div>
+    </div>
+  );
 };
 
 export const FleetView: React.FC = () => {
@@ -154,36 +410,26 @@ export const FleetView: React.FC = () => {
 
   const [selectedRegion, setSelectedRegion] = useState('');
 
-  // --- LOGIC FOR ADMIN VS USER RESTRICTIONS ---
-  
-  // 1. Determine user's region based on their assigned commune
   const userRegion = useMemo(() => {
-      if (user?.role === 'ADMIN') return null; // Admins don't have a restricted region
+      if (user?.role === 'ADMIN') return null;
       if (!user?.commune) return null;
-      // Find the region that contains the user's commune
       const found = CHILE_GEO_DATA.find(r => r.communes.includes(user.commune!));
       return found ? found.region : null;
   }, [user]);
 
-  // 2. Filter Available Regions (Admin gets all, User gets only theirs)
   const availableRegions = useMemo(() => {
       if (user?.role === 'ADMIN') return CHILE_GEO_DATA.map(r => r.region);
       return userRegion ? [userRegion] : CHILE_GEO_DATA.map(r => r.region);
   }, [user?.role, userRegion]);
 
-  // 3. Filter Available Emplacements (Admin gets all, User gets only theirs)
   const availableEmplacements = useMemo(() => {
       if (user?.role === 'ADMIN') return emplacements;
       return user?.location ? [user.location] : [];
   }, [user, emplacements]);
 
-  // 4. Calculate communes based on selected region (Standard logic)
   const communes = useMemo(() => {
-      // If a region is selected (manually or auto), show its communes
       if (selectedRegion) {
           const regionData = CHILE_GEO_DATA.find(r => r.region === selectedRegion);
-          // If user is non-admin and has a specific commune, restrict list? 
-          // The prompt says "usuario comun solo puede ver su emplazamiento y comuna".
           if (user?.role !== 'ADMIN' && user?.commune) {
               return [{ label: user.commune, value: user.commune }];
           }
@@ -192,26 +438,13 @@ export const FleetView: React.FC = () => {
       return [];
   }, [selectedRegion, user]);
 
-  // 5. Auto-fill Effect when Modal Opens
   useEffect(() => {
       if (isModalOpen && user?.role !== 'ADMIN') {
-          // Pre-fill Emplacement
-          if (user?.location) {
-              setNewVehicle(prev => ({ ...prev, location: user.location }));
-          }
-          
-          // Pre-fill Region
-          if (userRegion) {
-              setSelectedRegion(userRegion);
-          }
-
-          // Pre-fill Commune
-          if (user?.commune) {
-              setNewVehicle(prev => ({ ...prev, commune: user.commune }));
-          }
+          if (user?.location) setNewVehicle(prev => ({ ...prev, location: user.location }));
+          if (userRegion) setSelectedRegion(userRegion);
+          if (user?.commune) setNewVehicle(prev => ({ ...prev, commune: user.commune }));
       }
   }, [isModalOpen, user, userRegion]);
-
 
   const localVehicles = useMemo(() => {
     return vehicles.filter(v => v.location === user?.location && (v.plate.includes(searchTerm.toUpperCase()) || v.driver.toLowerCase().includes(searchTerm.toLowerCase())));
@@ -219,7 +452,6 @@ export const FleetView: React.FC = () => {
 
   const availableDrivers = useMemo(() => users.filter(u => u.role === 'DRIVER' || u.role === 'ADMIN'), [users]);
 
-  // Use CAR_MODELS from constants
   const availableModels = useMemo(() => {
       if (!newVehicle.brand) return [];
       return (CAR_MODELS as Record<string, string[]>)[newVehicle.brand] || [];
@@ -237,13 +469,13 @@ export const FleetView: React.FC = () => {
   };
 
   const StatCard = ({ label, value, icon: Icon, color }: any) => (
-      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-4 w-full">
-          <div className={`p-3 rounded-lg ${color} bg-opacity-10 text-opacity-100`}>
+      <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm flex items-center space-x-5 w-full">
+          <div className={`p-4 rounded-2xl ${color} bg-opacity-10 text-opacity-100`}>
               <Icon size={24} className={color.replace('bg-', 'text-')} />
           </div>
           <div>
-              <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">{label}</p>
-              <p className="text-2xl font-bold text-slate-800 leading-none mt-1">{value}</p>
+              <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest">{label}</p>
+              <p className="text-3xl font-black text-slate-800 leading-none mt-1">{value}</p>
           </div>
       </div>
   );
@@ -252,88 +484,75 @@ export const FleetView: React.FC = () => {
      <div className="h-full overflow-y-auto p-6 bg-slate-50/50 font-sans w-full">
        <div className="w-full space-y-6">
           
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 w-full">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 w-full">
              <StatCard label="Total Flota" value={localVehicles.length} icon={Car} color="bg-blue-600" />
              <StatCard label="Operativos" value={localVehicles.filter(v => v.status === 'AVAILABLE').length} icon={Activity} color="bg-emerald-500" />
-             <StatCard label="En Mantenimiento" value={localVehicles.filter(v => v.status === 'MAINTENANCE').length} icon={Wrench} color="bg-amber-500" />
-             <StatCard label="Rendimiento Prom." value="12 km/L" icon={Fuel} color="bg-indigo-500" />
+             <StatCard label="Mantenimiento" value={localVehicles.filter(v => v.status === 'MAINTENANCE').length} icon={Wrench} color="bg-amber-500" />
+             <StatCard label="Rendimiento" value="12 km/L" icon={Fuel} color="bg-indigo-500" />
           </div>
 
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm w-full">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-[2rem] border border-slate-200 shadow-sm w-full">
              <div className="flex-1 relative">
-                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                  <input 
                    type="text" 
-                   placeholder="Buscar patente, marca o conductor..." 
+                   placeholder="BUSCAR PATENTE O OPERADOR..." 
                    value={searchTerm}
                    onChange={e => setSearchTerm(e.target.value)}
-                   className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 focus:border-blue-500 outline-none"
+                   className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:bg-white focus:border-blue-500 transition-all uppercase"
                  />
              </div>
-             <div className="flex gap-3 overflow-x-auto pb-2 md:pb-0">
-                 {/* ... Filters & Buttons ... */}
-                 <button onClick={() => setIsModalOpen(true)} className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition-colors whitespace-nowrap shadow-md shadow-blue-500/20">
-                    <Plus size={16} className="mr-2" /> Nuevo Vehículo
-                 </button>
-             </div>
+             <button onClick={() => setIsModalOpen(true)} className="flex items-center px-8 py-3 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/20 active:scale-95">
+                <Plus size={18} className="mr-2" /> Registrar Unidad
+             </button>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-slate-200 w-full">
+          <div className="bg-white rounded-[2rem] shadow-sm overflow-hidden border border-slate-200 w-full">
              <div className="overflow-x-auto">
                  <table className="w-full text-left">
-                    <thead className="bg-slate-50 text-slate-400 uppercase font-black text-[10px] tracking-widest border-b border-slate-100">
+                    <thead className="bg-slate-900 text-white uppercase font-black text-[10px] tracking-widest">
                        <tr>
-                          <th className="px-6 py-4">Patente</th>
-                          <th className="px-6 py-4">Marca / Modelo</th>
-                          <th className="px-6 py-4">Tipo</th>
-                          <th className="px-6 py-4">Conductor</th>
-                          <th className="px-6 py-4">Ubicación</th>
-                          <th className="px-6 py-4">Estado</th>
-                          <th className="px-6 py-4 text-center">Kilometraje</th>
-                          <th className="px-6 py-4 text-center">Mantenimiento</th>
-                          <th className="px-6 py-4 text-right">Acciones</th>
+                          <th className="px-8 py-5">Identificador</th>
+                          <th className="px-8 py-5">Especificaciones</th>
+                          <th className="px-8 py-5">Asignación</th>
+                          <th className="px-8 py-5">Estado Operativo</th>
+                          <th className="px-8 py-5 text-center">Kilometraje</th>
+                          <th className="px-8 py-5 text-right">Control</th>
                        </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50 text-sm">
                        {localVehicles.map(v => (
                           <tr key={v.plate} className="hover:bg-slate-50 transition-colors group">
-                             <td className="px-6 py-4">
-                                <span className="bg-slate-100 border border-slate-200 px-2 py-1 rounded-md text-slate-700 font-mono font-bold text-xs">{v.plate}</span>
+                             <td className="px-8 py-5">
+                                <span className="bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-lg text-slate-700 font-mono font-black text-sm tracking-widest">{v.plate}</span>
                              </td>
-                             <td className="px-6 py-4">
-                                <div className="font-bold text-slate-900 text-xs">{v.brand} {v.model} <span className="text-slate-400 font-normal">({v.year})</span></div>
+                             <td className="px-8 py-5">
+                                <div className="font-black text-slate-900 text-xs">{v.brand} {v.model}</div>
+                                <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">{v.type} • {v.year}</div>
                              </td>
-                             <td className="px-6 py-4">
-                                <span className="bg-slate-50 text-slate-500 border border-slate-200 px-2 py-1 rounded-md text-[10px] font-bold uppercase">{v.type || 'Estándar'}</span>
-                             </td>
-                             <td className="px-6 py-4">
-                                <div className="flex items-center text-xs font-medium text-slate-700">
-                                   <UserIcon size={14} className="mr-2 text-slate-400" />
-                                   {v.driver || 'No Asignado'}
+                             <td className="px-8 py-5">
+                                <div className="flex items-center text-xs font-bold text-slate-700">
+                                   <UserIcon size={14} className="mr-2 text-blue-500" />
+                                   {v.driver || 'SIN CONDUCTOR'}
+                                </div>
+                                <div className="flex items-center text-[10px] text-slate-400 font-bold mt-1">
+                                   <MapPin size={12} className="mr-1.5"/> {v.commune}
                                 </div>
                              </td>
-                             <td className="px-6 py-4">
-                                <div className="flex items-center text-xs text-slate-500">
-                                   <MapPin size={14} className="mr-1.5 text-slate-400"/> {v.commune}
-                                </div>
-                             </td>
-                             <td className="px-6 py-4">
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${v.status === 'AVAILABLE' ? 'bg-green-50 text-green-600 border-green-200' : 'bg-amber-50 text-amber-600 border-amber-200'}`}>
-                                   {v.status === 'AVAILABLE' ? <CheckCircle2 size={10} className="mr-1" /> : <AlertCircle size={10} className="mr-1" />}
-                                   {v.status === 'AVAILABLE' ? 'Activo' : 'Mantenimiento'}
+                             <td className="px-8 py-5">
+                                <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${v.status === 'AVAILABLE' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-amber-50 text-amber-600 border-amber-200'}`}>
+                                   <div className={`w-1.5 h-1.5 rounded-full mr-2 ${v.status === 'AVAILABLE' ? 'bg-emerald-500' : 'bg-amber-500'}`}></div>
+                                   {v.status === 'AVAILABLE' ? 'Operativo' : 'En Taller'}
                                 </span>
                              </td>
-                             <td className="px-6 py-4 text-center text-xs font-bold text-slate-700">
-                                {v.km.toLocaleString()} km
+                             <td className="px-8 py-5 text-center font-mono font-bold text-slate-600">
+                                {v.km.toLocaleString()} KM
                              </td>
-                             <td className="px-6 py-4 text-center text-xs text-slate-400">
-                                -
-                             </td>
-                             <td className="px-6 py-4 text-right">
-                                <div className="flex items-center justify-end space-x-2 opacity-60 group-hover:opacity-100 transition-opacity">
-                                   <button className="text-blue-500 hover:bg-blue-50 p-1.5 rounded-md transition-colors"><Eye size={16}/></button>
-                                   <button className="text-slate-500 hover:bg-slate-100 p-1.5 rounded-md transition-colors"><Wrench size={16}/></button>
-                                   <button className="text-red-400 hover:bg-red-50 hover:text-red-500 p-1.5 rounded-md transition-colors"><Trash2 size={16}/></button>
+                             <td className="px-8 py-5 text-right">
+                                <div className="flex items-center justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                   <button className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-all"><Eye size={16}/></button>
+                                   <button className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-all"><Wrench size={16}/></button>
+                                   <button className="p-2 text-red-400 hover:bg-red-50 rounded-lg transition-all"><Trash2 size={16}/></button>
                                 </div>
                              </td>
                           </tr>
@@ -346,180 +565,76 @@ export const FleetView: React.FC = () => {
 
        {isModalOpen && (
           <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-950/40 backdrop-blur-[5px] animate-in fade-in duration-300">
-             <div className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
-                 
-                 {/* Modal Header */}
+             <div className="bg-white w-full max-w-4xl rounded-[2.5rem] shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
                  <div className="flex justify-between items-start p-8 border-b border-slate-100 bg-white sticky top-0 z-10">
                     <div className="flex items-center space-x-4">
-                        <div className="bg-blue-50 p-3 rounded-xl text-blue-600">
+                        <div className="bg-blue-600 p-3 rounded-2xl text-white">
                             <Car size={24} />
                         </div>
                         <div>
-                            <h3 className="text-lg font-bold text-slate-900 uppercase tracking-tight">Registrar Nueva Unidad</h3>
-                            <p className="text-xs text-slate-500 font-medium">Alta de vehículo en flota corporativa</p>
+                            <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Alta de Unidad</h3>
+                            <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">VINCULACIÓN A FLOTA CORPORATIVA</p>
                         </div>
                     </div>
-                    <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors p-1 bg-slate-50 rounded-full">
-                        <X size={20} />
+                    <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors p-2 bg-slate-50 rounded-full">
+                        <X size={24} />
                     </button>
                 </div>
-
-                {/* Modal Body */}
                  <div className="p-8 space-y-8 bg-slate-50/50 overflow-y-auto">
-                    
-                    {/* Section 1: Technical Specs */}
-                    <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                        <h4 className="text-xs font-bold text-slate-800 uppercase tracking-widest border-b border-slate-100 pb-3 mb-5 flex items-center">
-                            <Wrench size={14} className="mr-2 text-blue-500" /> Especificaciones Técnicas
+                    <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm">
+                        <h4 className="text-[10px] font-black text-slate-800 uppercase tracking-[0.3em] border-b border-slate-100 pb-4 mb-8 flex items-center">
+                            <Wrench size={14} className="mr-2 text-blue-500" /> ESPECIFICACIONES TÉCNICAS
                         </h4>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div>
-                                <label className={labelClass}><Hash size={12} className="mr-1.5"/> Patente (PPU)</label>
-                                <input 
-                                    placeholder="ABCD-12" 
-                                    value={newVehicle.plate}
-                                    onChange={e => setNewVehicle({...newVehicle, plate: e.target.value.toUpperCase()})}
-                                    className={`${inputBaseClass} font-bold tracking-wider`}
-                                />
+                                <label className={labelClass}>Patente (PPU)</label>
+                                <input placeholder="ABCD-12" value={newVehicle.plate} onChange={e => setNewVehicle({...newVehicle, plate: e.target.value.toUpperCase()})} className={`${inputBaseClass} tracking-widest font-black`} />
                             </div>
                             <div>
-                                <label className={labelClass}><Calendar size={12} className="mr-1.5"/> Año Fabricación</label>
-                                <input 
-                                    type="number"
-                                    placeholder="2024" 
-                                    value={newVehicle.year}
-                                    onChange={e => setNewVehicle({...newVehicle, year: parseInt(e.target.value)})}
-                                    className={inputBaseClass}
-                                />
-                            </div>
-
-                            <div>
-                                <label className={labelClass}><Car size={12} className="mr-1.5"/> Marca</label>
-                                <FormSelect 
-                                    value={newVehicle.brand || ''}
-                                    onChange={(val) => setNewVehicle({...newVehicle, brand: val, model: ''})}
-                                    options={CAR_BRANDS.map(brand => ({ label: brand, value: brand }))}
-                                    placeholder="Seleccionar Marca..."
-                                    className={inputBaseClass}
-                                />
+                                <label className={labelClass}>Año Fabricación</label>
+                                <input type="number" placeholder="2024" value={newVehicle.year} onChange={e => setNewVehicle({...newVehicle, year: parseInt(e.target.value)})} className={inputBaseClass} />
                             </div>
                             <div>
-                                <label className={labelClass}><Gauge size={12} className="mr-1.5"/> Modelo</label>
-                                <FormSelect 
-                                    value={newVehicle.model || ''}
-                                    onChange={(val) => setNewVehicle({...newVehicle, model: val})}
-                                    options={availableModels.map(model => ({ label: model, value: model }))}
-                                    placeholder={newVehicle.brand ? "Seleccionar Modelo..." : "Seleccione Marca Primero"}
-                                    disabled={!newVehicle.brand}
-                                    className={inputBaseClass}
-                                />
+                                <label className={labelClass}>Marca</label>
+                                <FormSelect value={newVehicle.brand || ''} onChange={(val) => setNewVehicle({...newVehicle, brand: val, model: ''})} options={CAR_BRANDS.map(brand => ({ label: brand, value: brand }))} placeholder="SELECCIONAR..." />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Modelo</label>
+                                <FormSelect value={newVehicle.model || ''} onChange={(val) => setNewVehicle({...newVehicle, model: val})} options={availableModels.map(model => ({ label: model, value: model }))} placeholder={newVehicle.brand ? "SELECCIONAR..." : "ELIJA MARCA..."} disabled={!newVehicle.brand} />
                             </div>
                         </div>
                     </div>
-
-                    {/* Section 2: Location & Assignment with DIDACTIC PROMPT */}
-                    <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                        <h4 className="text-xs font-bold text-slate-800 uppercase tracking-widest border-b border-slate-100 pb-3 mb-5 flex items-center">
-                            <MapPin size={14} className="mr-2 text-blue-500" /> Ubicación y Asignación
+                    <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm">
+                        <h4 className="text-[10px] font-black text-slate-800 uppercase tracking-[0.3em] border-b border-slate-100 pb-4 mb-8 flex items-center">
+                            <MapPin size={14} className="mr-2 text-blue-500" /> UBICACIÓN Y ASIGNACIÓN
                         </h4>
-
-                        {/* --- DIDACTIC INDUSTRIAL PROMPT --- */}
-                        <div className="mb-6 bg-slate-900 rounded-lg p-4 flex items-start space-x-3 border-l-4 border-orange-500">
-                            <div className="p-1.5 bg-white/10 rounded text-orange-500 mt-0.5">
-                                <Terminal size={16} />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div>
+                                <label className={labelClass}>Tipo de Vehículo</label>
+                                <FormSelect value={newVehicle.type || 'Camioneta'} onChange={(val) => setNewVehicle({...newVehicle, type: val})} options={[{ label: 'CAMIONETA', value: 'Camioneta' }, { label: 'CAMIÓN 3/4', value: 'Camión 3/4' }, { label: 'FURGÓN', value: 'Furgón' }, { label: 'AUTOMÓVIL', value: 'Automóvil' }]} />
                             </div>
                             <div>
-                                <h5 className="text-[10px] font-bold text-white uppercase tracking-[0.2em] mb-1">Protocolo de Asignación de Flota</h5>
-                                <p className="text-[10px] text-slate-400 leading-relaxed font-mono">
-                                    La vinculación del activo móvil debe corresponder estrictamente al <span className="text-white font-bold">Nodo Operativo (Emplazamiento)</span> autorizado. 
-                                    Los usuarios con perfil 'OPERADOR' tienen visibilidad restringida a su zona asignada para garantizar la integridad de la cadena de custodia.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label className={labelClass}><Truck size={12} className="mr-1.5"/> Tipo de Vehículo</label>
-                                <FormSelect 
-                                    value={newVehicle.type || 'Camioneta'}
-                                    onChange={(val) => setNewVehicle({...newVehicle, type: val})}
-                                    options={[
-                                        { label: 'Camioneta', value: 'Camioneta' },
-                                        { label: 'Camión 3/4', value: 'Camión 3/4' },
-                                        { label: 'Furgón', value: 'Furgón' },
-                                        { label: 'Automóvil', value: 'Automóvil' }
-                                    ]}
-                                    className={inputBaseClass}
-                                />
+                                <label className={labelClass}>Emplazamiento (Base)</label>
+                                <FormSelect value={newVehicle.location || ''} onChange={(val) => setNewVehicle({...newVehicle, location: val})} options={availableEmplacements.map(e => ({ label: e, value: e }))} placeholder={user?.role === 'ADMIN' ? "SELECCIONAR..." : `BASE: ${user?.location}`} disabled={user?.role !== 'ADMIN'} />
                             </div>
                             <div>
-                                <label className={labelClass}><Globe size={12} className="mr-1.5"/> Emplazamiento (Base)</label>
-                                <FormSelect 
-                                    value={newVehicle.location || ''}
-                                    onChange={(val) => setNewVehicle({...newVehicle, location: val})}
-                                    options={availableEmplacements.map(e => ({ label: e, value: e }))}
-                                    placeholder={user?.role === 'ADMIN' ? "Seleccionar Base..." : `Fijo: ${user?.location}`}
-                                    className={inputBaseClass}
-                                    disabled={user?.role !== 'ADMIN'}
-                                />
-                            </div>
-
-                            <div>
-                                <label className={labelClass}><Map size={12} className="mr-1.5"/> Región Operativa</label>
-                                <FormSelect 
-                                    value={selectedRegion}
-                                    onChange={(val) => { setSelectedRegion(val); if(user?.role==='ADMIN') setNewVehicle({...newVehicle, commune: ''}); }}
-                                    options={availableRegions.map(r => ({ label: r, value: r }))}
-                                    placeholder="Filtrar por Región..."
-                                    className={inputBaseClass}
-                                    disabled={user?.role !== 'ADMIN'}
-                                />
+                                <label className={labelClass}>Región Operativa</label>
+                                <FormSelect value={selectedRegion} onChange={(val) => { setSelectedRegion(val); if(user?.role==='ADMIN') setNewVehicle({...newVehicle, commune: ''}); }} options={availableRegions.map(r => ({ label: r, value: r }))} placeholder="FILTRAR..." disabled={user?.role !== 'ADMIN'} />
                             </div>
                             <div>
-                                <label className={labelClass}><Layers size={12} className="mr-1.5"/> Comuna</label>
-                                <FormSelect 
-                                    value={newVehicle.commune || ''}
-                                    onChange={(val) => setNewVehicle({...newVehicle, commune: val})}
-                                    options={communes.map(c => ({ label: c.label, value: c.value }))}
-                                    placeholder={selectedRegion ? "Seleccionar Comuna..." : "Seleccione Región Primero"}
-                                    disabled={user?.role !== 'ADMIN' && !!user?.commune}
-                                    className={inputBaseClass}
-                                />
+                                <label className={labelClass}>Comuna Jurisdiccional</label>
+                                <FormSelect value={newVehicle.commune || ''} onChange={(val) => setNewVehicle({...newVehicle, commune: val})} options={communes.map(c => ({ label: c.label, value: c.value }))} placeholder="SELECCIONAR..." disabled={user?.role !== 'ADMIN' && !!user?.commune} />
                             </div>
-
                             <div className="md:col-span-2">
-                                <label className={labelClass}><UserIcon size={12} className="mr-1.5"/> Conductor Asignado</label>
-                                <FormSelect 
-                                    value={newVehicle.driver || ''}
-                                    onChange={(val) => setNewVehicle({...newVehicle, driver: val})}
-                                    options={[
-                                        { label: 'Sin Asignar', value: '' },
-                                        ...availableDrivers.map(u => ({ label: `${u.name} (${u.rut})`, value: u.name }))
-                                    ]}
-                                    placeholder="Seleccionar Conductor..."
-                                    className={inputBaseClass}
-                                />
+                                <label className={labelClass}>Conductor Certificado</label>
+                                <FormSelect value={newVehicle.driver || ''} onChange={(val) => setNewVehicle({...newVehicle, driver: val})} options={[{ label: 'SIN ASIGNAR', value: '' }, ...availableDrivers.map(u => ({ label: `${u.name.toUpperCase()} (${u.rut})`, value: u.name }))]} placeholder="BUSCAR OPERADOR..." />
                             </div>
                         </div>
                     </div>
-
                  </div>
-                 
-                <div className="p-6 border-t border-slate-100 bg-white flex justify-end items-center space-x-4 sticky bottom-0 z-10">
-                    <button 
-                        onClick={() => setIsModalOpen(false)}
-                        className="px-8 py-3 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors uppercase tracking-wider"
-                    >
-                        Cancelar
-                    </button>
-                    <button 
-                        onClick={handleAdd}
-                        className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-lg shadow-blue-500/20 transition-all active:scale-95 uppercase tracking-wider flex items-center"
-                    >
-                        <Save size={16} className="mr-2" />
-                        Registrar Unidad
-                    </button>
+                <div className="p-8 border-t border-slate-100 bg-white flex justify-end items-center space-x-5 sticky bottom-0 z-10">
+                    <button onClick={() => setIsModalOpen(false)} className="px-10 py-4 border border-slate-200 rounded-xl text-[10px] font-black text-slate-400 uppercase tracking-widest hover:bg-slate-50 transition-all">Cancelar Operación</button>
+                    <button onClick={handleAdd} className="px-10 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[10px] font-black shadow-xl shadow-blue-500/20 transition-all active:scale-95 uppercase tracking-widest flex items-center"><Save size={18} className="mr-2" /> Certificar Registro</button>
                 </div>
              </div>
           </div>
