@@ -18,14 +18,13 @@ import { GateInView } from './views/GateInView';
 import { BehaviorView } from './views/BehaviorView'; 
 import { MobileControlView } from './views/MobileControlView';
 import { MobileHistoryView } from './views/MobileHistoryView';
-import { X, Minus, Square, Minimize2 } from 'lucide-react';
+import { X, Minus, Square, Minimize2, ChevronRight } from 'lucide-react';
 import { MODULES } from './constants';
 
 const DynamicStyles: React.FC = () => {
   const { currentConfig } = useApp();
   
   useEffect(() => {
-    // Inject dynamic CSS into head
     const styleId = 'dynamic-typography-styles';
     let styleTag = document.getElementById(styleId) as HTMLStyleElement;
     
@@ -35,8 +34,6 @@ const DynamicStyles: React.FC = () => {
       document.head.appendChild(styleTag);
     }
     
-    // Aplicamos font-size al html para que rem se escale proporcionalmente en todo el sitio
-    // Aplicamos font-family a todos los elementos de texto interactivos, incluyendo ASIDE y NAV
     styleTag.innerHTML = `
       html {
         font-size: ${currentConfig.fontSize}px !important;
@@ -53,12 +50,45 @@ const DynamicStyles: React.FC = () => {
   return null;
 };
 
+// --- MOBILE ICON LAUNCHER ---
+const MobileLaunchpad: React.FC<{ onSelect: (id: string) => void }> = ({ onSelect }) => {
+    return (
+        <div className="lg:hidden h-full overflow-y-auto p-4 bg-slate-50/50 pb-24 animate-in fade-in duration-500">
+            <div className="mb-8 mt-4">
+                <h2 className="text-2xl font-black text-slate-900 tracking-tighter uppercase leading-none">Módulos <span className="text-blue-600">ZERO</span></h2>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">SISTEMA OPERATIVO DE TERMINAL</p>
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {MODULES.map((mod) => (
+                    <button 
+                        key={mod.id}
+                        onClick={() => onSelect(mod.id)}
+                        className="bg-white border border-slate-200 rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-sm active:scale-95 active:bg-slate-50 transition-all group"
+                    >
+                        <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                            <mod.icon size={28} />
+                        </div>
+                        <span className="text-[10px] font-black text-slate-700 uppercase tracking-widest leading-tight">
+                            {mod.label}
+                        </span>
+                        <ChevronRight size={14} className="mt-3 text-slate-300" />
+                    </button>
+                ))}
+            </div>
+
+            <div className="mt-12 p-6 border-t border-slate-200 text-center opacity-30">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em]">Authorized Terminal Access Only</p>
+            </div>
+        </div>
+    );
+};
+
 const AppContent: React.FC = () => {
   const { user, currentConfig } = useApp();
   const [activeModule, setActiveModule] = useState(''); 
   const [windowState, setWindowState] = useState<'MAXIMIZED' | 'WINDOWED' | 'MINIMIZED'>('MAXIMIZED');
 
-  // Reset window state when module changes
   useEffect(() => {
     if (activeModule) {
         setWindowState('MAXIMIZED');
@@ -105,7 +135,6 @@ const AppContent: React.FC = () => {
       <WelcomeModal />
       <Layout activeModule={activeModule} setActiveModule={setActiveModule}>
         
-        {/* Render module or background based on activeModule */}
         {activeModule ? (
            <div className={`
                 flex flex-col bg-white border-slate-200 shadow-2xl overflow-hidden transition-all duration-300 ease-in-out
@@ -167,22 +196,28 @@ const AppContent: React.FC = () => {
                </div>
            </div>
         ) : (
-           <div className="absolute inset-0 flex flex-col items-center justify-center overflow-hidden">
-             {currentConfig.bgImage && (
-               <div className="absolute inset-0 pointer-events-none select-none z-0">
-                 <img 
-                   src={currentConfig.bgImage} 
-                   alt="Workspace Background" 
-                   style={{ 
-                     opacity: currentConfig.bgOpacity / 100, 
-                     filter: `blur(${currentConfig.bgBlur}px)`,
-                     objectFit: currentConfig.bgFit
-                   }}
-                   className="w-full h-full grayscale-[0.2]"
-                 />
-                 <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-white/30"></div>
-               </div>
-             )}
+           <div className="absolute inset-0 flex flex-col overflow-hidden">
+             {/* Desktop Content (Sidebar handled by Layout) */}
+             <div className="hidden lg:flex absolute inset-0 flex-col items-center justify-center overflow-hidden">
+                {currentConfig.bgImage && (
+                    <div className="absolute inset-0 pointer-events-none select-none z-0">
+                        <img 
+                        src={currentConfig.bgImage} 
+                        alt="Workspace Background" 
+                        style={{ 
+                            opacity: currentConfig.bgOpacity / 100, 
+                            filter: `blur(${currentConfig.bgBlur}px)`,
+                            objectFit: currentConfig.bgFit
+                        }}
+                        className="w-full h-full grayscale-[0.2]"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-white/30"></div>
+                    </div>
+                )}
+             </div>
+
+             {/* Mobile Content: Launchpad */}
+             <MobileLaunchpad onSelect={setActiveModule} />
            </div>
         )}
 
@@ -191,12 +226,12 @@ const AppContent: React.FC = () => {
   );
 };
 
-function App() {
+const App: React.FC = () => {
   return (
     <AppProvider>
       <AppContent />
     </AppProvider>
   );
-}
+};
 
 export default App;

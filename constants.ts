@@ -74,7 +74,18 @@ export const CHILE_GEO_DATA = [
   }
 ];
 
-export const EMPLACEMENTS = [];
+export const EMPLACEMENTS = [
+  "Centro de Distribución Lo Boza",
+  "Planta Productiva Renca",
+  "Base Operativa Antofagasta",
+  "Terminal Logístico Valparaíso",
+  "Centro Regional Concepción",
+  "Faena Minera Escondida",
+  "Bodega Central Quilicura",
+  "Sucursal Puerto Montt",
+  "Depósito Franco Iquique",
+  "Centro de Transferencia Temuco"
+];
 
 export const CAR_MODELS: Record<string, string[]> = {
   "Toyota": ["Hilux", "Yaris", "Corolla", "RAV4", "Fortuner", "4Runner", "Land Cruiser", "Urban Cruiser", "Prius", "Rush"],

@@ -148,7 +148,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   ];
 
   const [users, setUsers] = useLocalStorage<User[]>("zero_wms_users", [
-    { id: '1', name: 'Admin', rut: '1-9', password: '174545219', role: 'ADMIN', location: 'Central' }
+    { id: '1', name: 'Admin', rut: '1-9', password: '174545219', role: 'ADMIN', location: 'Centro de Distribución Lo Boza' }
   ]);
   const [roles, setRoles] = useLocalStorage<Role[]>("zero_wms_roles", initialRoles);
 
@@ -156,7 +156,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [stock, setStock] = useLocalStorage<StockItem[]>("zero_wms_stock", []); 
   const [transactions, setTransactions] = useLocalStorage<GateTransaction[]>("zero_wms_transactions", []);
   const [geoRecords, setGeoRecords] = useLocalStorage<GeoLocationRecord[]>("zero_wms_georecords", []);
-  const [emplacements, setEmplacements] = useLocalStorage<string[]>("zero_wms_emplacements", INITIAL_EMPLACEMENTS);
+  
+  // Changed key to v1 to ensure fresh load of industrial constants
+  const [emplacements, setEmplacements] = useLocalStorage<string[]>("zero_wms_emplacements_v1", INITIAL_EMPLACEMENTS);
+  
   const [documents, setDocuments] = useLocalStorage<ReceptionDocument[]>("zero_wms_documents", []);
   const [mobileInspections, setMobileInspections] = useLocalStorage<MobileInspection[]>("zero_wms_mobile_inspections", []);
 
