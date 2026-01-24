@@ -5,9 +5,9 @@ import { MODULES } from '../constants';
 import { 
   LogOut, X, 
   Bell, AlertTriangle, Info, CheckCircle,
-  Trash2, Search, Sun, Clock, ChevronDown, CloudRain, Cloud, CloudLightning,
+  Search, Sun, Clock, ChevronDown, CloudRain, Cloud, CloudLightning,
   User as UserIcon, Edit2, ShieldCheck,
-  ChevronRight, MapPin
+  ChevronRight, MapPin, Terminal
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -164,22 +164,25 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
         </div>
       )}
 
-      {/* SIDEBAR - FORCE HIDDEN ON MOBILE (SCREEN < 1024px) */}
+      {/* SIDEBAR - NO ICONS ON DESKTOP - TECHNICAL TEXT ONLY */}
       <aside 
         ref={sidebarRef}
         className={`
            transition-all duration-300 ease-out flex-col z-50 flex-shrink-0 bg-[#0B1120] text-slate-300 border-r border-slate-800/50
-           hidden lg:flex ${isSidebarOpen ? 'w-[280px]' : 'w-[88px]'} h-full
+           hidden lg:flex ${isSidebarOpen ? 'w-[260px]' : 'w-[80px]'} h-full
         `}
       >
-        <div className={`h-24 flex items-center flex-shrink-0 relative ${isSidebarOpen ? 'px-6' : 'justify-center'}`}>
+        <div className={`h-24 flex items-center flex-shrink-0 relative ${isSidebarOpen ? 'px-8' : 'justify-center'}`}>
           <div className={`flex items-center w-full overflow-hidden transition-all duration-300 ${isSidebarOpen ? 'justify-start' : 'justify-center'}`}>
              {isSidebarOpen ? (
                 <div className="flex flex-col animate-in fade-in slide-in-from-left-2 duration-300">
-                   <h1 className="text-2xl font-black text-white italic tracking-tighter leading-none">ZERO <span className="text-blue-600">WMS</span></h1>
+                   <h1 className="text-xl font-black text-white italic tracking-tighter leading-none">ZERO <span className="text-[#00AEEF]">SYSTEM</span></h1>
+                   <p className="text-[8px] font-bold text-slate-500 uppercase tracking-[0.4em] mt-1">Innovative Solutions</p>
                 </div>
              ) : (
-                <h1 className="text-xl font-black text-white italic tracking-tighter leading-none">Z<span className="text-blue-600">W</span></h1>
+                <div className="w-8 h-8 rounded-full border-2 border-[#00AEEF] flex items-center justify-center">
+                    <span className="text-[10px] font-black text-white">Z</span>
+                </div>
              )}
           </div>
           
@@ -193,9 +196,10 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
         
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1 scrollbar-hide">
           {isSidebarOpen && (
-            <p className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4 animate-in fade-in duration-500">
-              Panel Operativo
-            </p>
+            <div className="px-4 mb-6">
+                <p className="text-[9px] font-black text-slate-600 uppercase tracking-[0.3em] mb-1">Directorio</p>
+                <div className="h-[1px] w-full bg-slate-800/50"></div>
+            </div>
           )}
           
           {MODULES.map((module) => {
@@ -205,20 +209,22 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
                 key={module.id}
                 onClick={() => setActiveModule(module.id)}
                 className={`
-                  group relative flex items-center w-full rounded-xl transition-all duration-300 ease-out
-                  ${isSidebarOpen ? 'px-3.5 py-3' : 'justify-center py-3.5 px-2'}
+                  group relative flex items-center w-full rounded-lg transition-all duration-200 ease-out mb-1
+                  ${isSidebarOpen ? 'px-4 py-2.5' : 'justify-center py-3 px-2'}
                   ${isActive 
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/40' 
-                    : 'text-slate-400 hover:bg-white/5 hover:text-slate-100'}
+                    ? 'bg-[#00AEEF]/10 text-[#00AEEF] border-l-4 border-[#00AEEF]' 
+                    : 'text-slate-500 hover:text-slate-100 hover:bg-white/5 border-l-4 border-transparent'}
                 `}
               >
-                <div className={`relative flex items-center justify-center transition-transform duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`}>
-                   <module.icon size={20} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'text-white' : 'text-slate-400 group-hover:text-white'} />
-                </div>
-                {isSidebarOpen && (
-                  <span className={`ml-4 text-sm font-medium tracking-wide truncate transition-all ${isActive ? 'font-bold' : ''}`}>
+                {/* ICONS ONLY SHOWN WHEN SIDEBAR IS COLLAPSED FOR MINIMALISM OR TOTALLY REMOVED IF PREFERRED */}
+                {/* According to request: "no deben verse iconos si no que, la barra lateral izquierda" - Removing icons */}
+                
+                {isSidebarOpen ? (
+                  <span className={`text-[11px] font-bold uppercase tracking-[0.15em] truncate transition-all ${isActive ? 'translate-x-1' : ''}`}>
                     {module.label}
                   </span>
+                ) : (
+                    <span className="text-[10px] font-black">{module.label.charAt(0)}</span>
                 )}
               </button>
             );
@@ -226,13 +232,14 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
         </div>
 
         <div className="p-4 border-t border-slate-800/50 bg-[#0F1623]">
-          <button onClick={logout} className={`w-full flex items-center rounded-xl transition-all duration-200 group border border-transparent ${isSidebarOpen ? 'px-3 py-3 hover:bg-red-500/10 hover:border-red-500/20' : 'justify-center py-3 hover:bg-red-500/10 relative'}`}>
-            <LogOut size={20} className="text-slate-500 group-hover:text-red-400 transition-colors" />
-            {isSidebarOpen && (
-                <div className="ml-3 text-left">
-                    <p className="text-xs font-bold text-slate-300 group-hover:text-red-400 transition-colors">Cerrar Sesión</p>
-                    <p className="text-[9px] text-slate-600">Finalizar turno seguro</p>
+          <button onClick={logout} className={`w-full flex items-center rounded-xl transition-all duration-200 group border border-transparent ${isSidebarOpen ? 'px-4 py-3 hover:bg-red-500/10' : 'justify-center py-3'}`}>
+            {isSidebarOpen ? (
+                <div className="text-left w-full">
+                    <p className="text-[10px] font-black text-slate-500 group-hover:text-red-400 transition-colors uppercase tracking-widest">Logout System</p>
+                    <p className="text-[8px] text-slate-700 uppercase mt-0.5">End Active Session</p>
                 </div>
+            ) : (
+                <LogOut size={18} className="text-slate-600 group-hover:text-red-500" />
             )}
           </button>
         </div>
@@ -249,7 +256,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeModule, setActiv
                <div className="flex items-center mt-0.5 md:mt-1 text-slate-500">
                   <MapPin size={12} className="mr-1.5 text-blue-500" />
                   <span className="text-[10px] md:text-xs font-medium uppercase tracking-wide truncate max-w-[120px] md:max-w-none">
-                      {user?.location || 'Ubicación General'}
+                      {user?.role === 'ADMIN' ? 'Comando Central' : (user?.location || 'Ubicación General')}
                   </span>
                </div>
              </div>

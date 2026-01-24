@@ -10,21 +10,22 @@
     <link rel="icon" type="image/svg+xml" href="/shield_logo.svg" />
     <link rel="apple-touch-icon" href="/shield_logo.svg" />
     <link rel="manifest" href="/manifest.json" />
-    <title>Sistema de Gestión</title>
+    <title>ZERO Innovative Solutions | WMS</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Open+Sans:wght@300;400;500;600;700&family=Roboto+Mono:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700;900&family=Open+Sans:wght@300;400;500;600;700&family=Roboto+Mono:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script>
       tailwind.config = {
         theme: {
           extend: {
             colors: {
               corporate: {
-                900: '#0f172a', // Slate 900
-                800: '#1e293b', // Slate 800
-                100: '#f1f5f9', // Slate 100
-                blue: '#2563eb', // Royal Blue
-                purple: '#7c3aed', // Deep Purple
-                teal: '#0d9488', // Calipso/Teal
+                900: '#0f172a',
+                800: '#1e293b',
+                100: '#f1f5f9',
+                blue: '#2563eb',
+                cyan: '#00AEEF',
+                purple: '#7c3aed',
+                teal: '#0d9488',
               }
             }
           }
@@ -34,77 +35,12 @@
     <style>
       body {
         font-family: 'Inter', sans-serif;
-        background-color: #f8fafc; /* Very light slate */
+        background-color: #f8fafc;
       }
-      /* Professional thin scrollbar */
-      ::-webkit-scrollbar {
-        width: 6px;
-        height: 6px;
-      }
-      ::-webkit-scrollbar-track {
-        background: transparent;
-      }
-      ::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
-        border-radius: 3px;
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background: #94a3b8;
-      }
-
-      /* Print Styles for Professional Reports */
-      @media print {
-        aside, header, .no-print, button, .sidebar, .nav-tabs {
-          display: none !important;
-        }
-        body {
-          background-color: white !important;
-          margin: 0 !important;
-          padding: 0 !important;
-        }
-        #root {
-          padding: 0 !important;
-        }
-        .print-only {
-          display: block !important;
-        }
-        .report-container {
-          width: 100% !important;
-          max-width: none !important;
-          box-shadow: none !important;
-          border: none !important;
-          padding: 20mm !important;
-        }
-        table {
-          width: 100% !important;
-          border-collapse: collapse !important;
-        }
-        th, td {
-          border: 1px solid #e2e8f0 !important;
-          padding: 8px !important;
-          font-size: 10pt !important;
-        }
-        .print-header {
-          display: flex !important;
-          justify-content: space-between !important;
-          align-items: center !important;
-          margin-bottom: 30px !important;
-          border-bottom: 2px solid #0f172a !important;
-          padding-bottom: 10px !important;
-        }
-        .print-logo {
-          height: 60px !important;
-          width: auto !important;
-        }
-        .print-title {
-          font-weight: 900 !important;
-          text-transform: uppercase !important;
-          font-size: 18pt !important;
-        }
-      }
-      .print-only {
-        display: none;
-      }
+      ::-webkit-scrollbar { width: 6px; height: 6px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+      ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
   <script type="importmap">
 {
