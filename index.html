@@ -7,16 +7,16 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     
-    <!-- Favicon links con el nuevo logo circular -->
+    <!-- Favicon links con el logo oficial ZERO -->
     <link rel="icon" type="image/svg+xml" href="/shield_logo.svg" />
     <link rel="shortcut icon" href="/shield_logo.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/shield_logo.svg" />
-    <link rel="mask-icon" href="/shield_logo.svg" color="#2563eb" />
+    <link rel="mask-icon" href="/shield_logo.svg" color="#00AEEF" />
     <link rel="manifest" href="/manifest.json" />
     
     <title>ZERO Innovative Solutions | WMS</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700;900&family=Open+Sans:wght@300;400;500;600;700&family=Roboto+Mono:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Montserrat:wght@300;400;500;600;700;800;900&family=Roboto+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script>
       tailwind.config = {
         theme: {
@@ -40,11 +40,18 @@
       body {
         font-family: 'Inter', sans-serif;
         background-color: #f8fafc;
+        overflow: hidden;
       }
       ::-webkit-scrollbar { width: 6px; height: 6px; }
       ::-webkit-scrollbar-track { background: transparent; }
       ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
       ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+      
+      @keyframes spin-slow {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      .animate-spin-slow { animation: spin-slow 12s linear infinite; }
     </style>
   <script type="importmap">
 {

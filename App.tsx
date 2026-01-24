@@ -18,7 +18,7 @@ import { GateInView } from './views/GateInView';
 import { BehaviorView } from './views/BehaviorView'; 
 import { MobileControlView } from './views/MobileControlView';
 import { MobileHistoryView } from './views/MobileHistoryView';
-import { X, Minus, Square, Minimize2, ChevronRight } from 'lucide-react';
+import { X, Minus, Square, Minimize2, ChevronRight, Terminal } from 'lucide-react';
 import { MODULES } from './constants';
 
 const DynamicStyles: React.FC = () => {
@@ -50,35 +50,45 @@ const DynamicStyles: React.FC = () => {
   return null;
 };
 
-// --- MOBILE ICON LAUNCHER ---
+// --- MOBILE ICON LAUNCHER REDESIGN ---
 const MobileLaunchpad: React.FC<{ onSelect: (id: string) => void }> = ({ onSelect }) => {
     return (
-        <div className="lg:hidden h-full overflow-y-auto p-4 bg-slate-50/50 pb-24 animate-in fade-in duration-500">
-            <div className="mb-8 mt-4">
-                <h2 className="text-2xl font-black text-slate-900 tracking-tighter uppercase leading-none">Módulos <span className="text-blue-600">ZERO</span></h2>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">SISTEMA OPERATIVO DE TERMINAL</p>
+        <div className="lg:hidden h-full overflow-y-auto p-6 bg-[#F8FAFC] pb-24 animate-in fade-in duration-500">
+            <div className="mb-10 mt-4 flex items-center justify-between">
+                <div>
+                    <h2 className="text-2xl font-black text-slate-900 tracking-tighter uppercase leading-none italic">ZERO <span className="text-[#00AEEF]">OS</span></h2>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.4em] mt-2">Mobile Interface v2.5</p>
+                </div>
+                <div className="p-2 bg-slate-100 rounded-lg text-slate-400">
+                    <Terminal size={18} />
+                </div>
             </div>
             
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-5">
                 {MODULES.map((mod) => (
                     <button 
                         key={mod.id}
                         onClick={() => onSelect(mod.id)}
-                        className="bg-white border border-slate-200 rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-sm active:scale-95 active:bg-slate-50 transition-all group"
+                        className="relative bg-white border border-slate-200 rounded-[2rem] p-6 flex flex-col items-center justify-center text-center shadow-sm active:scale-95 active:shadow-inner active:bg-slate-50 transition-all group overflow-hidden"
                     >
-                        <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                            <mod.icon size={28} />
+                        {/* EFECTO REJILLA INDUSTRIAL */}
+                        <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '15px 15px' }}></div>
+                        
+                        <div className="w-16 h-16 bg-slate-50 text-slate-400 rounded-2xl flex items-center justify-center mb-5 group-hover:bg-[#00AEEF] group-hover:text-white transition-all duration-300 group-hover:rotate-6 shadow-sm border border-slate-100 group-active:scale-90 group-active:bg-slate-900">
+                            <mod.icon size={28} strokeWidth={1.5} />
                         </div>
-                        <span className="text-[10px] font-black text-slate-700 uppercase tracking-widest leading-tight">
+                        
+                        <span className="text-[10px] font-black text-slate-800 uppercase tracking-[0.1em] leading-tight mb-2 group-hover:text-[#00AEEF] transition-colors">
                             {mod.label}
                         </span>
-                        <ChevronRight size={14} className="mt-3 text-slate-300" />
+                        
+                        <div className="h-1 w-8 bg-slate-100 group-hover:w-12 group-hover:bg-[#00AEEF] transition-all rounded-full"></div>
                     </button>
                 ))}
             </div>
 
-            <div className="mt-12 p-6 border-t border-slate-200 text-center opacity-30">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em]">Authorized Terminal Access Only</p>
+            <div className="mt-16 p-8 border-t border-slate-200 text-center">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.5em] opacity-40 italic">Terminal Operativo Seguro</p>
             </div>
         </div>
     );
@@ -139,54 +149,36 @@ const AppContent: React.FC = () => {
            <div className={`
                 flex flex-col bg-white border-slate-200 shadow-2xl overflow-hidden transition-all duration-300 ease-in-out
                 ${windowState === 'MAXIMIZED' ? 'w-full h-full rounded-none border-0' : ''}
-                ${windowState === 'WINDOWED' ? 'absolute inset-4 md:inset-8 rounded-xl border z-20 shadow-[0_20px_50px_rgba(0,0,0,0.1)]' : ''}
-                ${windowState === 'MINIMIZED' ? 'absolute bottom-0 right-4 w-72 h-auto rounded-t-xl border border-b-0 z-30 shadow-lg' : ''}
+                ${windowState === 'WINDOWED' ? 'absolute inset-4 md:inset-8 rounded-[2rem] border z-20 shadow-[0_30px_60px_rgba(0,0,0,0.15)]' : ''}
+                ${windowState === 'MINIMIZED' ? 'absolute bottom-0 right-4 w-72 h-auto rounded-t-2xl border border-b-0 z-30 shadow-lg' : ''}
            `}>
-               {/* Window Title Bar */}
+               {/* Window Title Bar - Industrial Glass Style */}
                <div 
                  className={`
-                    flex items-center justify-between px-4 py-2.5 bg-slate-50 border-b border-slate-200 select-none
-                    ${windowState === 'MINIMIZED' ? 'cursor-pointer hover:bg-slate-100' : ''}
+                    flex items-center justify-between px-6 py-3.5 bg-slate-900 border-b border-white/5 select-none
+                    ${windowState === 'MINIMIZED' ? 'cursor-pointer hover:bg-slate-800' : ''}
                  `}
                  onClick={windowState === 'MINIMIZED' ? () => setWindowState('WINDOWED') : undefined}
                >
-                   <div className="flex items-center space-x-2.5 opacity-80">
+                   <div className="flex items-center space-x-3">
                        {currentModuleData && (
-                           <div className="text-slate-500">
-                               <currentModuleData.icon size={14} />
+                           <div className="text-[#00AEEF] animate-pulse">
+                               <currentModuleData.icon size={16} strokeWidth={2.5} />
                            </div>
                        )}
-                       <span className="text-xs font-bold text-slate-700 uppercase tracking-widest">
-                           {currentModuleData?.label || 'Sistema'}
+                       <span className="text-[10px] font-black text-white uppercase tracking-[0.2em]">
+                           {currentModuleData?.label || 'Terminal'}
                        </span>
                    </div>
 
-                   <div className="flex items-center space-x-1" onClick={e => e.stopPropagation()}>
-                       <button 
-                           onClick={() => setWindowState('MINIMIZED')}
-                           className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded transition-colors"
-                           title="Minimizar"
-                       >
-                           <Minus size={14} strokeWidth={3} />
-                       </button>
-                       
+                   <div className="flex items-center space-x-2" onClick={e => e.stopPropagation()}>
+                       <button onClick={() => setWindowState('MINIMIZED')} className="p-1.5 text-slate-500 hover:text-white transition-colors"><Minus size={14} /></button>
                        {windowState !== 'MINIMIZED' && (
-                           <button 
-                               onClick={() => setWindowState(windowState === 'MAXIMIZED' ? 'WINDOWED' : 'MAXIMIZED')}
-                               className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded transition-colors"
-                               title={windowState === 'MAXIMIZED' ? "Restaurar" : "Maximizar"}
-                           >
+                           <button onClick={() => setWindowState(windowState === 'MAXIMIZED' ? 'WINDOWED' : 'MAXIMIZED')} className="p-1.5 text-slate-500 hover:text-white transition-colors">
                                {windowState === 'MAXIMIZED' ? <Minimize2 size={14} /> : <Square size={12} />}
                            </button>
                        )}
-
-                       <button 
-                           onClick={handleCloseWindow}
-                           className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
-                           title="Cerrar"
-                       >
-                           <X size={16} strokeWidth={2.5} />
-                       </button>
+                       <button onClick={handleCloseWindow} className="p-1.5 text-slate-500 hover:text-red-500 transition-colors"><X size={16} /></button>
                    </div>
                </div>
                
@@ -197,7 +189,7 @@ const AppContent: React.FC = () => {
            </div>
         ) : (
            <div className="absolute inset-0 flex flex-col overflow-hidden">
-             {/* Desktop Content (Sidebar handled by Layout) */}
+             {/* Desktop Content */}
              <div className="hidden lg:flex absolute inset-0 flex-col items-center justify-center overflow-hidden">
                 {currentConfig.bgImage && (
                     <div className="absolute inset-0 pointer-events-none select-none z-0">

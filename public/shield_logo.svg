@@ -1,23 +1,27 @@
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Fondo circular blanco para visibilidad en temas oscuros -->
+  <!-- Fondo circular blanco para legibilidad -->
   <circle cx="256" cy="256" r="250" fill="white"/>
-  <!-- Anillo exterior gris -->
-  <circle cx="256" cy="256" r="180" stroke="#94A3B8" stroke-width="12" fill="none"/>
   
-  <!-- Grupo de texto central -->
-  <g transform="translate(105, 235)">
-    <!-- ZERO en estilo Bold Industrial -->
-    <text x="0" y="30" fill="#0F172A" font-family="Montserrat, Arial, sans-serif" font-weight="900" font-size="95" letter-spacing="-5" font-style="italic">ZE</text>
-    <text x="135" y="30" fill="#0F172A" font-family="Montserrat, Arial, sans-serif" font-weight="900" font-size="95" letter-spacing="-5" font-style="italic">R</text>
+  <!-- Anillo exterior gris característico -->
+  <circle cx="256" cy="256" r="210" stroke="#94A3B8" stroke-width="12" fill="none" stroke-dasharray="1100 219" />
+  
+  <!-- Texto ZERO con estilo industrial -->
+  <g transform="translate(65, 230)">
+    <!-- Letras ZER -->
+    <path d="M0 45 L90 45 L0 120 L90 120 M105 45 L180 45 L180 120 L105 120 M145 82 L180 82 M200 45 L275 45 L275 120 L200 120 M200 82 L245 82 L275 120" stroke="#0F172A" stroke-width="18" fill="none" stroke-linejoin="round" stroke-linecap="round" />
     
-    <!-- La O circular con el detalle de la mira/innovación -->
-    <g transform="translate(225, -45)">
-      <circle cx="45" cy="45" r="35" stroke="#00AEEF" stroke-width="12"/>
-      <circle cx="45" cy="45" r="10" fill="#00AEEF"/>
-      <rect x="15" y="42" width="60" height="6" fill="#00AEEF" rx="2"/>
+    <!-- Letra O con Símbolo de Mira/Innovación -->
+    <g transform="translate(325, 38)">
+      <circle cx="42" cy="42" r="38" stroke="#00AEEF" stroke-width="12" />
+      <circle cx="42" cy="42" r="10" fill="#00AEEF" />
+      <!-- Líneas de mira -->
+      <rect x="0" y="38" width="84" height="8" fill="#00AEEF" rx="2" />
+      <!-- Huecos en el anillo para efecto de mira -->
+      <rect x="38" y="-10" width="8" height="20" fill="white" />
+      <rect x="38" y="74" width="8" height="20" fill="white" />
     </g>
 
-    <!-- Subtítulo inferior -->
-    <text x="15" y="85" fill="#0F172A" font-family="Inter, sans-serif" font-weight="700" font-size="16" letter-spacing="4" text-transform="uppercase">INNOVATIVE SOLUTIONS</text>
+    <!-- Subtítulo INNOVATIVE SOLUTIONS -->
+    <text x="190" y="165" fill="#0F172A" font-family="Montserrat, Arial, sans-serif" font-weight="800" font-size="28" letter-spacing="4" text-anchor="middle">INNOVATIVE SOLUTIONS</text>
   </g>
 </svg>
