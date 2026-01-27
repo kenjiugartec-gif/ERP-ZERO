@@ -1,7 +1,6 @@
 
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { useApp } from '../store/AppContext';
-// Fix: ASSET_TYPES and SUPPLY_TYPES are exported from types.ts, not constants.ts
 import { CAR_BRANDS, CAR_MODELS, CHILE_GEO_DATA } from '../constants';
 import { Vehicle, ASSET_TYPES, SUPPLY_TYPES } from '../types';
 import { 
@@ -12,7 +11,7 @@ import {
   Car, Info, Globe, ChevronDown, UserCheck, Map, ClipboardCheck, Box,
   Edit, Pencil, List, Eye, Download, Printer, ArrowLeft,
   Search, Filter, Wrench, Activity, Fuel, Gauge, Layers, Terminal,
-  UserPlus, Navigation, RefreshCcw
+  UserPlus, Navigation, RefreshCcw, MoreHorizontal
 } from 'lucide-react';
 
 const inputBaseClass = "w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 font-bold focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none transition-all shadow-sm placeholder:text-slate-300 placeholder:font-normal";
@@ -551,12 +550,12 @@ export const FleetView: React.FC = () => {
                  <table className="w-full text-left">
                     <thead className="bg-slate-900 text-white uppercase font-black text-[10px] tracking-widest">
                        <tr>
-                          <th className="px-8 py-5">Identificador</th>
-                          <th className="px-8 py-5">Especificaciones</th>
-                          <th className="px-8 py-5">Asignación</th>
-                          <th className="px-8 py-5">Estado Operativo</th>
-                          <th className="px-8 py-5 text-center">Kilometraje</th>
-                          <th className="px-8 py-5 text-right">Control</th>
+                          <th className="px-8 py-5">UNIDAD (PPU)</th>
+                          <th className="px-8 py-5">FICHA TÉCNICA</th>
+                          <th className="px-8 py-5">OPERADOR ASIGNADO</th>
+                          <th className="px-8 py-5">ESTADO</th>
+                          <th className="px-8 py-5 text-center">KM</th>
+                          <th className="px-8 py-5 text-right">ACCIONES</th>
                        </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50 text-sm">
@@ -572,7 +571,7 @@ export const FleetView: React.FC = () => {
                              <td className="px-8 py-5">
                                 <div className="flex items-center text-xs font-bold text-slate-700">
                                    <UserIcon size={14} className="mr-2 text-blue-500" />
-                                   {v.driver || 'SIN CONDUCTOR'}
+                                   {v.driver || 'SIN ASIGNAR'}
                                 </div>
                                 <div className="flex items-center text-[10px] text-slate-400 font-bold mt-1">
                                    <MapPin size={12} className="mr-1.5"/> {v.commune}
@@ -585,21 +584,21 @@ export const FleetView: React.FC = () => {
                                 </span>
                              </td>
                              <td className="px-8 py-5 text-center font-mono font-bold text-slate-600">
-                                {v.km.toLocaleString()} KM
+                                {v.km.toLocaleString()}
                              </td>
                              <td className="px-8 py-5 text-right">
-                                <div className="flex items-center justify-end space-x-2 opacity-60 group-hover:opacity-100 transition-opacity">
+                                <div className="flex items-center justify-end space-x-2">
                                    <button 
                                       onClick={() => handleEdit(v)}
-                                      className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
-                                      title="Editar"
+                                      className="flex items-center px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-[10px] font-bold uppercase tracking-wider"
+                                      title="Editar Ficha"
                                    >
-                                      <Wrench size={16}/>
+                                      <Pencil size={12} className="mr-1.5"/> Editar
                                    </button>
                                    <button 
                                       onClick={() => handleDelete(v.plate)}
                                       className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                                      title="Eliminar"
+                                      title="Dar de Baja"
                                    >
                                       <Trash2 size={16}/>
                                    </button>
@@ -607,6 +606,11 @@ export const FleetView: React.FC = () => {
                              </td>
                           </tr>
                        ))}
+                       {localVehicles.length === 0 && (
+                           <tr>
+                               <td colSpan={6} className="px-8 py-8 text-center text-slate-400 italic text-xs">No hay unidades registradas en este nodo.</td>
+                           </tr>
+                       )}
                     </tbody>
                  </table>
              </div>
@@ -638,7 +642,7 @@ export const FleetView: React.FC = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div>
                                 <label className={labelClass}>Patente (PPU)</label>
-                                <input placeholder="ABCD-12" value={newVehicle.plate} onChange={e => setNewVehicle({...newVehicle, plate: e.target.value.toUpperCase()})} className={`${inputBaseClass} tracking-widest font-black`} />
+                                <input placeholder="ABCD-12" value={newVehicle.plate} onChange={e => setNewVehicle({...newVehicle, plate: e.target.value.toUpperCase()})} className={`${inputBaseClass} tracking-widest font-black uppercase`} />
                             </div>
                             <div>
                                 <label className={labelClass}>Año Fabricación</label>
