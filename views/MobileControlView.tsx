@@ -5,7 +5,7 @@ import {
   Camera, CheckCircle2, ChevronDown, Save, 
   RefreshCcw, Info, Terminal, ShieldCheck, 
   Smartphone, AlertCircle, Loader2, X, Trash2,
-  FileText
+  FileText, Eye, Maximize2
 } from 'lucide-react';
 import { MobileInspection } from '../types';
 
@@ -17,6 +17,9 @@ export const MobileControlView: React.FC = () => {
   const [details, setDetails] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
+  
+  // State for Image Preview Modal
+  const [previewImage, setPreviewImage] = useState<{ url: string, label: string } | null>(null);
 
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
@@ -70,6 +73,11 @@ export const MobileControlView: React.FC = () => {
 
   const triggerCamera = (key: string) => {
     fileInputRefs.current[key]?.click();
+  };
+
+  const openPreview = (url: string, label: string, e: React.MouseEvent) => {
+      e.stopPropagation();
+      setPreviewImage({ url, label });
   };
 
   const handleSave = () => {
@@ -198,7 +206,7 @@ export const MobileControlView: React.FC = () => {
                                 className="hidden"
                             />
                             <div 
-                                onClick={() => triggerCamera(slot.key)}
+                                onClick={() => !isFilled && triggerCamera(slot.key)}
                                 className={`group relative aspect-[1.4/1] bg-white rounded-3xl flex flex-col items-center justify-center cursor-pointer transition-all duration-300 border-2 overflow-hidden ${
                                     isFilled 
                                     ? 'border-blue-500 shadow-xl ring-4 ring-blue-50' 
@@ -208,24 +216,32 @@ export const MobileControlView: React.FC = () => {
                                 {isFilled ? (
                                     <>
                                         <img src={photos[slot.key]} className="w-full h-full object-cover" alt={slot.label} />
-                                        <div className="absolute inset-0 bg-blue-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center backdrop-blur-sm space-y-3">
+                                        <div className="absolute inset-0 bg-blue-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center backdrop-blur-sm space-y-2 p-4">
                                             <button 
-                                                onClick={(e) => { e.stopPropagation(); triggerCamera(slot.key); }}
-                                                className="bg-white text-blue-600 px-5 py-2 rounded-full text-[10px] font-black uppercase flex items-center shadow-lg active:scale-95"
+                                                onClick={(e) => openPreview(photos[slot.key], slot.label, e)}
+                                                className="bg-white text-slate-900 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase flex items-center shadow-lg active:scale-95 w-full justify-center hover:bg-blue-50"
                                             >
-                                                <RefreshCcw size={14} className="mr-2" /> Recapturar
+                                                <Eye size={14} className="mr-2" /> Ver Foto
                                             </button>
-                                            <button 
-                                                onClick={(e) => removePhoto(slot.key, e)}
-                                                className="bg-red-500 text-white px-5 py-2 rounded-full text-[10px] font-black uppercase flex items-center shadow-lg active:scale-95"
-                                            >
-                                                <Trash2 size={14} className="mr-2" /> Eliminar
-                                            </button>
+                                            <div className="flex space-x-2 w-full">
+                                                <button 
+                                                    onClick={(e) => { e.stopPropagation(); triggerCamera(slot.key); }}
+                                                    className="bg-blue-600 text-white px-3 py-2.5 rounded-xl text-[10px] font-black uppercase flex items-center justify-center shadow-lg active:scale-95 flex-1 hover:bg-blue-500"
+                                                >
+                                                    <RefreshCcw size={14} />
+                                                </button>
+                                                <button 
+                                                    onClick={(e) => removePhoto(slot.key, e)}
+                                                    className="bg-red-500 text-white px-3 py-2.5 rounded-xl text-[10px] font-black uppercase flex items-center justify-center shadow-lg active:scale-95 flex-1 hover:bg-red-400"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </div>
                                         </div>
-                                        <div className="absolute top-4 right-4 bg-emerald-500 text-white p-1.5 rounded-full shadow-lg z-20">
+                                        <div className="absolute top-4 right-4 bg-emerald-500 text-white p-1.5 rounded-full shadow-lg z-20 pointer-events-none">
                                             <CheckCircle2 size={16} />
                                         </div>
-                                        <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full border border-slate-200 z-20 shadow-sm">
+                                        <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full border border-slate-200 z-20 shadow-sm pointer-events-none">
                                             <span className="text-[9px] font-black text-slate-800 uppercase tracking-widest">{slot.label}</span>
                                         </div>
                                     </>
@@ -290,6 +306,46 @@ export const MobileControlView: React.FC = () => {
         </div>
 
       </div>
+
+      {/* --- PREVIEW MODAL (LIGHTBOX) --- */}
+      {previewImage && (
+          <div className="fixed inset-0 z-[100] bg-slate-950/95 backdrop-blur-md flex flex-col animate-in fade-in duration-300">
+              {/* Toolbar */}
+              <div className="h-20 flex items-center justify-between px-6 md:px-10 flex-shrink-0">
+                  <div className="flex items-center space-x-3">
+                      <div className="bg-white/10 p-2 rounded-lg text-white">
+                          <Maximize2 size={20} />
+                      </div>
+                      <div>
+                          <h3 className="text-white font-bold text-sm uppercase tracking-wider">{previewImage.label}</h3>
+                          <p className="text-slate-400 text-[10px] uppercase tracking-widest">Vista Previa de Alta Resolución</p>
+                      </div>
+                  </div>
+                  <button 
+                    onClick={() => setPreviewImage(null)}
+                    className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors"
+                  >
+                      <X size={24} />
+                  </button>
+              </div>
+
+              {/* Image Container */}
+              <div className="flex-1 flex items-center justify-center p-4 overflow-hidden" onClick={() => setPreviewImage(null)}>
+                  <img 
+                    src={previewImage.url} 
+                    alt="Preview" 
+                    className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+                    onClick={(e) => e.stopPropagation()} // Prevent close when clicking image
+                  />
+              </div>
+
+              {/* Footer */}
+              <div className="h-20 flex items-center justify-center pb-6 flex-shrink-0">
+                  <p className="text-slate-500 text-[10px] uppercase tracking-[0.3em]">Toque fuera de la imagen para cerrar</p>
+              </div>
+          </div>
+      )}
+
     </div>
   );
 };
