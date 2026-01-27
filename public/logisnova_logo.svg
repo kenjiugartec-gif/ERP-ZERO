@@ -1,0 +1,48 @@
+
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#06b6d4;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2563eb;stop-opacity:1" />
+    </linearGradient>
+    <filter id="f1" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#000" flood-opacity="0.2"/>
+    </filter>
+  </defs>
+  
+  <!-- Hexagon Background -->
+  <path d="M256 40 L443 148 V364 L256 472 L69 364 V148 L256 40Z" fill="white" stroke="url(#grad1)" stroke-width="16" filter="url(#f1)"/>
+  
+  <!-- Inner Fill Hexagon -->
+  <path d="M256 80 L408 168 V344 L256 432 L104 344 V168 L256 80Z" fill="url(#grad1)" opacity="0.1"/>
+
+  <!-- Logo Content Group -->
+  <g transform="translate(100, 130)">
+     <!-- Arrow Body -->
+     <path d="M40 100 H200 L200 60 L340 130 L200 200 L200 160 H40 V100 Z" fill="url(#grad1)" stroke="white" stroke-width="4"/>
+     
+     <!-- Pixel Trail Effect (Left side of arrow) -->
+     <rect x="-20" y="80" width="15" height="15" fill="#06b6d4" opacity="0.8" />
+     <rect x="-45" y="100" width="15" height="15" fill="#06b6d4" opacity="0.6" />
+     <rect x="-10" y="140" width="15" height="15" fill="#06b6d4" opacity="0.9" />
+     <rect x="10" y="170" width="12" height="12" fill="#06b6d4" opacity="0.5" />
+     
+     <!-- Truck Silhouette (Integrated below arrow) -->
+     <g transform="translate(70, 160)">
+        <!-- Cargo Box -->
+        <path d="M0 10 H110 V70 H0 Z" fill="#1e293b"/> 
+        <!-- Motion Lines on Cargo -->
+        <path d="M10 25 H80" stroke="white" stroke-width="2" stroke-opacity="0.3"/>
+        <path d="M10 40 H60" stroke="white" stroke-width="2" stroke-opacity="0.3"/>
+        <path d="M10 55 H90" stroke="white" stroke-width="2" stroke-opacity="0.3"/>
+
+        <!-- Cab -->
+        <path d="M115 30 H140 L140 70 H115 Z" fill="#1e293b"/>
+        
+        <!-- Wheels -->
+        <circle cx="30" cy="70" r="12" fill="#334155" stroke="white" stroke-width="2"/>
+        <circle cx="90" cy="70" r="12" fill="#334155" stroke="white" stroke-width="2"/>
+        <circle cx="130" cy="70" r="12" fill="#334155" stroke="white" stroke-width="2"/>
+     </g>
+  </g>
+</svg>

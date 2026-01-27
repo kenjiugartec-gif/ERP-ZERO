@@ -1,15 +1,16 @@
+
 {
-  "short_name": "ZERO WMS",
-  "name": "ZERO WMS Security Terminal",
+  "short_name": "LogisNova",
+  "name": "LogisNova WMS Terminal",
   "icons": [
     {
-      "src": "/shield_logo.svg",
+      "src": "/logisnova_logo.svg",
       "type": "image/svg+xml",
       "sizes": "192x192 512x512",
       "purpose": "any"
     },
     {
-      "src": "/shield_logo.svg",
+      "src": "/logisnova_logo.svg",
       "type": "image/svg+xml",
       "sizes": "512x512",
       "purpose": "maskable"
