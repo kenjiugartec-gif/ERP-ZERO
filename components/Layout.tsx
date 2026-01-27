@@ -24,27 +24,39 @@ export const Layout: React.FC<{children: React.ReactNode, activeModule: string, 
     return () => clearInterval(timer);
   }, []);
 
-  // Clima por Geolocalización (GPS)
+  // Clima: GPS con Fallback Silencioso (Reparado)
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(async (position) => {
-        const { latitude, longitude } = position.coords;
-        try {
-          // Usamos Open-Meteo para datos en tiempo real gratuitos por coordenadas
-          const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`);
-          const data = await res.json();
-          if (data.current_weather) {
-            setWeather({
-              temp: Math.round(data.current_weather.temperature),
-              code: data.current_weather.weathercode
-            });
-          }
-        } catch (e) {
-          console.error("Error al obtener clima:", e);
+    const fetchWeather = async (lat: number, lon: number) => {
+      try {
+        // Usamos Open-Meteo para datos en tiempo real gratuitos por coordenadas
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+        const data = await res.json();
+        if (data.current_weather) {
+          setWeather({
+            temp: Math.round(data.current_weather.temperature),
+            code: data.current_weather.weathercode
+          });
         }
-      }, (error) => {
-          console.warn("GPS denegado, usando valores predeterminados.");
-      });
+      } catch (e) {
+        console.error("Error al conectar con servicio meteorológico:", e);
+      }
+    };
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          // Éxito: Usar coordenadas reales
+          fetchWeather(position.coords.latitude, position.coords.longitude);
+        },
+        () => {
+          // Error/Denegado: Fallback silencioso a Santiago (Capital)
+          // No mostramos alerta para mantener la interfaz limpia ("Profesional")
+          fetchWeather(-33.4489, -70.6693);
+        }
+      );
+    } else {
+        // Navegador no soporta GPS: Default Santiago
+        fetchWeather(-33.4489, -70.6693);
     }
   }, []);
 
@@ -128,7 +140,7 @@ export const Layout: React.FC<{children: React.ReactNode, activeModule: string, 
   };
 
   return (
-    <div className="h-[100dvh] flex overflow-hidden font-sans relative bg-slate-900">
+    <div className="h-[100dvh] flex overflow-hidden font-sans relative bg-slate-50">
       
       {/* Fondo de Pantalla Global Persistente */}
       {currentConfig.bgImage && (
@@ -138,14 +150,14 @@ export const Layout: React.FC<{children: React.ReactNode, activeModule: string, 
             alt="Background" 
             className="w-full h-full object-cover opacity-20 filter blur-sm grayscale-[0.3]"
           />
-          <div className="absolute inset-0 bg-slate-100/80 backdrop-blur-sm"></div>
+          <div className="absolute inset-0 bg-slate-50/90 backdrop-blur-sm"></div>
         </div>
       )}
 
       {/* Sidebar con Referencia y Comportamiento Dinámico */}
       <aside 
         ref={sidebarRef}
-        className={`transition-all duration-300 ease-out flex-col z-50 flex-shrink-0 bg-[#0B1120] text-slate-300 border-r border-slate-800/50 hidden lg:flex ${isSidebarOpen ? 'w-[260px]' : 'w-[80px]'} h-full shadow-2xl relative`}
+        className={`transition-all duration-300 ease-out flex-col z-50 flex-shrink-0 bg-[#0B1120] text-slate-300 border-r border-slate-200/50 hidden lg:flex ${isSidebarOpen ? 'w-[260px]' : 'w-[80px]'} h-full shadow-2xl relative`}
       >
         <div className={`h-24 flex items-center flex-shrink-0 relative ${isSidebarOpen ? 'px-8' : 'justify-center'}`}>
           <div className="flex items-center w-full overflow-hidden transition-all duration-300">
@@ -184,7 +196,7 @@ export const Layout: React.FC<{children: React.ReactNode, activeModule: string, 
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10 bg-transparent">
-        <header className="h-16 md:h-20 bg-white/90 backdrop-blur-md border-b border-slate-200/60 flex justify-between items-center px-4 md:px-8 z-20 shadow-sm flex-shrink-0">
+        <header className="h-16 md:h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 flex justify-between items-center px-4 md:px-8 z-20 shadow-sm flex-shrink-0">
           <div className="flex items-center space-x-4">
              <div className="flex flex-col">
                <h2 className="text-sm md:text-lg text-slate-900 leading-tight uppercase tracking-tighter">
@@ -198,15 +210,15 @@ export const Layout: React.FC<{children: React.ReactNode, activeModule: string, 
           </div>
           
           <div className="flex items-center space-x-2 md:space-x-6">
-             <div className="hidden lg:flex items-center bg-slate-50/50 rounded-2xl px-5 py-2.5 border border-slate-200 shadow-sm h-14">
-                <div className="flex items-center pr-5 border-r border-slate-200">
+             <div className="hidden lg:flex items-center bg-white rounded-2xl px-5 py-2.5 border border-slate-200 shadow-sm h-14">
+                <div className="flex items-center pr-5 border-r border-slate-100">
                    {getWeatherIcon(weather?.code || 0)}
                    <div className="flex flex-col">
                       <span className="text-sm font-black text-slate-800 leading-none">{weather ? `${weather.temp}°` : '--°'}</span>
                       <span className="text-[0.65rem] font-bold text-slate-400 uppercase">Clima Real</span>
                    </div>
                 </div>
-                <div className="flex items-center pl-5 w-44 justify-center border-r border-slate-200 pr-5 mr-5">
+                <div className="flex items-center pl-5 w-44 justify-center border-r border-slate-100 pr-5 mr-5">
                    <Clock size={18} className="text-[#00AEEF] mr-3 flex-shrink-0" />
                    <span className="text-sm font-bold text-slate-700 tracking-wide tabular-nums">
                       {time.toLocaleTimeString('es-CL', {hour: '2-digit', minute:'2-digit', second: '2-digit'})}
@@ -223,7 +235,7 @@ export const Layout: React.FC<{children: React.ReactNode, activeModule: string, 
 
              <div className="relative">
                 <div onClick={() => setShowProfileMenu(!showProfileMenu)} className="flex items-center cursor-pointer group p-1 rounded-xl hover:bg-slate-50 transition-colors">
-                    <div className="h-8 w-8 md:h-10 md:w-10 bg-[#0B1120] rounded-xl overflow-hidden border-2 border-slate-100 shadow-sm mr-2 md:mr-3 relative flex-shrink-0">
+                    <div className="h-8 w-8 md:h-10 md:w-10 bg-white rounded-xl overflow-hidden border-2 border-slate-100 shadow-sm mr-2 md:mr-3 relative flex-shrink-0">
                        <div className="w-full h-full flex items-center justify-center text-[#00AEEF] text-sm font-black">{user?.name.charAt(0)}</div>
                     </div>
                     <div className="hidden md:flex flex-col items-start mr-2">
@@ -233,7 +245,7 @@ export const Layout: React.FC<{children: React.ReactNode, activeModule: string, 
                     <ChevronDown size={14} className={`text-slate-400 transition-transform ${showProfileMenu ? 'rotate-180' : ''}`} />
                 </div>
                 {showProfileMenu && (
-                    <div className="absolute right-0 top-[120%] w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-50 animate-in slide-in-from-top-2 duration-200">
+                    <div className="absolute right-0 top-[120%] w-56 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-50 animate-in slide-in-from-top-2">
                         <div className="p-4 border-b border-slate-50 bg-slate-50/50"><p className="text-[10px] font-black text-slate-800 uppercase tracking-widest">{user?.name}</p></div>
                         <div className="p-2">
                             <button className="w-full flex items-center px-4 py-2.5 text-[10px] font-bold text-slate-600 hover:bg-blue-50 hover:text-[#00AEEF] rounded-lg transition-colors mb-1 uppercase tracking-widest"><Edit2 size={14} className="mr-2" />Editar Perfil</button>

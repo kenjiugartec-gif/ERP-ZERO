@@ -53,9 +53,9 @@ const DEFAULT_CONFIG: AppConfig = {
   lineHeight: 1.5,
   primaryColor: "#2563eb",
   logo: undefined,
-  loginImage: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=2070&auto=format&fit=crop",
-  bgImage: "https://images.unsplash.com/photo-1553413077-190dd305871c?q=80&w=2070&auto=format&fit=crop",
-  bgOpacity: 20,
+  loginImage: undefined,
+  bgImage: undefined,
+  bgOpacity: 50,
   bgBlur: 0,
   bgFit: 'cover',
   disableBold: false
