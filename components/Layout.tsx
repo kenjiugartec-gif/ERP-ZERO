@@ -163,11 +163,11 @@ export const Layout: React.FC<{children: React.ReactNode, activeModule: string, 
           <div className="flex items-center w-full overflow-hidden transition-all duration-300">
              {isSidebarOpen ? (
                 <div className="flex flex-col animate-in fade-in slide-in-from-left-2 duration-300">
-                   <h1 className="text-lg text-white font-black tracking-tighter uppercase leading-none">ZERO <span className="text-[#00AEEF]">WMS</span></h1>
+                   <h1 className="text-lg text-white font-black tracking-tighter uppercase leading-none">LOGIS <span className="text-[#00AEEF]">NOVA</span></h1>
                    <p className="text-[7px] text-slate-500 font-bold uppercase tracking-[0.3em] mt-1">Innovative Solutions</p>
                 </div>
              ) : (
-                <div className="w-10 h-10 border border-[#00AEEF]/20 rounded-lg flex items-center justify-center text-[#00AEEF] text-xs font-black">Z</div>
+                <div className="w-10 h-10 border border-[#00AEEF]/20 rounded-lg flex items-center justify-center text-[#00AEEF] text-xs font-black">L</div>
              )}
           </div>
           <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className={`absolute top-1/2 -translate-y-1/2 -right-3 w-6 h-6 bg-[#00AEEF] border border-blue-400 rounded-full flex items-center justify-center text-white hover:bg-blue-400 transition-all z-20 shadow-lg ${isSidebarOpen ? '' : 'rotate-180'}`}><ChevronRight size={14} /></button>

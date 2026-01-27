@@ -84,7 +84,7 @@ export const Login: React.FC = () => {
                 <div className="absolute -left-1 bottom-1/3 w-2 h-2 bg-slate-50 rounded-full"></div>
 
                 <div className="flex flex-col items-center justify-center text-center">
-                    <h1 className="text-7xl text-white font-normal tracking-tighter" style={{ fontFamily: 'Montserrat, sans-serif' }}>ZERO</h1>
+                    <h1 className="text-5xl text-white font-normal tracking-tighter" style={{ fontFamily: 'Montserrat, sans-serif' }}>LOGISNOVA</h1>
                     <div className="h-px w-24 bg-blue-600 my-4 opacity-50"></div>
                     <p className="text-[10px] text-slate-300 font-normal uppercase tracking-[0.4em]">INNOVATIVE SOLUTIONS</p>
                 </div>

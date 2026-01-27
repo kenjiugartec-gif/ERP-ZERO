@@ -52,7 +52,7 @@ const DEFAULT_CONFIG: AppConfig = {
   fontSize: 14, 
   lineHeight: 1.5,
   primaryColor: "#2563eb",
-  logo: undefined,
+  logo: '/logisnova_logo.svg',
   loginImage: undefined,
   bgImage: undefined,
   bgOpacity: 50,
@@ -70,7 +70,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
 
   const [welcomeMessageShown, setWelcomeMessageShown] = useState(false);
-  const [appName, setAppName] = useState(() => localStorage.getItem("zero_wms_appname") || "ZERO WMS");
+  const [appName, setAppName] = useState(() => localStorage.getItem("zero_wms_appname") || "LogisNova");
   const [configs, setConfigs] = useState<Record<string, AppConfig>>(() => {
     const saved = localStorage.getItem("zero_wms_configs");
     return saved ? JSON.parse(saved) : {};

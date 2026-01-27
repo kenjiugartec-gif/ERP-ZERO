@@ -72,7 +72,7 @@ const MobileLaunchpad: React.FC<{ onSelect: (id: string) => void }> = ({ onSelec
         <div className="lg:hidden h-full overflow-y-auto p-6 bg-[#F8FAFC] pb-24 animate-in fade-in duration-500 font-normal">
             <div className="mb-10 mt-4 flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl text-slate-900 tracking-tighter uppercase leading-none">ZERO <span className="text-[#00AEEF]">WMS</span></h2>
+                    <h2 className="text-2xl text-slate-900 tracking-tighter uppercase leading-none">LOGIS <span className="text-[#00AEEF]">NOVA</span></h2>
                     <p className="text-[9px] text-slate-400 uppercase tracking-[0.4em] mt-2">Interfaz Móvil v2.5</p>
                 </div>
                 <div className="p-2 bg-slate-100 rounded-lg text-slate-400">
