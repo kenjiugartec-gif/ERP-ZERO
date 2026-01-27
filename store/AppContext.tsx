@@ -64,12 +64,15 @@ const DEFAULT_CONFIG: AppConfig = {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Session State (SessionStorage - Cleared on browser close typically, but we want manual logout or timeout)
   const [user, setUser] = useState<User | null>(() => {
     const saved = sessionStorage.getItem("zero_wms_current_user");
     return saved ? JSON.parse(saved) : null;
   });
 
   const [welcomeMessageShown, setWelcomeMessageShown] = useState(false);
+  
+  // Persistent State (LocalStorage - Survives restart/close)
   const [appName, setAppName] = useState(() => localStorage.getItem("zero_wms_appname") || "ZERO");
   const [configs, setConfigs] = useState<Record<string, AppConfig>>(() => {
     const saved = localStorage.getItem("zero_wms_configs");
@@ -104,14 +107,43 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     ];
   });
 
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const [stock, setStock] = useState<StockItem[]>([]);
-  const [transactions, setTransactions] = useState<GateTransaction[]>([]);
-  const [geoRecords, setGeoRecords] = useState<GeoLocationRecord[]>([]);
-  const [emplacements, setEmplacements] = useState<string[]>(INITIAL_EMPLACEMENTS);
-  const [documents, setDocuments] = useState<ReceptionDocument[]>([]);
-  const [mobileInspections, setMobileInspections] = useState<MobileInspection[]>([]);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  // Data Entities - Now with Persistence
+  const [vehicles, setVehicles] = useState<Vehicle[]>(() => {
+    const saved = localStorage.getItem("zero_wms_vehicles");
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [stock, setStock] = useState<StockItem[]>(() => {
+    const saved = localStorage.getItem("zero_wms_stock");
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [transactions, setTransactions] = useState<GateTransaction[]>(() => {
+    const saved = localStorage.getItem("zero_wms_transactions");
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [geoRecords, setGeoRecords] = useState<GeoLocationRecord[]>(() => {
+    const saved = localStorage.getItem("zero_wms_georecords");
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [emplacements, setEmplacements] = useState<string[]>(() => {
+    const saved = localStorage.getItem("zero_wms_emplacements");
+    return saved ? JSON.parse(saved) : INITIAL_EMPLACEMENTS;
+  });
+
+  const [documents, setDocuments] = useState<ReceptionDocument[]>(() => {
+    const saved = localStorage.getItem("zero_wms_documents");
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [mobileInspections, setMobileInspections] = useState<MobileInspection[]>(() => {
+    const saved = localStorage.getItem("zero_wms_inspections");
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [notifications, setNotifications] = useState<Notification[]>([]); // Notifications can remain ephemeral or persist if needed
 
   const inactivityTimer = useRef<number | null>(null);
   const lastActivity = useRef<number>(Date.now());
@@ -185,11 +217,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const currentConfig = user ? (configs[user.location] || configs['COMANDO CENTRAL'] || DEFAULT_CONFIG) : (configs['COMANDO CENTRAL'] || DEFAULT_CONFIG);
 
+  // Persistence Effect: Save data whenever it changes
   useEffect(() => {
     localStorage.setItem("zero_wms_users", JSON.stringify(users));
     localStorage.setItem("zero_wms_roles", JSON.stringify(roles));
     localStorage.setItem("zero_wms_appname", appName);
-  }, [users, roles, appName]);
+    
+    localStorage.setItem("zero_wms_vehicles", JSON.stringify(vehicles));
+    localStorage.setItem("zero_wms_stock", JSON.stringify(stock));
+    localStorage.setItem("zero_wms_transactions", JSON.stringify(transactions));
+    localStorage.setItem("zero_wms_georecords", JSON.stringify(geoRecords));
+    localStorage.setItem("zero_wms_emplacements", JSON.stringify(emplacements));
+    localStorage.setItem("zero_wms_documents", JSON.stringify(documents));
+    localStorage.setItem("zero_wms_inspections", JSON.stringify(mobileInspections));
+  }, [users, roles, appName, vehicles, stock, transactions, geoRecords, emplacements, documents, mobileInspections]);
 
   const addVehicle = (v: Vehicle) => setVehicles(prev => [...prev, v]);
   const updateVehicle = (plate: string, v: Partial<Vehicle>) => setVehicles(prev => prev.map(veh => veh.plate === plate ? { ...veh, ...v } : veh));
