@@ -5,7 +5,7 @@ import { MODULES } from '../constants';
 import { 
   LogOut, X, 
   Bell, Sun, Clock, ChevronDown, CloudRain, Cloud, CloudLightning,
-  User as UserIcon, Edit2, ChevronRight, Activity, Cpu
+  User as UserIcon, Edit2, ChevronRight, Activity, Cpu, RefreshCw, Wifi
 } from 'lucide-react';
 
 export const Layout: React.FC<{children: React.ReactNode, activeModule: string, setActiveModule: (m: string) => void}> = ({ children, activeModule, setActiveModule }) => {
@@ -14,7 +14,9 @@ export const Layout: React.FC<{children: React.ReactNode, activeModule: string, 
   const [weather, setWeather] = useState<{temp: number, code: number} | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Inicialmente colapsada para enfocarse en datos
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const lastEtagRef = useRef<string | null>(null);
 
   // Reloj persistente
   useEffect(() => {
@@ -57,6 +59,54 @@ export const Layout: React.FC<{children: React.ReactNode, activeModule: string, 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isSidebarOpen]);
+
+  // SISTEMA DE AUTO-ACTUALIZACIÓN (Version Watcher)
+  // Consulta los encabezados del servidor cada 60s para detectar nuevos despliegues
+  useEffect(() => {
+    const checkForUpdates = async () => {
+      if (document.hidden) return; // No verificar si la tab está oculta
+      
+      setIsCheckingUpdate(true);
+      try {
+        // Solicitamos solo los headers del index.html para ser eficientes
+        const response = await fetch('/', { 
+            method: 'HEAD', 
+            cache: 'no-store',
+            headers: { 'Cache-Control': 'no-cache' } 
+        });
+        
+        const newEtag = response.headers.get('ETag') || response.headers.get('Last-Modified');
+        
+        if (lastEtagRef.current && newEtag && newEtag !== lastEtagRef.current) {
+            console.log("Nueva versión detectada en hosting. Actualizando...");
+            window.location.reload();
+        }
+        
+        if (newEtag) lastEtagRef.current = newEtag;
+      } catch (err) {
+        console.warn("Error verificando actualizaciones:", err);
+      } finally {
+        setIsCheckingUpdate(false);
+      }
+    };
+
+    // Verificar inmediatamente al montar
+    checkForUpdates();
+
+    // Verificar cada 60 segundos
+    const intervalId = setInterval(checkForUpdates, 60000);
+    
+    // Verificar cuando la app vuelve a primer plano (Móvil)
+    const handleVisibilityChange = () => {
+        if (!document.hidden) checkForUpdates();
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+        clearInterval(intervalId);
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
 
   const getGreeting = () => {
     const hours = time.getHours();
@@ -156,11 +206,18 @@ export const Layout: React.FC<{children: React.ReactNode, activeModule: string, 
                       <span className="text-[0.65rem] font-bold text-slate-400 uppercase">Clima Real</span>
                    </div>
                 </div>
-                <div className="flex items-center pl-5 w-44 justify-center">
+                <div className="flex items-center pl-5 w-44 justify-center border-r border-slate-200 pr-5 mr-5">
                    <Clock size={18} className="text-[#00AEEF] mr-3 flex-shrink-0" />
                    <span className="text-sm font-bold text-slate-700 tracking-wide tabular-nums">
                       {time.toLocaleTimeString('es-CL', {hour: '2-digit', minute:'2-digit', second: '2-digit'})}
                    </span>
+                </div>
+                {/* Indicador de Conexión / Versión */}
+                <div className="flex items-center" title="Estado de Sincronización">
+                    <div className={`w-2 h-2 rounded-full mr-2 ${isCheckingUpdate ? 'bg-amber-400 animate-pulse' : 'bg-emerald-500'}`}></div>
+                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                        {isCheckingUpdate ? 'SYNC...' : 'ONLINE'}
+                    </span>
                 </div>
              </div>
 
@@ -180,6 +237,8 @@ export const Layout: React.FC<{children: React.ReactNode, activeModule: string, 
                         <div className="p-4 border-b border-slate-50 bg-slate-50/50"><p className="text-[10px] font-black text-slate-800 uppercase tracking-widest">{user?.name}</p></div>
                         <div className="p-2">
                             <button className="w-full flex items-center px-4 py-2.5 text-[10px] font-bold text-slate-600 hover:bg-blue-50 hover:text-[#00AEEF] rounded-lg transition-colors mb-1 uppercase tracking-widest"><Edit2 size={14} className="mr-2" />Editar Perfil</button>
+                            {/* Botón manual de actualización por si el auto-check falla */}
+                            <button onClick={() => window.location.reload()} className="w-full flex items-center px-4 py-2.5 text-[10px] font-bold text-slate-600 hover:bg-amber-50 hover:text-amber-600 rounded-lg transition-colors mb-1 uppercase tracking-widest"><RefreshCw size={14} className="mr-2" />Forzar Actualización</button>
                             <button onClick={logout} className="w-full flex items-center px-4 py-2.5 text-[10px] font-bold text-red-500 hover:bg-red-50 rounded-lg transition-colors uppercase tracking-widest"><LogOut size={14} className="mr-2" />Cerrar Sesión</button>
                         </div>
                     </div>
