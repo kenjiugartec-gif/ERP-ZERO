@@ -25,6 +25,7 @@ interface AppContextType {
   currentConfig: AppConfig;
   addVehicle: (v: Vehicle) => void;
   updateVehicle: (plate: string, v: Partial<Vehicle>) => void;
+  deleteVehicle: (plate: string) => void;
   createTransaction: (t: GateTransaction) => void;
   updateTransaction: (id: string, t: Partial<GateTransaction>) => void;
   addUser: (u: User) => void;
@@ -234,6 +235,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const addVehicle = (v: Vehicle) => setVehicles(prev => [...prev, v]);
   const updateVehicle = (plate: string, v: Partial<Vehicle>) => setVehicles(prev => prev.map(veh => veh.plate === plate ? { ...veh, ...v } : veh));
+  const deleteVehicle = (plate: string) => setVehicles(prev => prev.filter(v => v.plate !== plate));
   const createTransaction = (t: GateTransaction) => setTransactions(prev => [...prev, t]);
   const updateTransaction = (id: string, t: Partial<GateTransaction>) => setTransactions(prev => prev.map(tr => tr.id === id ? { ...tr, ...t } : tr));
   const addUser = (u: User) => setUsers(prev => [...prev, u]);
@@ -256,7 +258,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     <AppContext.Provider value={{
       user, login, logout, updateCurrentUser, welcomeMessageShown, setWelcomeMessageShown,
       users, roles, vehicles, stock, transactions, notifications, geoRecords, emplacements, documents, mobileInspections,
-      configs, updateConfig, currentConfig, addVehicle, updateVehicle, createTransaction, updateTransaction,
+      configs, updateConfig, currentConfig, addVehicle, updateVehicle, deleteVehicle, createTransaction, updateTransaction,
       addUser, editUser, deleteUser, addRole, updateRole, deleteRole,
       addStockItem, updateStockLocation, markNotificationRead, clearNotifications,
       addGeoRecord, deleteGeoRecord, addEmplacement, addDocument, addMobileInspection, appName, setAppName

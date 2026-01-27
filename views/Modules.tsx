@@ -391,10 +391,13 @@ export const DispatchView: React.FC = () => {
 };
 
 export const FleetView: React.FC = () => {
-  const { vehicles, addVehicle, user, users, emplacements } = useApp();
+  const { vehicles, addVehicle, updateVehicle, deleteVehicle, user, users, emplacements } = useApp();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   
+  // Track editing state
+  const [originalPlate, setOriginalPlate] = useState<string | null>(null);
+
   const [newVehicle, setNewVehicle] = useState<Partial<Vehicle>>({
      brand: '', 
      model: '',
@@ -439,12 +442,12 @@ export const FleetView: React.FC = () => {
   }, [selectedRegion, user]);
 
   useEffect(() => {
-      if (isModalOpen && user?.role !== 'ADMIN') {
+      if (isModalOpen && user?.role !== 'ADMIN' && !originalPlate) {
           if (user?.location) setNewVehicle(prev => ({ ...prev, location: user.location }));
           if (userRegion) setSelectedRegion(userRegion);
           if (user?.commune) setNewVehicle(prev => ({ ...prev, commune: user.commune }));
       }
-  }, [isModalOpen, user, userRegion]);
+  }, [isModalOpen, user, userRegion, originalPlate]);
 
   const localVehicles = useMemo(() => {
     return vehicles.filter(v => v.location === user?.location && (v.plate.includes(searchTerm.toUpperCase()) || v.driver.toLowerCase().includes(searchTerm.toLowerCase())));
@@ -457,15 +460,51 @@ export const FleetView: React.FC = () => {
       return (CAR_MODELS as Record<string, string[]>)[newVehicle.brand] || [];
   }, [newVehicle.brand]);
 
-  const handleAdd = () => {
+  const handleEdit = (vehicle: Vehicle) => {
+      setNewVehicle({...vehicle});
+      setOriginalPlate(vehicle.plate);
+      
+      if (vehicle.commune) {
+          const regionData = CHILE_GEO_DATA.find(r => r.communes.includes(vehicle.commune));
+          if (regionData) setSelectedRegion(regionData.region);
+      }
+      
+      setIsModalOpen(true);
+  };
+
+  const handleDelete = (plate: string) => {
+      if (confirm(`¿Está seguro de eliminar el vehículo ${plate}? Esta acción no se puede deshacer.`)) {
+          deleteVehicle(plate);
+      }
+  };
+
+  const handleSave = () => {
       if(newVehicle.plate && newVehicle.brand && newVehicle.model && newVehicle.location) {
-          addVehicle({ ...newVehicle, plate: newVehicle.plate?.toUpperCase() } as Vehicle);
-          setIsModalOpen(false);
-          setNewVehicle({ brand: '', model: '', year: new Date().getFullYear(), location: '', plate: '', driver: '', commune: '', type: 'Camioneta', status: 'AVAILABLE' });
-          setSelectedRegion('');
+          const upperPlate = newVehicle.plate.toUpperCase();
+          
+          if (originalPlate) {
+              // EDIT MODE
+              updateVehicle(originalPlate, { ...newVehicle, plate: upperPlate } as Vehicle);
+          } else {
+              // CREATE MODE
+              if (vehicles.some(v => v.plate === upperPlate)) {
+                  alert("La patente ya existe en el sistema.");
+                  return;
+              }
+              addVehicle({ ...newVehicle, plate: upperPlate } as Vehicle);
+          }
+          
+          closeModal();
       } else {
           alert("Por favor complete los campos obligatorios.");
       }
+  };
+
+  const closeModal = () => {
+      setIsModalOpen(false);
+      setNewVehicle({ brand: '', model: '', year: new Date().getFullYear(), location: '', plate: '', driver: '', commune: '', type: 'Camioneta', status: 'AVAILABLE' });
+      setOriginalPlate(null);
+      setSelectedRegion('');
   };
 
   const StatCard = ({ label, value, icon: Icon, color }: any) => (
@@ -502,7 +541,7 @@ export const FleetView: React.FC = () => {
                    className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:bg-white focus:border-blue-500 transition-all uppercase"
                  />
              </div>
-             <button onClick={() => setIsModalOpen(true)} className="flex items-center px-8 py-3 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/20 active:scale-95">
+             <button onClick={() => { setOriginalPlate(null); setIsModalOpen(true); }} className="flex items-center px-8 py-3 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/20 active:scale-95">
                 <Plus size={18} className="mr-2" /> Registrar Unidad
              </button>
           </div>
@@ -549,10 +588,21 @@ export const FleetView: React.FC = () => {
                                 {v.km.toLocaleString()} KM
                              </td>
                              <td className="px-8 py-5 text-right">
-                                <div className="flex items-center justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                   <button className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-all"><Eye size={16}/></button>
-                                   <button className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-all"><Wrench size={16}/></button>
-                                   <button className="p-2 text-red-400 hover:bg-red-50 rounded-lg transition-all"><Trash2 size={16}/></button>
+                                <div className="flex items-center justify-end space-x-2 opacity-60 group-hover:opacity-100 transition-opacity">
+                                   <button 
+                                      onClick={() => handleEdit(v)}
+                                      className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
+                                      title="Editar"
+                                   >
+                                      <Wrench size={16}/>
+                                   </button>
+                                   <button 
+                                      onClick={() => handleDelete(v.plate)}
+                                      className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                      title="Eliminar"
+                                   >
+                                      <Trash2 size={16}/>
+                                   </button>
                                 </div>
                              </td>
                           </tr>
@@ -572,11 +622,11 @@ export const FleetView: React.FC = () => {
                             <Car size={24} />
                         </div>
                         <div>
-                            <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Alta de Unidad</h3>
+                            <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">{originalPlate ? 'Editar Unidad' : 'Alta de Unidad'}</h3>
                             <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">VINCULACIÓN A FLOTA CORPORATIVA</p>
                         </div>
                     </div>
-                    <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors p-2 bg-slate-50 rounded-full">
+                    <button onClick={closeModal} className="text-slate-400 hover:text-slate-600 transition-colors p-2 bg-slate-50 rounded-full">
                         <X size={24} />
                     </button>
                 </div>
@@ -633,8 +683,8 @@ export const FleetView: React.FC = () => {
                     </div>
                  </div>
                 <div className="p-8 border-t border-slate-100 bg-white flex justify-end items-center space-x-5 sticky bottom-0 z-10">
-                    <button onClick={() => setIsModalOpen(false)} className="px-10 py-4 border border-slate-200 rounded-xl text-[10px] font-black text-slate-400 uppercase tracking-widest hover:bg-slate-50 transition-all">Cancelar Operación</button>
-                    <button onClick={handleAdd} className="px-10 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[10px] font-black shadow-xl shadow-blue-500/20 transition-all active:scale-95 uppercase tracking-widest flex items-center"><Save size={18} className="mr-2" /> Certificar Registro</button>
+                    <button onClick={closeModal} className="px-10 py-4 border border-slate-200 rounded-xl text-[10px] font-black text-slate-400 uppercase tracking-widest hover:bg-slate-50 transition-all">Cancelar Operación</button>
+                    <button onClick={handleSave} className="px-10 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[10px] font-black shadow-xl shadow-blue-500/20 transition-all active:scale-95 uppercase tracking-widest flex items-center"><Save size={18} className="mr-2" /> {originalPlate ? 'Guardar Cambios' : 'Certificar Registro'}</button>
                 </div>
              </div>
           </div>
