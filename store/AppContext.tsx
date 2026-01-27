@@ -114,6 +114,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
   const inactivityTimer = useRef<number | null>(null);
+  const lastActivity = useRef<number>(Date.now());
 
   const logout = useCallback(() => {
     setUser(null);
@@ -123,20 +124,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, []);
 
   const resetInactivityTimer = useCallback(() => {
+    lastActivity.current = Date.now();
     if (inactivityTimer.current) window.clearTimeout(inactivityTimer.current);
     inactivityTimer.current = window.setTimeout(() => {
       logout();
-    }, 4 * 60 * 1000);
+    }, 4 * 60 * 1000); // 4 Minutes
   }, [logout]);
 
   useEffect(() => {
     if (!user) return;
-    const handleVisibilityChange = () => { if (document.hidden) logout(); };
+    
+    // Check if session should have expired while app was in background
+    const handleVisibilityChange = () => { 
+        if (!document.hidden) {
+            const elapsed = Date.now() - lastActivity.current;
+            if (elapsed > 4 * 60 * 1000) {
+                logout();
+            } else {
+                resetInactivityTimer();
+            }
+        }
+    };
+
     const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
     const onActivity = () => resetInactivityTimer();
+    
     document.addEventListener("visibilitychange", handleVisibilityChange);
     activityEvents.forEach(evt => document.addEventListener(evt, onActivity));
+    
     resetInactivityTimer();
+    
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       activityEvents.forEach(evt => document.removeEventListener(evt, onActivity));
