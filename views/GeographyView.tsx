@@ -359,7 +359,7 @@ export const GeographyView: React.FC = () => {
                         </div>
                         
                         <ModalInput 
-                            label="Nombre Descriptivo" 
+                            label="Emplazamiento" 
                             placeholder="Ej: Bodega Norte" 
                             value={newEmpName}
                             onChange={(e: any) => setNewEmpName(e.target.value)}

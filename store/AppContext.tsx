@@ -70,7 +70,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
 
   const [welcomeMessageShown, setWelcomeMessageShown] = useState(false);
-  const [appName, setAppName] = useState(() => localStorage.getItem("zero_wms_appname") || "LogisNova");
+  const [appName, setAppName] = useState(() => localStorage.getItem("zero_wms_appname") || "ZERO");
   const [configs, setConfigs] = useState<Record<string, AppConfig>>(() => {
     const saved = localStorage.getItem("zero_wms_configs");
     return saved ? JSON.parse(saved) : {};

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useApp } from '../store/AppContext';
-import { Eye, EyeOff, Lock, User, Building2, ChevronRight, XCircle, ChevronDown, CheckCircle2 } from 'lucide-react';
+import { Eye, EyeOff, Lock, User, Building2, ChevronRight, XCircle, ChevronDown, CheckCircle2, Maximize2, X, Image as ImageIcon } from 'lucide-react';
 
 export const Login: React.FC = () => {
   const { login, users, emplacements, configs, currentConfig } = useApp();
@@ -12,6 +12,10 @@ export const Login: React.FC = () => {
   const [error, setError] = useState('');
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [isSelectOpen, setIsSelectOpen] = useState(false);
+  
+  // State for Image Preview
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
   const selectRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -25,7 +29,6 @@ export const Login: React.FC = () => {
   }, []);
 
   // Usamos currentConfig para el fondo si el usuario ya ha configurado uno en el sistema.
-  // Esto asegura que "siempre el mismo fondo" se mantenga.
   const activeConfig = useMemo(() => {
     const local = configs[selectedEmplacement];
     return {
@@ -61,20 +64,32 @@ export const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex bg-white font-sans overflow-hidden">
+    <div className="min-h-screen flex bg-white font-sans overflow-hidden relative">
+      
+      {/* LEFT PANEL (VISUAL) */}
       <div className="relative w-1/2 hidden lg:flex flex-col justify-center items-center overflow-hidden bg-slate-900">
+        
+        {/* Expand Button */}
+        <button 
+            onClick={() => setIsPreviewOpen(true)}
+            className="absolute top-8 left-8 z-20 p-3 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl text-white transition-all group border border-white/5 shadow-xl"
+            title="Ver Imagen Completa"
+        >
+            <Maximize2 size={20} className="group-hover:scale-110 transition-transform opacity-70 group-hover:opacity-100" />
+        </button>
+
         <div className="absolute inset-0 z-0">
             {activeConfig.loginImage ? (
                 <img 
                     src={activeConfig.loginImage} 
-                    className="w-full h-full object-cover filter grayscale-[0.4] brightness-[0.3]"
+                    className="w-full h-full object-cover filter grayscale-[0.4] brightness-[0.3] transition-all duration-700 hover:scale-105"
                     alt="Background"
                 />
             ) : (
                 <div className="absolute inset-0 bg-slate-900"></div>
             )}
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-900/90 via-slate-900/50 to-transparent"></div>
-            <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(#475569 1px, transparent 1px)', backgroundSize: '30px 30px' }}></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-900/90 via-slate-900/50 to-transparent pointer-events-none"></div>
+            <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#475569 1px, transparent 1px)', backgroundSize: '30px 30px' }}></div>
         </div>
 
         <div className="relative z-10 flex flex-col items-center justify-center p-12 scale-110">
@@ -84,7 +99,7 @@ export const Login: React.FC = () => {
                 <div className="absolute -left-1 bottom-1/3 w-2 h-2 bg-slate-50 rounded-full"></div>
 
                 <div className="flex flex-col items-center justify-center text-center">
-                    <h1 className="text-5xl text-white font-normal tracking-tighter" style={{ fontFamily: 'Montserrat, sans-serif' }}>LOGISNOVA</h1>
+                    <h1 className="text-6xl text-white font-normal tracking-tighter" style={{ fontFamily: 'Montserrat, sans-serif' }}>ZERO</h1>
                     <div className="h-px w-24 bg-blue-600 my-4 opacity-50"></div>
                     <p className="text-[10px] text-slate-300 font-normal uppercase tracking-[0.4em]">INNOVATIVE SOLUTIONS</p>
                 </div>
@@ -102,6 +117,7 @@ export const Login: React.FC = () => {
         </div>
       </div>
 
+      {/* RIGHT PANEL (FORM) */}
       <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-8 bg-white">
         <div className="w-full max-w-[420px] space-y-12 animate-in fade-in duration-500">
           <header className="space-y-3">
@@ -158,6 +174,49 @@ export const Login: React.FC = () => {
           </footer>
         </div>
       </div>
+
+      {/* --- LIGHTBOX MODAL --- */}
+      {isPreviewOpen && activeConfig.loginImage && (
+          <div 
+            className="fixed inset-0 z-[9999] bg-slate-950/95 backdrop-blur-xl flex flex-col animate-in fade-in duration-300"
+            onClick={() => setIsPreviewOpen(false)}
+          >
+              {/* Toolbar */}
+              <div className="h-20 flex items-center justify-between px-6 md:px-10 flex-shrink-0 border-b border-white/5 bg-slate-900/50">
+                  <div className="flex items-center space-x-3">
+                      <div className="bg-white/10 p-2 rounded-lg text-white">
+                          <ImageIcon size={20} />
+                      </div>
+                      <div>
+                          <h3 className="text-white font-bold text-sm uppercase tracking-wider">Visualización de Activo</h3>
+                          <p className="text-slate-400 text-[10px] uppercase tracking-widest">Fondo de Pantalla (Raw Data)</p>
+                      </div>
+                  </div>
+                  <button 
+                    onClick={() => setIsPreviewOpen(false)}
+                    className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors"
+                  >
+                      <X size={24} />
+                  </button>
+              </div>
+
+              {/* Image Container */}
+              <div className="flex-1 flex items-center justify-center p-4 md:p-8 overflow-hidden">
+                  <img 
+                    src={activeConfig.loginImage} 
+                    alt="Full Preview" 
+                    className="max-w-full max-h-full object-contain rounded-lg shadow-2xl animate-in zoom-in-95 duration-300"
+                    onClick={(e) => e.stopPropagation()} 
+                  />
+              </div>
+
+              {/* Footer */}
+              <div className="h-16 flex items-center justify-center flex-shrink-0">
+                  <p className="text-slate-500 text-[10px] uppercase tracking-[0.3em] font-mono">Presione ESC o haga clic fuera para cerrar</p>
+              </div>
+          </div>
+      )}
+
     </div>
   );
 };

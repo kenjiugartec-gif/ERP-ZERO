@@ -25,6 +25,7 @@ const DynamicStyles: React.FC = () => {
   const { currentConfig } = useApp();
   
   useEffect(() => {
+    // Inject dynamic CSS into head
     const styleId = 'dynamic-typography-styles';
     let styleTag = document.getElementById(styleId) as HTMLStyleElement;
     
@@ -34,33 +35,18 @@ const DynamicStyles: React.FC = () => {
       document.head.appendChild(styleTag);
     }
     
-    const boldStyles = currentConfig.disableBold ? `
-      * :not(.force-bold) {
-        font-weight: 400 !important;
-        font-style: normal !important;
-      }
-      h1:not(.force-bold), h2:not(.force-bold), h3:not(.force-bold), 
-      h4:not(.force-bold), h5:not(.force-bold), h6:not(.force-bold), 
-      b:not(.force-bold), strong:not(.force-bold), i, em, 
-      .font-bold:not(.force-bold), .font-semibold:not(.force-bold), 
-      .font-black:not(.force-bold), .font-extrabold:not(.force-bold) {
-        font-weight: 400 !important;
-        font-style: normal !important;
-      }
-    ` : '';
-
+    // Aplicamos font-size al html para que rem se escale proporcionalmente en todo el sitio
+    // Aplicamos font-family a todos los elementos de texto interactivos, incluyendo ASIDE y NAV
     styleTag.innerHTML = `
       html {
         font-size: ${currentConfig.fontSize}px !important;
       }
-      body, button, input, select, textarea, span, p, div, aside, nav {
+      body, button, input, select, textarea, h1, h2, h3, h4, h5, h6, span, p, div, aside, nav {
         font-family: ${currentConfig.fontFamily} !important;
         line-height: ${currentConfig.lineHeight} !important;
+        ${currentConfig.disableBold ? 'font-weight: 400 !important;' : ''}
       }
-      .force-bold {
-        font-weight: 800 !important;
-      }
-      ${boldStyles}
+      ${currentConfig.disableBold ? '* { font-weight: 400 !important; }' : ''}
     `;
   }, [currentConfig]);
 
@@ -72,7 +58,7 @@ const MobileLaunchpad: React.FC<{ onSelect: (id: string) => void }> = ({ onSelec
         <div className="lg:hidden h-full overflow-y-auto p-6 bg-[#F8FAFC] pb-24 animate-in fade-in duration-500 font-normal">
             <div className="mb-10 mt-4 flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl text-slate-900 tracking-tighter uppercase leading-none">LOGIS <span className="text-[#00AEEF]">NOVA</span></h2>
+                    <h2 className="text-2xl text-slate-900 tracking-tighter uppercase leading-none">ZERO</h2>
                     <p className="text-[9px] text-slate-400 uppercase tracking-[0.4em] mt-2">Interfaz Móvil v2.5</p>
                 </div>
                 <div className="p-2 bg-slate-100 rounded-lg text-slate-400">
@@ -110,6 +96,7 @@ const AppContent: React.FC = () => {
   const [activeModule, setActiveModule] = useState(''); 
   const [windowState, setWindowState] = useState<'MAXIMIZED' | 'WINDOWED' | 'MINIMIZED'>('MAXIMIZED');
 
+  // Reset window state when module changes
   useEffect(() => {
     if (activeModule) {
         setWindowState('MAXIMIZED');
@@ -155,13 +142,16 @@ const AppContent: React.FC = () => {
       <DynamicStyles />
       <WelcomeModal />
       <Layout activeModule={activeModule} setActiveModule={setActiveModule}>
+        
+        {/* Render module or background based on activeModule */}
         {activeModule ? (
            <div className={`
-                flex flex-col bg-white border-slate-200 shadow-2xl overflow-hidden transition-all duration-300 ease-in-out font-normal
+                flex flex-col bg-white border-slate-200 shadow-2xl overflow-hidden transition-all duration-300 ease-in-out
                 ${windowState === 'MAXIMIZED' ? 'w-full h-full rounded-none border-0' : ''}
                 ${windowState === 'WINDOWED' ? 'absolute inset-4 md:inset-8 rounded-xl border z-20 shadow-[0_20px_50px_rgba(0,0,0,0.1)]' : ''}
                 ${windowState === 'MINIMIZED' ? 'absolute bottom-0 right-4 w-72 h-auto rounded-t-xl border border-b-0 z-30 shadow-lg' : ''}
            `}>
+               {/* Window Title Bar */}
                <div 
                  className={`
                     flex items-center justify-between px-4 py-2.5 bg-slate-50 border-b border-slate-200 select-none
@@ -172,25 +162,44 @@ const AppContent: React.FC = () => {
                    <div className="flex items-center space-x-2.5 opacity-80">
                        {currentModuleData && (
                            <div className="text-slate-500">
-                               <currentModuleData.icon size={14} strokeWidth={1.5} />
+                               <currentModuleData.icon size={14} />
                            </div>
                        )}
-                       <span className="text-xs text-slate-700 uppercase tracking-widest font-normal">
+                       <span className="text-xs font-bold text-slate-700 uppercase tracking-widest">
                            {currentModuleData?.label || 'Sistema'}
                        </span>
                    </div>
 
                    <div className="flex items-center space-x-1" onClick={e => e.stopPropagation()}>
-                       <button onClick={() => setWindowState('MINIMIZED')} className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded transition-colors"><Minus size={14} /></button>
+                       <button 
+                           onClick={() => setWindowState('MINIMIZED')}
+                           className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded transition-colors"
+                           title="Minimizar"
+                       >
+                           <Minus size={14} strokeWidth={3} />
+                       </button>
+                       
                        {windowState !== 'MINIMIZED' && (
-                           <button onClick={() => setWindowState(windowState === 'MAXIMIZED' ? 'WINDOWED' : 'MAXIMIZED')} className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded transition-colors">
+                           <button 
+                               onClick={() => setWindowState(windowState === 'MAXIMIZED' ? 'WINDOWED' : 'MAXIMIZED')}
+                               className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded transition-colors"
+                               title={windowState === 'MAXIMIZED' ? "Restaurar" : "Maximizar"}
+                           >
                                {windowState === 'MAXIMIZED' ? <Minimize2 size={14} /> : <Square size={12} />}
                            </button>
                        )}
-                       <button onClick={handleCloseWindow} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"><X size={16} /></button>
+
+                       <button 
+                           onClick={handleCloseWindow}
+                           className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                           title="Cerrar"
+                       >
+                           <X size={16} strokeWidth={2.5} />
+                       </button>
                    </div>
                </div>
                
+               {/* Module Content */}
                <div className={`flex-1 relative overflow-hidden bg-slate-50/30 ${windowState === 'MINIMIZED' ? 'hidden' : 'block'}`}>
                    {getModuleComponent(activeModule)}
                </div>
@@ -215,6 +224,7 @@ const AppContent: React.FC = () => {
              <MobileLaunchpad onSelect={setActiveModule} />
            </div>
         )}
+
       </Layout>
     </>
   );
