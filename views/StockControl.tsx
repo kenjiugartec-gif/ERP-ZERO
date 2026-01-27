@@ -19,21 +19,9 @@ export const StockControl: React.FC = () => {
   const simulateLoad = (message: string) => {
     setIsSimulating(true);
     setTimeout(() => {
-        const mockItems: StockItem[] = [
-            {
-              id: Date.now().toString(),
-              code: `IMP-${Math.floor(Math.random()*1000)}`,
-              name: 'Cilindro Oxígeno Portátil',
-              category: 'ACTIVO',
-              quantity: 8,
-              location: user?.location || 'Central',
-              receptionBranch: user?.location || 'Central',
-              supplier: 'Excel Import',
-              lastUpdated: new Date().toISOString()
-            }
-        ];
-        mockItems.forEach(item => addStockItem(item));
+        // Mock data removed. User must provide real data or implement a real parser.
         setIsSimulating(false);
+        alert("Para cargar datos, utilice la entrada manual o configure el parser CSV (No hay datos de ejemplo).");
     }, 1500);
   };
 
@@ -114,7 +102,7 @@ export const StockControl: React.FC = () => {
             <div className="absolute inset-0 z-20 bg-white/60 backdrop-blur-[2px] flex items-center justify-center no-print">
                 <div className="flex flex-col items-center">
                     <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-3"></div>
-                    <span className="text-sm font-bold text-blue-700 uppercase tracking-widest animate-pulse">Procesando Datos...</span>
+                    <span className="text-sm font-bold text-blue-700 uppercase tracking-widest animate-pulse">Procesando Archivo...</span>
                 </div>
             </div>
         )}
@@ -131,7 +119,11 @@ export const StockControl: React.FC = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
-            {filteredStock.map((item) => (
+            {filteredStock.length === 0 ? (
+                <tr>
+                    <td colSpan={6} className="px-8 py-10 text-center text-slate-400 italic">No hay inventario registrado. Utilice la carga masiva o manual.</td>
+                </tr>
+            ) : filteredStock.map((item) => (
               <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
                 <td className="px-8 py-5">
                   <div className="font-bold text-slate-900">{item.name}</div>

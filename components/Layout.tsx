@@ -49,13 +49,14 @@ export const Layout: React.FC<{children: React.ReactNode, activeModule: string, 
   // Detector de clics fuera de la barra lateral (Auto-colapso)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
+      // Si la barra está abierta y el clic no fue dentro de la barra
+      if (isSidebarOpen && sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
         setIsSidebarOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [isSidebarOpen]);
 
   const getGreeting = () => {
     const hours = time.getHours();
@@ -77,11 +78,24 @@ export const Layout: React.FC<{children: React.ReactNode, activeModule: string, 
   };
 
   return (
-    <div className="h-[100dvh] flex overflow-hidden bg-slate-50 font-sans relative">
+    <div className="h-[100dvh] flex overflow-hidden font-sans relative bg-slate-900">
+      
+      {/* Fondo de Pantalla Global Persistente */}
+      {currentConfig.bgImage && (
+        <div className="absolute inset-0 pointer-events-none z-0">
+          <img 
+            src={currentConfig.bgImage} 
+            alt="Background" 
+            className="w-full h-full object-cover opacity-20 filter blur-sm grayscale-[0.3]"
+          />
+          <div className="absolute inset-0 bg-slate-100/80 backdrop-blur-sm"></div>
+        </div>
+      )}
+
       {/* Sidebar con Referencia y Comportamiento Dinámico */}
       <aside 
         ref={sidebarRef}
-        className={`transition-all duration-300 ease-out flex-col z-50 flex-shrink-0 bg-[#0B1120] text-slate-300 border-r border-slate-800/50 hidden lg:flex ${isSidebarOpen ? 'w-[260px]' : 'w-[80px]'} h-full`}
+        className={`transition-all duration-300 ease-out flex-col z-50 flex-shrink-0 bg-[#0B1120] text-slate-300 border-r border-slate-800/50 hidden lg:flex ${isSidebarOpen ? 'w-[260px]' : 'w-[80px]'} h-full shadow-2xl relative`}
       >
         <div className={`h-24 flex items-center flex-shrink-0 relative ${isSidebarOpen ? 'px-8' : 'justify-center'}`}>
           <div className="flex items-center w-full overflow-hidden transition-all duration-300">
@@ -119,8 +133,8 @@ export const Layout: React.FC<{children: React.ReactNode, activeModule: string, 
         </div>
       </aside>
 
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10">
-        <header className="h-16 md:h-20 bg-white border-b border-slate-200 flex justify-between items-center px-4 md:px-8 z-20 shadow-sm flex-shrink-0">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10 bg-transparent">
+        <header className="h-16 md:h-20 bg-white/90 backdrop-blur-md border-b border-slate-200/60 flex justify-between items-center px-4 md:px-8 z-20 shadow-sm flex-shrink-0">
           <div className="flex items-center space-x-4">
              <div className="flex flex-col">
                <h2 className="text-sm md:text-lg text-slate-900 leading-tight uppercase tracking-tighter">
@@ -134,11 +148,11 @@ export const Layout: React.FC<{children: React.ReactNode, activeModule: string, 
           </div>
           
           <div className="flex items-center space-x-2 md:space-x-6">
-             <div className="hidden lg:flex items-center bg-slate-50 rounded-2xl px-5 py-2.5 border border-slate-100 shadow-sm h-14">
+             <div className="hidden lg:flex items-center bg-slate-50/50 rounded-2xl px-5 py-2.5 border border-slate-200 shadow-sm h-14">
                 <div className="flex items-center pr-5 border-r border-slate-200">
                    {getWeatherIcon(weather?.code || 0)}
                    <div className="flex flex-col">
-                      <span className="text-sm font-black text-slate-800 leading-none">{weather ? weather.temp : '--'}°</span>
+                      <span className="text-sm font-black text-slate-800 leading-none">{weather ? `${weather.temp}°` : '--°'}</span>
                       <span className="text-[0.65rem] font-bold text-slate-400 uppercase">Clima Real</span>
                    </div>
                 </div>
