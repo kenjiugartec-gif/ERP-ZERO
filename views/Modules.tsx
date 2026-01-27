@@ -11,7 +11,7 @@ import {
   Car, Info, Globe, ChevronDown, UserCheck, Map, ClipboardCheck, Box,
   Edit, Pencil, List, Eye, Download, Printer, ArrowLeft,
   Search, Filter, Wrench, Activity, Fuel, Gauge, Layers, Terminal,
-  UserPlus, Navigation, RefreshCcw, MoreHorizontal
+  UserPlus, Navigation, RefreshCcw, MoreHorizontal, AlertTriangle
 } from 'lucide-react';
 
 const inputBaseClass = "w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 font-bold focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none transition-all shadow-sm placeholder:text-slate-300 placeholder:font-normal";
@@ -562,7 +562,7 @@ export const FleetView: React.FC = () => {
                        {localVehicles.map(v => (
                           <tr key={v.plate} className="hover:bg-slate-50 transition-colors group">
                              <td className="px-8 py-5">
-                                <span className="bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-lg text-slate-700 font-mono font-black text-sm tracking-widest">{v.plate}</span>
+                                <span className="text-slate-900 font-mono font-black text-sm tracking-widest">{v.plate}</span>
                              </td>
                              <td className="px-8 py-5">
                                 <div className="font-black text-slate-900 text-xs">{v.brand} {v.model}</div>
