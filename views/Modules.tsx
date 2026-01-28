@@ -562,7 +562,7 @@ export const FleetView: React.FC = () => {
                        {localVehicles.map(v => (
                           <tr key={v.plate} className="hover:bg-slate-50 transition-colors group">
                              <td className="px-8 py-5">
-                                <span className="text-slate-900 font-mono font-black text-sm tracking-widest">{v.plate}</span>
+                                <span className="bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-lg text-slate-700 font-mono font-black text-sm tracking-widest">{v.plate}</span>
                              </td>
                              <td className="px-8 py-5">
                                 <div className="font-black text-slate-900 text-xs">{v.brand} {v.model}</div>
