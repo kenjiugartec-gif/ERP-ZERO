@@ -449,7 +449,13 @@ export const FleetView: React.FC = () => {
   }, [isModalOpen, user, userRegion, originalPlate]);
 
   const localVehicles = useMemo(() => {
-    return vehicles.filter(v => v.location === user?.location && (v.plate.includes(searchTerm.toUpperCase()) || v.driver.toLowerCase().includes(searchTerm.toLowerCase())));
+    // Robust Filtering: Handle case where vehicle properties might be undefined or null
+    return vehicles.filter(v => {
+        const matchesLocation = v.location === user?.location;
+        const plateMatch = (v.plate || '').toUpperCase().includes(searchTerm.toUpperCase());
+        const driverMatch = (v.driver || '').toLowerCase().includes(searchTerm.toLowerCase());
+        return matchesLocation && (plateMatch || driverMatch);
+    });
   }, [vehicles, user, searchTerm]);
 
   const availableDrivers = useMemo(() => users.filter(u => u.role === 'DRIVER' || u.role === 'ADMIN'), [users]);
@@ -490,7 +496,13 @@ export const FleetView: React.FC = () => {
                   alert("La patente ya existe en el sistema.");
                   return;
               }
-              addVehicle({ ...newVehicle, plate: upperPlate } as Vehicle);
+              // Ensure driver and KM are safe
+              addVehicle({ 
+                  ...newVehicle, 
+                  plate: upperPlate,
+                  driver: newVehicle.driver || 'SIN ASIGNAR',
+                  km: newVehicle.km || 0
+              } as Vehicle);
           }
           
           closeModal();
@@ -501,7 +513,7 @@ export const FleetView: React.FC = () => {
 
   const closeModal = () => {
       setIsModalOpen(false);
-      setNewVehicle({ brand: '', model: '', year: new Date().getFullYear(), location: '', plate: '', driver: '', commune: '', type: 'Camioneta', status: 'AVAILABLE' });
+      setNewVehicle({ brand: '', model: '', year: new Date().getFullYear(), location: '', plate: '', driver: '', commune: '', type: 'Camioneta', status: 'AVAILABLE', km: 0 });
       setOriginalPlate(null);
       setSelectedRegion('');
   };
@@ -584,7 +596,7 @@ export const FleetView: React.FC = () => {
                                 </span>
                              </td>
                              <td className="px-8 py-5 text-center font-mono font-bold text-slate-600">
-                                {v.km.toLocaleString()}
+                                {(v.km || 0).toLocaleString()}
                              </td>
                              <td className="px-8 py-5 text-right">
                                 <div className="flex items-center justify-end space-x-2">
@@ -655,6 +667,10 @@ export const FleetView: React.FC = () => {
                             <div>
                                 <label className={labelClass}>Modelo</label>
                                 <FormSelect value={newVehicle.model || ''} onChange={(val) => setNewVehicle({...newVehicle, model: val})} options={availableModels.map(model => ({ label: model, value: model }))} placeholder={newVehicle.brand ? "SELECCIONAR..." : "ELIJA MARCA..."} disabled={!newVehicle.brand} />
+                            </div>
+                            <div className="md:col-span-2">
+                                <label className={labelClass}>Kilometraje (Odómetro)</label>
+                                <input type="number" placeholder="0" value={newVehicle.km} onChange={e => setNewVehicle({...newVehicle, km: parseInt(e.target.value) || 0})} className={inputBaseClass} />
                             </div>
                         </div>
                     </div>
