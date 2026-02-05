@@ -37,30 +37,42 @@ export const Login: React.FC = () => {
     };
   }, [selectedEmplacement, configs, currentConfig]);
 
+  // Actualizar modo administrador dinámicamente si el usuario existe en la base local
   useEffect(() => {
-    if (username === 'Admin') {
+    const potentialUser = users.find(u => u.username === username || u.name === username);
+    if (potentialUser?.role === 'ADMIN' || username === 'Admin') {
       setIsAdminMode(true);
       setSelectedEmplacement(''); 
     } else {
       setIsAdminMode(false);
     }
-  }, [username]);
+  }, [username, users]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    const foundUser = users.find(u => u.name === username && u.password === password);
+    
+    // Búsqueda robusta por nombre de usuario o nombre completo
+    const foundUser = users.find(u => 
+      (u.username === username || u.name === username) && 
+      u.password === password
+    );
     
     if (!foundUser) {
-      setError('Credenciales de acceso no válidas');
+      setError('Credenciales de acceso no válidas. Verifique su usuario y contraseña.');
       return;
     }
 
+    // Los usuarios normales deben seleccionar un nodo obligatoriamente
     if (foundUser.role !== 'ADMIN' && !selectedEmplacement) {
-      setError('Debe seleccionar un nodo operativo.');
+      setError('Debe seleccionar un nodo operativo para iniciar su turno.');
       return;
     }
 
-    login({ ...foundUser, location: selectedEmplacement || foundUser.location });
+    // Realizar login persistiendo el nodo seleccionado si no es admin (o el default del admin)
+    login({ 
+      ...foundUser, 
+      location: selectedEmplacement || foundUser.location || 'COMANDO CENTRAL' 
+    });
   };
 
   return (
@@ -129,12 +141,26 @@ export const Login: React.FC = () => {
             <div className="space-y-6">
                 <div className="relative">
                   <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300"><User size={20} strokeWidth={1} /></div>
-                  <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} className="w-full pl-12 pr-4 py-4 bg-slate-50/50 border border-slate-200 rounded-xl text-sm font-normal text-slate-700 placeholder:text-slate-300 outline-none focus:border-blue-400 focus:bg-white transition-all shadow-sm" placeholder="ID de Usuario (Admin)" required />
+                  <input 
+                    type="text" 
+                    value={username} 
+                    onChange={(e) => setUsername(e.target.value)} 
+                    className="w-full pl-12 pr-4 py-4 bg-slate-50/50 border border-slate-200 rounded-xl text-sm font-normal text-slate-700 placeholder:text-slate-300 outline-none focus:border-blue-400 focus:bg-white transition-all shadow-sm" 
+                    placeholder="Usuario o Nombre" 
+                    required 
+                  />
                 </div>
 
                 <div className="relative">
                   <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300"><Lock size={20} strokeWidth={1} /></div>
-                  <input type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} className="w-full pl-12 pr-12 py-4 bg-slate-50/50 border border-slate-200 rounded-xl text-sm font-normal text-slate-700 placeholder:text-slate-300 outline-none focus:border-blue-400 focus:bg-white transition-all shadow-sm" placeholder="Contraseña Maestra" required />
+                  <input 
+                    type={showPassword ? "text" : "password"} 
+                    value={password} 
+                    onChange={(e) => setPassword(e.target.value)} 
+                    className="w-full pl-12 pr-12 py-4 bg-slate-50/50 border border-slate-200 rounded-xl text-sm font-normal text-slate-700 placeholder:text-slate-300 outline-none focus:border-blue-400 focus:bg-white transition-all shadow-sm" 
+                    placeholder="Contraseña" 
+                    required 
+                  />
                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-blue-500 transition-colors">{showPassword ? <EyeOff size={18} strokeWidth={1.5} /> : <Eye size={18} strokeWidth={1.5} />}</button>
                 </div>
             </div>
